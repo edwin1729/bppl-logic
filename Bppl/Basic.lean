@@ -10,22 +10,7 @@ open ProbabilityTheory Kernel
 
 abbrev var := String
 
---/-- Terms in BPPL -/
---inductive te where
---  | ins: Nat → te → te -- (i,t)
---  | case: te → (Nat → var → te) → te
---  | unit : te
---  | prod: te → te → te
---  | proj: te → Nat → te
---  -- | f(t)
---  | var: var → te
---  | ret: te → te -- return(t)
---  | lt: var → te → te -- let x = t in u
---  | sample: te → te
---  | score: te → te
---  | normalize: te → te
---
-
+/-- Types in BPPL -/
 inductive 𝔸 where
   | R
   | P: 𝔸 → 𝔸 -- Giry monad
@@ -33,6 +18,24 @@ inductive 𝔸 where
   | prod: 𝔸 → 𝔸 → 𝔸
   | sum: 𝔸 → 𝔸 → 𝔸
   -- | sum (ι : Type*) [Countable ι] : (ι → 𝔸) → 𝔸 -- ⨆ 𝔸ᵢ
+  deriving BEq
+
+/-- Terms in BPPL -/
+inductive te where
+  | inl: te → te -- (i,t)
+  | inr: te → te -- (i,t)
+  | case: te → var → te → te → te
+  | unit : te
+  | prod: te → te → te
+  | πₗ : te → te
+  | πᵣ : te → te
+  -- | f(t)
+  | var: var → 𝔸 → te
+  | ret: te → te -- return(t)
+  | lt: var → te → te -- let x = t in u
+  | sample: te → te
+  | score: te → te
+  | normalize: te → te
 
 mutual
   structure t where
@@ -48,7 +51,8 @@ mutual
     | case: t → var → t → t → t'
     | unit : t'
     | prod: t → t → t'
-    | proj: t → Nat → t'
+    | πₗ : t → t'
+    | πᵣ : t → t'
     -- | f(t)
     | var: var → t'
     | ret: t → t' -- return(t)
@@ -58,20 +62,51 @@ mutual
     | normalize: t → t'
 end
 
-/-- Typed terms of a Baysian probabilistic programming language.
-The types are only required at binding sites: `let` and `case` -/
---inductive t where
---  | ins: Nat → t → t -- (i,t)
---  | case: t → (Nat → var × 𝔸 → t) → t
---  | unit : t
---  | prod: t → t → t
---  | proj: t → Nat → t
---  | var: var → t
---  | ret: t → t -- return(t)
---  | lt: var × 𝔸 → t → t -- let x = t in u
---  | sample: t → t
---  | score: t → t
---  | normalize: t → t
+def infer_type (term : te) : Except String 𝔸 :=
+  match term with
+  | te.inl term => Except.error "The structure of a term must have an injection only immediately inside a case"
+  | te.inr term => Except.error "The structure of a term must have an injection only immediately inside a case"
+  | te.case term name (te.inl term_l) (te.inr term_r) => do
+    let l ← infer_type term_l
+    let r ← infer_type term_r
+    return 𝔸.sum l r
+  | te.case term name (te.inr term_r) (te.inl term_l) => do
+    let l ← infer_type term_l
+    let r ← infer_type term_r
+    return 𝔸.sum l r
+  | te.case term name term_l term_r => do
+    let l ← infer_type term_l
+    let r ← infer_type term_r
+    if (l == r) then pure r else Except.error "the types of the case arm don't match"
+  | te.unit => pure 𝔸.unit
+  | te.prod term_l term_r => do
+    let l ← infer_type term_l
+    let r ← infer_type term_r
+    return 𝔸.prod l r
+  | te.πₗ term => do
+    let type ← infer_type term
+    match type with
+      | 𝔸.prod l r => return l
+      | _  => Except.error "Projection on non product type"
+  | te.πᵣ term => do
+    let type ← infer_type term
+    match type with
+      | 𝔸.prod l r => return r
+      | _  => Except.error "Projection on non product type"
+  | te.var name type => pure type
+  | te.ret term => infer_type term
+  | te.lt name term => infer_type term
+  | te.sample term => do
+    let p_type ← infer_type term
+    match p_type with
+      | 𝔸.P type => return type
+      | _ => Except.error "sample can only be done on a probability distribution"
+  | te.score term => do
+    let type ← infer_type term
+    if (type == 𝔸.R) then pure 𝔸.unit else Except.error "score must be provided type ℝ"
+  | te.normalize term => do
+    let type ← infer_type term
+    return 𝔸.sum (𝔸.sum (𝔸.prod 𝔸.R (𝔸.P type)) 𝔸.unit) 𝔸.unit
 
 -- def measure_iunion (ι : Type*) (f: ι → Σ T: Type, MeasurableSpace T) :
 --   MeasurableSpace T₁ ⊕ T₂ := sorry
