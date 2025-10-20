@@ -14,5 +14,10 @@ maxSynthPendingDepth = 3
 name = "mathlib"
 scope = "leanprover-community"
 
+
+[[require]]
+name = "iris"
+scope = "leanprover-community"
+
 [[lean_lib]]
 name = "Bppl"
