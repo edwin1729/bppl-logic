@@ -39,11 +39,6 @@ noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (Prob
       ⟨by simp⟩⟩
   }
 
-    -- Measure.ofMeasurable (fun s hs ↦
-    --     let foo: s = ∅ ∨ s = Set.univ := by grind [MeasurableSpace.generateFrom]
-    --     1
-    --  )
-
 instance {α : Type*} : Coe (ProbabilitySpace α) (MeasurableSpace α) where
   coe P := P.toMeasurableSpace
 
@@ -61,42 +56,16 @@ def indep_combination_pred {α : Type*}
   ∀ p q : Set α, MeasurableSet[P] p → MeasurableSet[Q] q →
     P.volume p * Q.volume q = R.volume (p ∩ q)
 
-
 abbrev existence_cond {α : Type*} (E : ProbabilitySpace α) (F : ProbabilitySpace α) :=
   ∃ ρ : @ProbabilityMeasure α (E.toMeasurableSpace ⊓ F.toMeasurableSpace),
     ∀ e f : Set α, MeasurableSet[E] e → MeasurableSet[F] f → ρ (e ∩ f) = E.volume e * F.volume f
 
-  -- My glorious non-circular definitionh
-  -- ∀ e f₁ f₂ : Set α, MeasurableSet e → MeasurableSet f₁ → MeasurableSet f₂ →
-  --   E.volume (e ∩ f₁) / E.volume (e ∩ f₂) = F.volume f₁ / F.volume f₂
-
-lemma indep_existence {α : Type*}
-  (P : ProbabilitySpace α) (Q : ProbabilitySpace α) (hPQ : existence_cond P Q) :
-  ∃ R : ProbabilitySpace α, indep_combination_pred P Q R :=
-  -- use dynkin's pi lambda theorem. Nope that's completely wrong
-  sorry
-
--- def indep_combination {α : Type*}
---   (P : ProbabilitySpace α) (Q : ProbabilitySpace α) :
---   ProbabilitySpace α :=
---   if h : ∃ R : ProbabilitySpace α, indep_combination_pred P Q R then
---     Classical.choose h
---   else
---     foo α
-
-abbrev existence_cond {α : Type*} (E : ProbabilitySpace α) (F : ProbabilitySpace α) :=
-  ∃ ρ : @Measure α (E.toMeasurableSpace ⊓ F.toMeasurableSpace),
-    ∀ e f : Set α, MeasurableSet[E] e → MeasurableSet[F] f → ρ (e ∩ f) = E.volume e * F.volume f
-
 open Classical
 instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
-  binop E F := if h : ∃ ρ : @Measure α (E.toMeasurableSpace ⊓ F.toMeasurableSpace),
-    ∀ e f : Set α, MeasurableSet[E] e → MeasurableSet[F] f → ρ (e ∩ f) = E.volume e * F.volume f then
-      let foo := Classical.choose h
-      Part.some {
+  binop E F := if h : existence_cond E F
+    then Part.some {
         toMeasurableSpace := E.toMeasurableSpace ⊓ F.toMeasurableSpace
-        volume := foo
-        is_prob := ⟨by simp⟩
+        volume := Classical.choose h
       }
     else Part.none
   one_mul := sorry
@@ -108,34 +77,5 @@ instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace �
 
 -- instance instKRM {α : Type*} : KRM (ProbabilitySpace α) where
 --   ge_mul_mono := sorry
-
-
--- def foo (α : Type*) : ProbabilitySpace α := {
---   MeasurableSet' := fun s => s = ∅ ∨ s = Set.univ,
---   measurableSet_empty := Or.inl rfl,
---   measurableSet_compl := by simp,
---   measurableSet_iUnion := by
---     intros f hf
---     by_cases h : ∃ i, f i = Set.univ
---     · right
---       obtain ⟨i, h⟩ := h
---       have ge : f i ⊆ ⋃ i, f i := Set.subset_iUnion f i
---       simp_all only [Set.univ_subset_iff]
---     · left
---       rw [Set.iUnion_eq_empty]
---       intro i
---       rw [not_exists] at h
---       simp_all only [or_false],
---   volume := Measure.dirac ∅,
--- }
-
--- def foo' (α : Type*) : ProbabilityMeasure α
-
--- instance (α : Type) : One (ProbabilitySpace α) where
---   one := foo α
-
--- define a predicate.
--- define an existence condition
-
 
 end KRM
