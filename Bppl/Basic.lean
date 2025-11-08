@@ -62,6 +62,9 @@ mutual
     | normalize: t → t'
 end
 
+-- constrain terms to only be well-typed if there aren't pointless `inl` and `inr` injections
+-- Essentially we demand the terms' structure is such that type checking local, as opposed to
+-- the usual non-local strategies with type variables
 def infer_type (term : te) : Except String 𝔸 :=
   match term with
   | te.inl term => Except.error "The structure of a term must have an injection only immediately inside a case"
@@ -111,27 +114,50 @@ def infer_type (term : te) : Except String 𝔸 :=
 -- def measure_iunion (ι : Type*) (f: ι → Σ T: Type, MeasurableSpace T) :
 --   MeasurableSpace T₁ ⊕ T₂ := sorry
 
--- marked as noncomputable because of Giry
-noncomputable def type_denote' (ty : 𝔸) : Σ (T: Type), MeasurableSpace T :=
-  match ty with
-  | 𝔸.R => ⟨ℝ, borel ℝ⟩
-  | 𝔸.P ty' =>
-    let ⟨ty, _⟩ := type_denote' ty'
-    let foo := MeasCat.Giry.obj (MeasCat.of ty)
-    ⟨foo, foo.str⟩
-  | 𝔸.unit => ⟨PUnit, PUnit.instMeasurableSpace⟩ -- unit
-  | 𝔸.prod ty₁' ty₂' =>
-    let ⟨ty₁, _⟩ := type_denote' ty₁'
-    let ⟨ty₂, _⟩ := type_denote' ty₂'
-    ⟨ty₁ × ty₂, (inferInstance : MeasurableSpace (ty₁ × ty₂))⟩
-  | 𝔸.sum ty₁' ty₂' =>
-    let ⟨ty₁, _⟩ := type_denote' ty₁'
-    let ⟨ty₂, _⟩ := type_denote' ty₂'
-    ⟨ty₁ ⊕ ty₂, (inferInstance : MeasurableSpace (ty₁ ⊕ ty₂))⟩
 
-noncomputable def type_denote (ty' : 𝔸) : MeasCat :=
-  let ⟨ty, _⟩ := type_denote' ty'
-  MeasCat.of ty
+-- marked as noncomputable because of Giry
+-- noncomputable def type_denote' (ty : 𝔸) : Σ (T: Type), MeasurableSpace T :=
+--   match ty with
+--   | 𝔸.R => ⟨ℝ, borel ℝ⟩
+--   | 𝔸.P ty' =>
+--     let ⟨ty, _⟩ := type_denote' ty'
+--     let foo := MeasCat.Giry.obj (MeasCat.of ty)
+--     ⟨foo, foo.str⟩
+--   | 𝔸.unit => ⟨PUnit, PUnit.instMeasurableSpace⟩ -- unit
+--   | 𝔸.prod ty₁' ty₂' =>
+--     let ⟨ty₁, _⟩ := type_denote' ty₁'
+--     let ⟨ty₂, _⟩ := type_denote' ty₂'
+--     ⟨ty₁ × ty₂, (inferInstance : MeasurableSpace (ty₁ × ty₂))⟩
+--   | 𝔸.sum ty₁' ty₂' =>
+--     let ⟨ty₁, _⟩ := type_denote' ty₁'
+--     let ⟨ty₂, _⟩ := type_denote' ty₂'
+--     ⟨ty₁ ⊕ ty₂, (inferInstance : MeasurableSpace (ty₁ ⊕ ty₂))⟩
+
+-- noncomputable def type_denote (ty' : 𝔸) : MeasCat :=
+--   let ⟨ty, _⟩ := type_denote' ty'
+--   MeasCat.of ty
+
+noncomputable def type_denote (ty : 𝔸) : MeasCat :=
+  match ty with
+  | 𝔸.R => MeasCat.of ℝ
+  | 𝔸.P ty' => MeasCat.Giry.obj (type_denote ty')
+  | 𝔸.unit => MeasCat.of PUnit
+  | 𝔸.prod ty₁' ty₂' =>
+    let ty₁ := type_denote ty₁'
+    let ty₂ := type_denote ty₂'
+    MeasCat.of (ty₁ × ty₂)
+  | 𝔸.sum ty₁' ty₂' =>
+    let ty₁ := type_denote ty₁'
+    let ty₂ := type_denote ty₂'
+    MeasCat.of (ty₁ ⊕ ty₂)
+
+def Realizes (t : 𝔸) (T : Type*) := type_denote t ≃ T
+-- ℝ ≃ ℝ
+def realize_r : Realizes 𝔸.R ℝ := Equiv.refl ℝ
+def realize_unit : Realizes 𝔸.unit PUnit := Equiv.refl PUnit
+
+
+  -- MeasCat.isoOfEquiv (Equiv.refl ℝ)
 
 -- abbrev denotation: -- (var → 𝔸) → ()
 
@@ -154,14 +180,79 @@ def get_prob {α β : MeasCat} (den : denotation_ty α β) (err_msg : String)
   : Except String (Kernel α β) :=
   den.elim (fun _ ↦ Except.error err_msg) (fun prob ↦ Except.ok prob)
 
--- I don't aim to type check here. I do a sort of optimistic type checking.
--- (Probably called dynamic type checking actually)
--- Invalidly typed terms recieve undefined semantics instead of failing as expected
--- A type checker is best added as a separate step later
-def denote (vs: List (var × t × 𝔸)) (te : t) : Except String
-  (denotation_ty (type_prod ((List.map (fun (a,b,c) ↦ (type_denote c)) vs))) (type_denote te.ty)) :=
-  match te.unty_te with
-  | everyhting => sorry
+abbrev context := List (var × 𝔸)
+
+noncomputable def denote_context (vs : context) :=
+  (type_prod ((List.map (fun (_, c) ↦ (type_denote c)) vs)))
+
+
+-- TODO how to use loogle to find this if it exists?
+/-- Returns `true` on `some x` and `false` on `none`. -/
+@[inline] def Except.isError {ε α : Type*} (e : Except ε α) : Bool := not e.isOk
+
+/--
+TODO what does this syntax mean?
+How does the other branch not need to be mentioned
+Extracts the value from an option that can be proven to be `some`.
+-/
+@[inline] def Except.get {ε α : Type*} : (o : Except ε α) → Except.isOk o → α
+  | Except.ok x, _ => x
+
+abbrev well_typed_term := { term: te // (infer_type term).isOk }
+-- Σ term: te, ( (infer_type term).isOk = true : Prop)
+def get_type (wtt : well_typed_term) :=
+  (infer_type wtt.1).get wtt.2
+
+-- denote_term (term: te) (T : Type*) (Realizes (infer_term term) T)
+
+def denote (vs : context) (wtt : well_typed_term) : Except String
+  (denotation_ty (denote_context vs) (type_denote <| get_type wtt)) :=
+  match h: wtt.1 with
+  -- simplify this its awful
+  | te.inl foo =>
+    have h : False := by
+      have fpp : ¬(infer_type (wtt.1)).isOk := by
+        simp [h, infer_type, Except.isOk, Except.toBool]
+      have fpp' : (infer_type wtt).isOk := wtt.2
+      absurd fpp'
+      exact fpp
+    nomatch h
+
+  -- simplify this its awful
+  | te.inr foo =>
+    have h : False := by
+      have fpp : ¬(infer_type (wtt.1)).isOk := by
+        simp [h, infer_type, Except.isOk, Except.toBool]
+      have fpp' : (infer_type wtt).isOk := wtt.2
+      absurd fpp'
+      exact fpp
+    nomatch h
+
+  -- | case: te → var → te → te → te
+  | te.unit =>
+    -- let foo : (denote_context vs) → PUnit := (fun x ↦ PUnit.unit)
+    -- let foo₃ : get_type wtt = 𝔸.unit := by simp only [h, get_type];rfl
+    -- let foo'' : type_denote (get_type wtt) = PUnit := by
+    --   simp only [foo₃, type_denote]--;sorry--rfl
+    --   -- sorry
+    -- let foo' : {f : (denote_context vs) → PUnit // Measurable f}
+    --   := ⟨foo, by measurability⟩
+
+    let foo₄ : {f : (denote_context vs) → type_denote (get_type wtt) // Measurable f} := by
+      sorry
+      --rw [foo'']
+    Except.ok (Sum.inl foo₄)
+  -- | prod: te → te → te
+  -- | πₗ : te → te
+  -- | πᵣ : te → te
+  -- -- | f(t)
+  -- | var: var → 𝔸 → te
+  -- | ret: te → te -- return(t)
+  -- | lt: var → te → te -- let x = t in u
+  -- | sample: te → te
+  -- | score: te → te
+  -- | normalize: te → te
+  | everything => sorry
   --| t'.inl te => do
   --  let te_denotation ← (denote vs te)
   --  let measurable_fn ← get_det te_denotation "Only deterministic values allowed in an injection"
