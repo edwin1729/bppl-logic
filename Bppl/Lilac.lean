@@ -65,40 +65,7 @@ lemma trim_measurableSet_eq {s : Set α} {μ : @ProbabilityMeasure α m0}
 
 end ProbabilitySpace
 
--- Non-constructive defintion using mathlib
--- noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (ProbabilitySpace α) where
---   one := {
---     toMeasurableSpace := ⊥
---     -- below magic provided by @p127 discord, Aaron Liu
---     volume := ⟨@OuterMeasure.toMeasure α ⊥ (OuterMeasure.dirac (Classical.choice nonempty)) bot_le,
---       ⟨by simp⟩⟩
---   }
 open Classical
-
-def unit (α : Type*) : MeasurableSpace α := {
-   MeasurableSet' := fun s => s = ∅ ∨ s = Set.univ,
-   measurableSet_empty := Or.inl rfl,
-   measurableSet_compl := by simp,
-   measurableSet_iUnion := by
-     intros f hf
-     by_cases h : ∃ i, f i = Set.univ
-     · right
-       obtain ⟨i, h⟩ := h
-       have ge : f i ⊆ ⋃ i, f i := Set.subset_iUnion f i
-       simp_all only [Set.univ_subset_iff]
-     · left
-       rw [Set.iUnion_eq_empty]
-       intro i
-       rw [not_exists] at h
-       simp_all only [or_false],
- }
-
-
-lemma explicit_bot {α : Type*}: unit α = ⊥ :=
-     bot_unique fun _ hs =>
-     hs.elim (fun s => s.symm ▸ @MeasurableSpace.measurableSet_empty _ ⊥) fun s =>
-       s.symm ▸ @MeasurableSet.univ _ ⊥
-
 
 -- The relevant lemma for explicitly stating what `⊥` is, is `measurableSet_bot_iff`
 noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (ProbabilitySpace α) where
