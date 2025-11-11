@@ -80,6 +80,14 @@ noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (Prob
       ⟩⟩
   }
 
+section indep_comb
+
+variable {α : Type*} (ℰ : ProbabilitySpace α) (ℱ : ProbabilitySpace α)
+
+-- At the moment I talk explicitly about properties of combinations of measures
+-- (uniqueness/existence). These are trivial for spaces. However it may be cleaner later on
+-- to talk of the space as a whole instead
+
 -- TODO fix the need to do `toMeasurableSpace`. It's annoying
 -- notation "∀ " s:arg " ∈ᵐ " P:arg ", " body:arg => ∀ s, MeasurableSet[P] s → body
 -- on that topic, maybe I should use a strucutre and just use a pair
@@ -88,17 +96,19 @@ noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (Prob
 -- why does the R.volume part work? I think the `measure` is a garbage value for sets which
 -- are not measurable. But of course this is fine (cause the prop would just be false in
 -- garbage value case)
-def indep_combination_pred {α : Type*}
-  (P : ProbabilitySpace α) (Q : ProbabilitySpace α) (R : ProbabilitySpace α) : Prop :=
-  P.toMeasurableSpace ⊔ Q.toMeasurableSpace = R.toMeasurableSpace ∧
-  ∀ p q : Set α, MeasurableSet[P] p → MeasurableSet[Q] q →
-    P.volume p * Q.volume q = R.volume (p ∩ q)
+def indep_comb_measure (ρ : @ProbabilityMeasure α (ℰ ⊔ ℱ)) :=
+    ∀ E F : Set α, MeasurableSet[ℰ] E → MeasurableSet[ℱ] F →
+      ρ (E ∩ F) = ℰ.volume E * ℱ.volume F
 
-abbrev existence_cond {α : Type*} (E : ProbabilitySpace α) (F : ProbabilitySpace α) :=
-  ∃ ρ : @ProbabilityMeasure α (E.toMeasurableSpace ⊔ F.toMeasurableSpace),
-    ∀ e f : Set α, MeasurableSet[E] e → MeasurableSet[F] f → ρ (e ∩ f) = E.volume e * F.volume f
+def existence_cond : Prop := ∃ ρ, indep_comb_measure ℰ ℱ ρ
 
-instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
+-- use the π-λ-theorem here
+def uniqueness_indep_comb (ρ₁ ρ₂ : @ProbabilityMeasure α (ℰ ⊔ ℱ))
+  (hρ₁ : indep_comb_measure ℰ ℱ ρ₁) (hρ₂ : indep_comb_measure ℰ ℱ ρ₂) := ρ₁ = ρ₂
+
+end indep_comb
+
+noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
   binop E F := if h : existence_cond E F
     then Part.some {
         toMeasurableSpace := E.toMeasurableSpace ⊔ F.toMeasurableSpace
@@ -108,6 +118,7 @@ instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace �
     else Part.none
   one_mul P := by
     let one: ProbabilitySpace α := 1 -- can't seem to use dot syntax for 1
+    -- The indepdenent combination exists by case analysis on the σ-algebra of `1`
     have existence: existence_cond 1 P := by
       have eq_inf_one: one.toMeasurableSpace ⊔ P.toMeasurableSpace = P.toMeasurableSpace := by
         simp only [sup_eq_right]
@@ -120,8 +131,16 @@ instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace �
       | inl he_empty => measurability
       | inr he_univ =>
         subst he_univ
-        simp_all only [Set.univ_inter, ProbabilityMeasure.coeFn_univ, one_mul, ProbabilitySpace.trim_measurableSet_eq]
-    -- apply dite_cond_eq_true existence
+        simp_all only [Set.univ_inter, ProbabilityMeasure.coeFn_univ, one_mul,
+          ProbabilitySpace.trim_measurableSet_eq]
+
+    rw [dite_cond_eq_true (eq_true existence)]
+    simp only [Part.coe_some, Part.some_inj]
+
+    -- The probability measure is precisely that of `P.volume`, because the combination's
+    -- σ-algebra is just the same as `P`'s. But in general the probability measure is defined
+    -- by the axiom of choice. So the only way is to use 1) the uniqueness of the combination's
+    -- measure (via π-λ-theorem), and 2) show that `P`'s measure is a satisfactory instance
     sorry
   mul_one := sorry
   comm := sorry
