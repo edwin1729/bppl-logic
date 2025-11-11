@@ -109,33 +109,35 @@ def uniqueness_indep_comb (ρ₁ ρ₂ : @ProbabilityMeasure α (ℰ ⊔ ℱ))
 end indep_comb
 
 noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
-  binop E F := if h : existence_cond E F
+  binop ℰ ℱ := if h : existence_cond ℰ ℱ
     then Part.some {
-        toMeasurableSpace := E.toMeasurableSpace ⊔ F.toMeasurableSpace
-        -- It looks uniqueness need not be proven? What does uniqueness afford us?
+        toMeasurableSpace := ℰ ⊔ ℱ
         volume := Classical.choose h
       }
     else Part.none
-  one_mul P := by
+  one_mul 𝒢 := by
     let one: ProbabilitySpace α := 1 -- can't seem to use dot syntax for 1
-    -- The indepdenent combination exists by case analysis on the σ-algebra of `1`
-    have existence: existence_cond 1 P := by
-      have eq_inf_one: one.toMeasurableSpace ⊔ P.toMeasurableSpace = P.toMeasurableSpace := by
-        simp only [sup_eq_right]
-        exact bot_le
-      use ProbabilitySpace.trim P.volume (le_of_eq eq_inf_one)
+    have eq_inf_one: one.toMeasurableSpace ⊔ 𝒢.toMeasurableSpace = 𝒢.toMeasurableSpace := by
+      simp only [sup_eq_right]
+      exact bot_le
+    let ρ := ProbabilitySpace.trim 𝒢.volume (le_of_eq eq_inf_one)
+    -- The independent combination exists by case analysis on the σ-algebra of `1`
+    have ρ_indep_comb : indep_comb_measure 1 𝒢 ρ := by
       intro e f he hf
       rw [measurableSet_bot_iff] at he
-
       cases he with
       | inl he_empty => measurability
       | inr he_univ =>
         subst he_univ
         simp_all only [Set.univ_inter, ProbabilityMeasure.coeFn_univ, one_mul,
-          ProbabilitySpace.trim_measurableSet_eq]
+          ProbabilitySpace.trim_measurableSet_eq, ρ]
+    have existence: existence_cond 1 𝒢 := ⟨ρ, ρ_indep_comb⟩
 
     rw [dite_cond_eq_true (eq_true existence)]
     simp only [Part.coe_some, Part.some_inj]
+
+    let uniqueness := uniqueness_indep_comb 1 𝒢 (1 • 𝒢).volume ρ
+
 
     -- The probability measure is precisely that of `P.volume`, because the combination's
     -- σ-algebra is just the same as `P`'s. But in general the probability measure is defined
