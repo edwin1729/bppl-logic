@@ -34,20 +34,11 @@ class KRM (α : Type*) extends PCM α, PartialOrder α where
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
 
-structure ProbabilitySpace (α : Type*) extends MeasurableSpace α where
-  volume : ProbabilityMeasure α
-
-def PrSp (α : Type*) := Σ (m: MeasurableSpace α), @ProbabilityMeasure α m
-
-def foo {α : Type*} [h : MeasurableSpace α] (μ : ProbabilityMeasure α) : ProbabilitySpace α :=
-  ⟨h, μ⟩
+def ProbabilitySpace (α : Type*) := Σ (m: MeasurableSpace α), @ProbabilityMeasure α m
 
 namespace ProbabilitySpace
 
 variable {α : Type*} {m m0 : MeasurableSpace α}
-
-instance : Coe (ProbabilitySpace α) (MeasurableSpace α) where
-  coe P := P.toMeasurableSpace
 
 -- to mathlib?
 -- maybe I should use `Measure.trim` instead of copying and adapting its definition
@@ -75,7 +66,7 @@ end ProbabilitySpace
 open Classical
 
 -- The relevant lemma for explicitly stating what `⊥` is, is `measurableSet_bot_iff`
-noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (PrSp α) where
+noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (ProbabilitySpace α) where
   one := ⟨⊥, ⟨@Measure.ofMeasurable α ⊥ (fun s hs ↦ if s = ∅ then 0 else 1) (by simp) sorry,
       -- prove that the measure is a probability measure, μ univ = 1
       ⟨by
@@ -87,7 +78,7 @@ noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (PrSp
 
 section indep_comb
 
-variable {α : Type*} (ℰ ℱ 𝒢 𝒢': PrSp α)
+variable {α : Type*} (ℰ ℱ 𝒢 𝒢': ProbabilitySpace α)
 
 -- At the moment I talk explicitly about properties of combinations of measures
 -- (uniqueness/existence). These are trivial for spaces. However it may be cleaner later on
@@ -105,7 +96,7 @@ def indep_comb_measure (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
 
 -- The problem with the above is that it forces the measurablespace to be `ℰ.1 ⊔ ℱ.1`
 -- We don't want that.
-def indep_comb_measure' (𝒢 : PrSp α) (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
+def indep_comb_measure' (𝒢 : ProbabilitySpace α) (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
     𝒢.1 = (ℰ.1 ⊔ ℱ.1) ∧
     ∀ E F : Set α, MeasurableSet[ℰ.1] E → MeasurableSet[ℱ.1] F →
       ρ (E ∩ F) = ℰ.2 E * ℱ.2 F
@@ -128,26 +119,22 @@ lemma uniqueness_indep_comb' (ρ₁ ρ₂ : @ProbabilityMeasure α (ℰ.1 ⊔ �
 
 end indep_comb
 
-noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (PrSp α) where
+noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
   binop ℰ ℱ := if h : existence_cond ℰ ℱ
     then Part.some ⟨ℰ.1 ⊔ ℱ.1, Classical.choose h⟩
     else Part.none
 
 -- lemma binop_indep {α : Type*} [nonempty : Nonempty α] (ℰ ℱ : PrSp α) : indep_comb ℰ ℱ (ℰ • ℱ)
--- lemma one_mull {α : Type*} [nonempty : Nonempty α] (𝒢 : ProbabilitySpace α ) :
---  PCM.binop One.one 𝒢 = 𝒢 := by
-
---   sorry
 
 lemma inter_diff_space {α : Type*} {m m0 : MeasurableSpace α} {s : Set α} (hm: m ≤ m0) (hs: @MeasurableSet α m s)
   : @MeasurableSet α m0 s := by
     measurability
 
 
-noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (PrSp α) where
+noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (ProbabilitySpace α) where
   one_mul 𝒢 := by
 
-    let one: PrSp α := 1 -- can't seem to use dot syntax for 1
+    let one: ProbabilitySpace α := 1 -- can't seem to use dot syntax for 1
     have eq_inf_one: one.1 ⊔ 𝒢.1 = 𝒢.1 := by
       simp only [sup_eq_right]
       exact bot_le
@@ -194,19 +181,11 @@ noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (Pr
 
     apply uniqueness_indep_comb 1 𝒢
     · exact that
-      -- rw [indep_comb]
-      -- use (by rfl)
-
-      -- rw [indep_comb_measure]
-
-      -- intro E F hE hF
-
-      -- simp [ProbabilitySpace.trim_measurableSet_eq (by rfl) (MeasurableSet.inter hF hE)]
-      -- simp_all only [ρ, one]
-
-
-      -- sorry
     · exact this
+
+    -- This is from the design where the uniqueness result works at the granularity of measures.
+    -- I think this would remove some bloat from the proof, and I would like to go back to it at
+    -- some point
 
     -- have : ⊥ ⊔ 𝒢.fst = 𝒢.fst := by exact eq_inf_one
     -- rw [this]
