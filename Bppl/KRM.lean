@@ -1,7 +1,3 @@
-import Iris.BI.BIBase
-import Iris.BI
-import Iris.Algebra.OFE
-import Iris.Std.Equivalence
 
 import Mathlib.Data.PFun
 import Mathlib.MeasureTheory.MeasurableSpace.Defs
@@ -38,12 +34,12 @@ class KRM (α : Type*) extends PCM' α, PartialOrder α where
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
 
-def ProbabilitySpace (α : Type*) := Σ (m: MeasurableSpace α), @ProbabilityMeasure α m
+def PSp (α : Type*) := Σ (m: MeasurableSpace α), @ProbabilityMeasure α m
 
 open Classical
 
 -- The relevant lemma for explicitly stating what `⊥` is, is `measurableSet_bot_iff`
-noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (ProbabilitySpace α) where
+noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (PSp α) where
   one := ⟨⊥, ⟨@Measure.ofMeasurable α ⊥ (fun s hs ↦ if s = ∅ then 0 else 1) (by simp) sorry,
       -- prove that the measure is a probability measure, μ univ = 1
       ⟨by
@@ -55,7 +51,7 @@ noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (Prob
 
 section indep_comb
 
-variable {α : Type*} (ℰ ℱ 𝒢 𝒢': ProbabilitySpace α)
+variable {α : Type*} (ℰ ℱ 𝒢 𝒢': PSp α)
 
 -- why does the R.volume part work? I think the `measure` is a garbage value for sets which
 -- are not measurable. But of course this is fine (cause the prop would just be false in
@@ -66,7 +62,7 @@ def indep_comb_measure (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
 
 -- The problem with the above is that it forces the measurablespace to be `ℰ.1 ⊔ ℱ.1`
 -- We don't want that.
-def indep_comb_measure' (𝒢 : ProbabilitySpace α) (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
+def indep_comb_measure' (𝒢 : PSp α) (ρ : @ProbabilityMeasure α (ℰ.1 ⊔ ℱ.1)) :=
     𝒢.1 = (ℰ.1 ⊔ ℱ.1) ∧
     ∀ E F : Set α, MeasurableSet[ℰ.1] E → MeasurableSet[ℱ.1] F →
       ρ (E ∩ F) = ℰ.2 E * ℱ.2 F
@@ -75,7 +71,7 @@ def existence_cond : Prop := ∃ ρ, indep_comb_measure ℰ ℱ ρ
 
 end indep_comb
 
-noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (ProbabilitySpace α) where
+noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (PSp α) where
   binop ℰ ℱ := if h : existence_cond ℰ ℱ
     then some ⟨ℰ.1 ⊔ ℱ.1, Classical.choose h⟩
     else none
@@ -86,88 +82,19 @@ lemma inter_diff_space {α : Type*} {m m0 : MeasurableSpace α} {s : Set α} (hm
   : @MeasurableSet α m0 s := by
     measurability
 
-noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (ProbabilitySpace α) where
+noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (PSp α) where
   one_mul 𝒢 := sorry
   mul_one := sorry
   comm := sorry
   assoc := sorry
 
-noncomputable instance instPartialOrder {α : Type*} : PartialOrder (ProbabilitySpace α) where
+noncomputable instance instPartialOrder {α : Type*} : PartialOrder (PSp α) where
   le := sorry
   le_refl := sorry
   le_trans := sorry
   le_antisymm := sorry
 
-noncomputable instance instKRM {α : Type*} [nonempty : Nonempty α] : KRM (ProbabilitySpace α) where
+noncomputable instance instKRM {α : Type*} [nonempty : Nonempty α] : KRM (PSp α) where
   ge_mul_mono := sorry
 
 end KRM
-
-open Iris.BI Iris
-
-abbrev PROP (α : Type*) [nonempty : Nonempty α] := ProbabilitySpace α → Prop
-
-instance instBIBase {α : Type*} [nonempty : Nonempty α]: BIBase (PROP α ) where
-  Entails P Q      := ∀ σ, P σ → Q σ
-  emp            σ := σ = 1
-  pure φ         _ := φ
-  and P Q        σ := P σ ∧ Q σ
-  or P Q         σ := P σ ∨ Q σ
-  imp P Q        σ := P σ → Q σ
-  sForall Ψ      σ := ∀ p, Ψ p → p σ
-  sExists Ψ      σ := ∃ p, Ψ p ∧ p σ
-  sep P Q        σ := ∃ σ1 σ2 : ProbabilitySpace α, σ1 • σ2 = some σ ∧ P σ1 ∧ Q σ2
-  wand P Q       σ := ∀ σ' : ProbabilitySpace α, (h : (σ • σ').isSome) → P σ' → Q ((σ • σ').get h)
-  -- could we do better than this? Identify what more is persistent/affine
-  -- wasn't BaSL partially affine? What does that mean?
-  persistently P _ := P 1
-  later P        σ := P σ -- there is no step indexing
-
-instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
-
-instance instBI {α : Type*} [nonempty : Nonempty α] : BI (PROP α) where
-  equiv_iff := sorry
-  entails_preorder := sorry
-  and_ne := sorry
-  or_ne := sorry
-  imp_ne := sorry
-  sForall_ne := sorry
-  sExists_ne := sorry
-  sep_ne := sorry
-  wand_ne := sorry
-  persistently_ne := sorry
-  later_ne := sorry
-  pure_intro := sorry
-  pure_elim' := sorry
-  and_elim_l := sorry
-  and_elim_r := sorry
-  and_intro := sorry
-  or_intro_l := sorry
-  or_intro_r := sorry
-  or_elim := sorry
-  imp_intro := sorry
-  imp_elim := sorry
-  sForall_intro := sorry
-  sForall_elim := sorry
-  sExists_intro := sorry
-  sExists_elim := sorry
-  sep_mono := sorry
-  emp_sep := sorry
-  sep_symm := sorry
-  sep_assoc_l := sorry
-  wand_intro := sorry
-  wand_elim := sorry
-  persistently_mono := sorry
-  persistently_idem_2 := sorry
-  persistently_emp_2 := sorry
-  persistently_and_2 := sorry
-  persistently_sExists_1 := sorry
-  persistently_absorb_l := sorry
-  persistently_and_l := sorry
-  later_mono := sorry
-  later_intro := sorry
-  later_sForall_2 := sorry
-  later_sExists_false := sorry
-  later_sep := sorry
-  later_persistently := sorry
-  later_false_em := sorry
