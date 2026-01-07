@@ -5,7 +5,7 @@ import Iris.BI
 import Iris.Algebra.OFE
 import Iris.Std.Equivalence
 
-import Bppl.KRM
+import Bppl.Lilac.KRM
 /-!
 Will need the subtly different types of objects (in the semantic domain) that variables that
 variables can be interpreted to, to be defined, as certain types are allowed to be used in
