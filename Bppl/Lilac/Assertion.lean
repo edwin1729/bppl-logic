@@ -35,15 +35,38 @@ def HList.get : HList β is → Member i is → β i
   | a::as, .head => a
   | a::as, .tail h => as.get h
 
+
 -- Define the various kinds of measurable fucntions we'll have to deal with
 -- Fig 4. in Lilac paper, but why do we need that? For example `own E` is an assertion
 -- which requires the definition of `E` as in `T-RANDE`
 
-#check MeasCat
+/- Here are we are parametric over the denotation of types in APPL.
+To remain general, we assume there are two kinds of types in APPL,
+whose dentotation is 1) `Meas` 2) `Set`
 
-/- Here are we are parametric over the denotation of types in APPL -/
+(Though in our actual definition of APPL, all types have denotation in `Meas` and every element
+of `Meas` is also in `Set`)-/
 
--- abbrev RV (A : Type) [MeasurableSpace A] := HList β αs →
+-- TODO introduce notation for Measurable fns
+-- TODO we might want to have an MList of types which are measurable, and specialize the development
+-- here to use just that. Depends on how we would instantiate the types here come APPL.
+-- For now I keep it verbose with casts like `(fun i => ↑(β i)) is`, keeping in mind the
+-- direction of succinctness
+
+
+-- variable
+def HList.toFn (β : α → Type u) {is : List α} : Member i is → Type u
+  | @Member.head α i _ => β i
+  | @Member.tail _ _ _ _ h => HList.toFn β h
+
+-- instance instMeasurableProd : MeasurableSpace (MList β is) where
+universe u₁ u₂
+abbrev RV {β₁ : α₁ → Type u₁} {is : List α₁} -- The deterministic env
+    {β₂ : α₂ → Type u₂} {is' : List α₂} -- The probabilistic env which needs to be measurable
+    (A : Type) [MeasurableSpace A] :=
+  {f : ∀ a, }
+  --HList β₁ is → A--{ f : HList β₂ is' → A // Measurable f }
+
 
 open Iris.BI Iris
 
