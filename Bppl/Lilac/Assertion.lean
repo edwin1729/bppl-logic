@@ -1,4 +1,5 @@
 import Mathlib.MeasureTheory.Category.MeasCat
+import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 
 import Iris.BI.BIBase
 import Iris.BI
@@ -60,13 +61,97 @@ def HList.toFn (β : α → Type u) {is : List α} : Member i is → Type u
   | @Member.tail _ _ _ _ h => HList.toFn β h
 
 -- instance instMeasurableProd : MeasurableSpace (MList β is) where
-universe u₁ u₂
-abbrev RV {β₁ : α₁ → Type u₁} {is : List α₁} -- The deterministic env
-    {β₂ : α₂ → Type u₂} {is' : List α₂} -- The probabilistic env which needs to be measurable
-    (A : Type) [MeasurableSpace A] :=
-  {f : ∀ a, }
+-- universe u₁ u₂
+-- abbrev RV {β₁ : α₁ → Type u₁} {is : List α₁} -- The deterministic env
+--     {β₂ : α₂ → Type u₂} {is' : List α₂} -- The probabilistic env which needs to be measurable
+--     (A : Type) [MeasurableSpace A] :=
+--   {f : ∀ a, }
   --HList β₁ is → A--{ f : HList β₂ is' → A // Measurable f }
 
+-- attempt to at defining an Assertion. Plan: copy dependent de Brujin indicies
+-- with "Term" being assertion and denotation being semantics as expected.
+
+-- start with Ty
+
+-- Lilac A.1 (appendix)
+inductive Ty where
+  | nat
+  | fn : Ty → Ty → Ty
+  | prod : Ty → Ty → Ty
+  | bool
+  | real
+  | exp : ℕ → Ty → Ty -- Tyⁿ
+  | index
+  | G : Ty → Ty
+
+inductive Term' : List Ty → Ty → Type
+  | var   : Member ty ctx → Term' ctx ty
+  | const : Nat → Term' ctx .nat
+  | plus  : Term' ctx .nat → Term' ctx .nat → Term' ctx .nat
+  | app   : Term' ctx (.fn dom ran) → Term' ctx dom → Term' ctx ran
+  | lam   : Term' (dom :: ctx) ran → Term' ctx (.fn dom ran)
+  | let : Term' ctx ty₁ → Term' (ty₁ :: ctx) ty₂ → Term' ctx ty₂
+
+-- we're struggling to see how to couple the logic with the language. So let's tackle that
+-- separately, and for the moment let
+
+/-- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
+dentoation must have a measurable space structure -/
+class Denotational (Ty : Type u) where
+  denote : Ty → Type
+
+notation "⟦" t "⟧" => Denotational.denote t
+
+class DenotationalMeas (Ty : Type u) extends Denotational Ty where
+  instMeasurable : ∀ t, MeasurableSpace (denote t)
+
+instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
+    MeasurableSpace ⟦t⟧ :=
+  d.instMeasurable t
+
+variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
+
+inductive Term : List TyDet → List TyRand → Type
+  -- | var   : Member ty ctx → Term ctx
+  | bot : Term ds rs -- ds: deterministic context, rs: random variable context
+  | and  : Term ds rs  → Term ds rs → Term ds rs
+  | sep  : Term ds rs  → Term ds rs → Term ds rs
+  | persistently  : Term ds rs  → Term ds rs
+  | forall : Term (d :: ds) rs → Term ds rs
+  -- | app   : Term ctx (.fn dom ran) → Term ctx dom → Term ctx ran
+  -- | let : Term ctx ty₁ → Term (ty₁ :: ctx) ty₂ → Term ctx ty₂
+  | own {ds : List TyDet} {rs : List TyRand} {A : TyRand} :
+      (HList (⟦·⟧) ds → {f : List.TProd (⟦·⟧) rs → ⟦A⟧ // Measurable f})
+      → Term ds rs
+-- ⊤ | ⊥ | 𝑃 ∧ 𝑄 | 𝑃 ∨ 𝑄 | 𝑃 → 𝑄 |
+-- 𝑃 ∗ 𝑄 | 𝑃 −∗ 𝑄 | □ 𝑃 |
+-- ∀𝑥:𝑆.𝑃 | ∃𝑥:𝑆.𝑃 | ∀rv𝑋 :𝐴.𝑃 | ∃rv𝑋 :𝐴.𝑃 |
+-- 𝐸 ∼ 𝜇 | own 𝐸 | 𝐸 =as= 𝐸 | E[𝐸] = 𝑒 | wp(𝑀, 𝑋 :𝐴.𝑄)
+
+-- now define semantics for these "Terms". Then use said semantics
+-- in definition of `Entails`.
+
+-- Haziest in my mind: 1) wp semantics 2) instantiations of `TyDet` and `TyRand`
+
+-- does the order of parameters matter? For purposes of dependencies?
+-- If not I would like it to be in the order γ → D → 𝒫 → P → Prop
+-- for encoding the four way satisfiabilty relation: γ, D 𝒫 ⊨ P
+variable {α : Type*} [nonempty : Nonempty α]
+
+def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
+
+@[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
+    Term ds rs → HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs → PSp α → Prop
+  | bot, _, _, _  => False
+  | and P Q, γ, D, σ => P.denote γ D σ ∧ Q.denote γ D σ
+  | sep P Q, γ, D, σ => ∃ σ₁ σ₂ : PSp α, σ₁ • σ₂ ≤ σ ∧ P.denote γ D σ₁ ∧ Q.denote γ D σ₂
+  | persistently P, γ, D, _ => P.denote γ D 1
+  | «forall» P, γ, D, σ => ∀ x, P.denote (x :: γ) D σ
+  | own E, γ, D, σ => sorry
+
+/-- Satisfaction relation: `(γ, D, σ)⊨ P` means `P` holds under deterministic env `γ`,
+    random env `D`, and resource `σ` -/
+notation:50 "(" γ ", " D ", " σ ")⊨ " P => Term.denote P γ D σ
 
 open Iris.BI Iris
 
