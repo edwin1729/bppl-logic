@@ -7,6 +7,7 @@ import Iris.Algebra.OFE
 import Iris.Std.Equivalence
 
 import Bppl.Lilac.KRM
+import Bppl.Lilac.Appl
 /-!
 Will need the subtly different types of objects (in the semantic domain) that variables that
 variables can be interpreted to, to be defined, as certain types are allowed to be used in
@@ -18,23 +19,6 @@ Use `env` for the values and `ctx` for the types of these values.
 -/
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
-universe u v
--- Primitives
-inductive HList {α : Type v} (β : α → Type u) : List α → Type (max u v)
-  | nil  : HList β []
-  | cons : β i → HList β is → HList β (i::is)
-
-infix:67 " :: " => HList.cons
-
-notation "[" "]" => HList.nil
-
-inductive Member : α → List α → Type
-  | head : Member a (a::as)
-  | tail : Member a bs → Member a (b::bs)
-
-def HList.get : HList β is → Member i is → β i
-  | a::as, .head => a
-  | a::as, .tail h => as.get h
 
 
 -- Define the various kinds of measurable fucntions we'll have to deal with
@@ -55,11 +39,6 @@ of `Meas` is also in `Set`)-/
 -- direction of succinctness
 
 
--- variable
-def HList.toFn (β : α → Type u) {is : List α} : Member i is → Type u
-  | @Member.head α i _ => β i
-  | @Member.tail _ _ _ _ h => HList.toFn β h
-
 -- instance instMeasurableProd : MeasurableSpace (MList β is) where
 -- universe u₁ u₂
 -- abbrev RV {β₁ : α₁ → Type u₁} {is : List α₁} -- The deterministic env
@@ -71,26 +50,6 @@ def HList.toFn (β : α → Type u) {is : List α} : Member i is → Type u
 -- attempt to at defining an Assertion. Plan: copy dependent de Brujin indicies
 -- with "Term" being assertion and denotation being semantics as expected.
 
--- start with Ty
-
--- Lilac A.1 (appendix)
-inductive Ty where
-  | nat
-  | fn : Ty → Ty → Ty
-  | prod : Ty → Ty → Ty
-  | bool
-  | real
-  | exp : ℕ → Ty → Ty -- Tyⁿ
-  | index
-  | G : Ty → Ty
-
-inductive Term' : List Ty → Ty → Type
-  | var   : Member ty ctx → Term' ctx ty
-  | const : Nat → Term' ctx .nat
-  | plus  : Term' ctx .nat → Term' ctx .nat → Term' ctx .nat
-  | app   : Term' ctx (.fn dom ran) → Term' ctx dom → Term' ctx ran
-  | lam   : Term' (dom :: ctx) ran → Term' ctx (.fn dom ran)
-  | let : Term' ctx ty₁ → Term' (ty₁ :: ctx) ty₂ → Term' ctx ty₂
 
 -- we're struggling to see how to couple the logic with the language. So let's tackle that
 -- separately, and for the moment let
@@ -166,7 +125,7 @@ def MeasurableFunction.compose (g : MeasurableFunction β γ) (f : MeasurableFun
 notation g " ∘ " f => MeasurableFunction.compose g f
 
 end
-
+-- `by coarser` might be a nice custom tactic name for dealing with those sorries
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
     Term ds rs → (σ : PSp HC) → HList (⟦·⟧) ds → {f : HC → List.TProd (⟦·⟧) rs // Measurable[σ.1] f } → Prop
   | bot, _, _, _  => False
