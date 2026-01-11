@@ -111,6 +111,7 @@ instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (
 
 variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
 
+-- Here Term means Assertion actually
 inductive Term : List TyDet → List TyRand → Type
   -- | var   : Member ty ctx → Term ctx
   | bot : Term ds rs -- ds: deterministic context, rs: random variable context
@@ -138,16 +139,46 @@ inductive Term : List TyDet → List TyRand → Type
 -- for encoding the four way satisfiabilty relation: γ, D 𝒫 ⊨ P
 variable {α : Type*} [nonempty : Nonempty α]
 
-def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
+
+-- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
+
+-- Hilbert Cube
+abbrev HC := ℕ → Set.Icc (0:ℝ) 1
+
+-- Useing `MeasurableSpace.HC
+instance : MeasurableSpace HC := inferInstance
+
+open MeasureTheory
+
+-- def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
+
+-- This section was made originally to be used with `own E` or any other probability specfic
+-- connectives. But we may not need this at all, since `Own E` is alway `True` if one is able
+-- to construct an `E` in the first place!
+section
+variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
+abbrev MeasurableFunction (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
+  := {f : α → β // Measurable f}
+
+def MeasurableFunction.compose (g : MeasurableFunction β γ) (f : MeasurableFunction α β)
+  : MeasurableFunction α γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
+
+notation g " ∘ " f => MeasurableFunction.compose g f
+
+end
 
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs → PSp α → Prop
+    Term ds rs → (σ : PSp HC) → HList (⟦·⟧) ds → {f : HC → List.TProd (⟦·⟧) rs // Measurable[σ.1] f } → Prop
   | bot, _, _, _  => False
-  | and P Q, γ, D, σ => P.denote γ D σ ∧ Q.denote γ D σ
-  | sep P Q, γ, D, σ => ∃ σ₁ σ₂ : PSp α, σ₁ • σ₂ ≤ σ ∧ P.denote γ D σ₁ ∧ Q.denote γ D σ₂
-  | persistently P, γ, D, _ => P.denote γ D 1
-  | «forall» P, γ, D, σ => ∀ x, P.denote (x :: γ) D σ
-  | own E, γ, D, σ => sorry
+  | and P Q, σ, γ, D => P.denote σ γ D ∧ Q.denote σ γ D
+  -- Fill sorry with a lemma that `σ₁ ≤ σ` and `σ₂ ≤ σ`
+  | sep P Q, σ, γ, D => ∃ σ₁ σ₂ : PSp HC, σ₁ • σ₂ ≤ some σ ∧ P.denote σ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote σ₂ γ ⟨D.1, Measurable.le _ D.2⟩
+  -- Fill sorry with ∀ σ : PSp α, 1.1 ≤ σ.1. In words, The sigma algebra of `1` is the least or coarsest
+  | persistently P, _, γ, D => P.denote 1 γ ⟨D.1, Measurable.le (sorry) D.2⟩
+  | «forall» P, σ, γ, D => ∀ x, P.denote σ (x :: γ) D
+  -- We could just say `True` for the semantics of `own E`
+  | own E, σ, γ, D => Measurable[σ.1] ((E γ).1 ∘ D.1) -- hmmm. Curiously, this must hold by construction!
+  -- Our model using dependent types is doing much of the heavy lifting at the syntactic stage to begin with
 
 /-- Satisfaction relation: `(γ, D, σ)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `σ` -/
