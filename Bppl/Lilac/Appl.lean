@@ -70,12 +70,14 @@ inductive Term : List Ty → Ty → Type
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   | for : ℕ → Term ctx ty → Term (index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
 
-@[reducible] def Ty.denote : Ty → MeasCat
-  | prod ty₁ ty₂ => ty₁.denote × ty₂.denote
-  | bool => sorry
-  | real => sorry
-  | exp n ty => sorry --: ℕ → Ty → Ty -- Tyⁿ
-  | index => sorry
-  | G ty => sorry --: Ty → Ty
+-- Most of the MeasurableSpace instance provided in
+-- Mathlib.MeasureTheory.MeasurableSpace.Instances
+@[reducible] noncomputable def Ty.denote : Ty → MeasCat
+  | prod ty₁ ty₂ => .of (ty₁.denote × ty₂.denote)
+  | bool => .of Bool
+  | real => .of ℝ
+  | exp n ty => .of (∀ (_ : Fin n), ty.denote) -- using MeasurableSpace.pi
+  | index => .of ℕ
+  | G ty => MeasCat.Giry.obj (ty.denote) --: Ty → Ty
 
 end Appl
