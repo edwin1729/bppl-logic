@@ -54,20 +54,8 @@ of `Meas` is also in `Set`)-/
 -- we're struggling to see how to couple the logic with the language. So let's tackle that
 -- separately, and for the moment let
 
-/-- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
+/- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
 dentoation must have a measurable space structure -/
-class Denotational (Ty : Type u) where
-  denote : Ty → Type
-
-notation "⟦" t "⟧" => Denotational.denote t
-
-class DenotationalMeas (Ty : Type u) extends Denotational Ty where
-  instMeasurable : ∀ t, MeasurableSpace (denote t)
-
-instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
-    MeasurableSpace ⟦t⟧ :=
-  d.instMeasurable t
-
 variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
 
 -- Here Term means Assertion actually
@@ -116,8 +104,6 @@ open MeasureTheory
 -- to construct an `E` in the first place!
 section
 variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-abbrev MeasurableFunction (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
-  := {f : α → β // Measurable f}
 
 def MeasurableFunction.compose (g : MeasurableFunction β γ) (f : MeasurableFunction α β)
   : MeasurableFunction α γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
