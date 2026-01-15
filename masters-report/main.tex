@@ -1,0 +1,69 @@
+\documentclass[a4paper, twoside]{report}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\newcommand{\rcite}[1]{\textcolor{red}{\cite{#1}}}
+
+\title{Implementation of Foundational Verification for Probabilistic Programs in Continuous Domain}
+\author{Edwin Fernando}
+% Update supervisor and other title stuff in title/title.tex
+
+\begin{document}
+\input{title/title.tex}
+
+\begin{abstract}
+Probabilistic Programming offers a principled way to decouple inference algorithms from the
+statistical models a programmer/statistician wishes to create. There are several languages
+(anglican hakaru, \rcite) used predominantly by statisticians. But there are much wider applications
+in computer science, where arguments of correctness are probabilistic in nature. Examples
+include Zero Knowledge Proof Systems (Blockchain), Differential Privacy and Machine Learning. We can reason 
+expressively and formally verify these arguments if the implementation was carried out in a probabilistic
+programming language/DSL, using Probabilistic Separation Logics (PSL).
+This project is meant as a proof of concept, aiming to be the first implementation of a PSL.
+Specifically in the Lean proof assistant, we implement the lilac separation logic
+using Iris-lean (ported from rocq) to provide ergonomic tactical support. We choose
+Lean for the significant body of measure-theoretic results present in Mathlib, required
+to establish soundness of the logic.
+
+Given time I would also like to pursue formalisation of BaSL or a
+ theory for symbolic execution using lilac or BaSL for probabilistic programs.
+
+
+on top of the Iris framework, in Lean.
+offer an intuitive way to reason about
+probabilistic programs at a suitable level of abstraction. 
+\end{abstract}
+
+% \renewcommand{\abstractname}{Acknowledgements}
+% \begin{abstract}
+% Thanks mum!
+% \end{abstract}
+
+\tableofcontents
+% \listoffigures
+% \listoftables
+
+\input{introduction/introduction.tex}
+\input{background/background.tex}
+\input{project/project.tex}
+% \input{evaluation/evaluation.tex}
+% \input{conclusion/conclusion.tex}
+% \input{appendix/appendix.tex}
+
+\bibliographystyle{alpha}
+\bibliography{bibs/sample}
+
+\end{document}

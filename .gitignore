@@ -2,3 +2,6 @@
 .github
 .claude
 .mcp.json
+
+masters-report/build/*
+!masters-report/build/*.pdf
