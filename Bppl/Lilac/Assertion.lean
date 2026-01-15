@@ -117,7 +117,7 @@ end
   | bot, _, _, _  => False
   | and P Q, σ, γ, D => P.denote σ γ D ∧ Q.denote σ γ D
   -- Fill sorry with a lemma that `σ₁ ≤ σ` and `σ₂ ≤ σ`
-  | sep P Q, σ, γ, D => ∃ σ₁ σ₂ : PSp HC, σ₁ • σ₂ ≤ some σ ∧ P.denote σ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote σ₂ γ ⟨D.1, Measurable.le _ D.2⟩
+  | sep P Q, σ, γ, D => ∃ σ₁ σ₂ : PSp HC, σ₁ • σ₂ ≤ some σ ∧ P.denote σ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote σ₂ γ ⟨D.1, Measurable.le sorry D.2⟩
   -- Fill sorry with ∀ σ : PSp α, 1.1 ≤ σ.1. In words, The sigma algebra of `1` is the least or coarsest
   | persistently P, _, γ, D => P.denote 1 γ ⟨D.1, Measurable.le (sorry) D.2⟩
   | «forall» P, σ, γ, D => ∀ x, P.denote σ (x :: γ) D

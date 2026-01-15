@@ -1,6 +1,129 @@
 \chapter{Background}
+Probabilistic programming is a paradigm where we are defining statistical models using code. It is a means of describing
+complex distributions over some space in a structured way. Probabilistic programming language (PPL) also come with an interpreter
+(probabilistic inference engine) ehich allows the programmer to sample a term from the distribution denoted by a program
+and indeed sample distributions while constructing new distributions.
 
-\section{Lean}
+More interestingly a Bayesian probabilistic programming language (BPPL) also allows one to "observe" an event and update
+their belief of the world (update the probability distribution they associate with some ocurrence). Here we take the
+bayesian perspective underpinned by Baye's law which describes how we update a probability distribution based
+
+\Todo{buses and days and instantiation of Baye's law}
+
+
+A simple example taken from \cite{prob-semantics} is reproduced below to show how 
+
+\section{Measure Theory}
+In order to understand the semantics of a probabilistic programming, a formal definition for probability is needed.
+Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
+probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
+variable we first need to define Measures and Measurable Space. A measurable space is a pair $(\Omega, \mathcal{F})$,
+where $\Omega$ is some Set, and $\mathcal{F} \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\mathcal{F}$
+to be an event (such as a coin flip landing heads). We would like the $\sigma$-algebra to closed under complements and
+countable unions. From the presentation so far it may seem like all singleton sets must be events but
+due to technical reasons (see \cite{axler} Ch. 2), this cannot be in certain cases where $\Sigma$ is infinite.
+
+A measure on a measurable space is a function
+ $\mu : \mathcal{F} \rightarrow [0, \infty]$ 
+
+This is essentially providing a probability density or probability mass function for the set of events
+$\mathcal{F}$. A similar but more general notion than what a measure gives us, is a random variable: a measurable
+function between two measurable spaces. I say "more general notion", since using the identity measurable function
+yields the measure we started with. A measurable function denoted $f : (\Omega_1, \mathcal{F})  \xrightarrow{m} (\Omega_2, \mathcal{G})$
+$f : \Omega_1  \xrightarrow{m} \Omega_2$ is well defined when there is an ambient measurable space structure $(\Omega_1, \mathcal{F})$
+and $(\Omega_2, \mathcal{G})$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
+$\Omega_1 = [1,6]^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = [1,12]^2$.
+A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \mathcal{F})$ to the pushforward measure $\mu'$ on $(\Omega_2, \mathcal{G})$.
+In order for this to always be well defined we require the following measurability to be satisfied by all measurable functions:
+$\forall G \in \mathcal{G}, f^{-1}(G) \in \mathcal{F}$.
+
+
+\Todo Define lebesgue integration, since it's used in the Giry monad.
+\Todo Define s-finite measures and kernels
+
+\subsection{Pi-lambda theorem}
+
+\subsection{Disintegration theorem}
+The disintegration theorem allows a more general definition conditional variables where conditioning on events with
+with zero probability is well defined under certain conditions. This is required, since if conditioning
+is defined in a program logic, it must handle all edge cases
+
+\Todo more details in final report (as I haven't studied this yet)
+
+\section{Semantics of Probabilistic Programs}
+Staton provided a compositional semantics to first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
+validation of inference algorithms, etc. The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
+are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. BaSL uses exactly this
+semantics. Note that supporting bayesian updates, involves the construct \texttt{observe} and \texttt{normalize} in the language. We will present here the
+more complete semantics.
+The key contribution of the paper is the introduction of \texttt{s-finite kernels}, motivated by validating a basic commutativity property that programmers expect.
+Specifically:
+\[
+\begin{array}{c@{\qquad=\qquad}c}
+\begin{array}{l}
+\texttt{let } x = t \texttt{ in}\\
+\texttt{let } y = u \texttt{ in}\\
+v
+\end{array}
+&
+\begin{array}{l}
+\texttt{let } y = u \texttt{ in}\\
+\texttt{let } x = t \texttt{ in}\\
+v
+\end{array}
+\end{array}
+\]
+when neither x is free in u nor y is free in t. Another benefit of this semantics is a line-by-line compositionality, ie, the semantics of every subterm
+in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
+as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
+s-finite kernels denote open programs and s-finite measures denote closed programs.
+
+\subsection{Semantics of Let binding}
+Probabilistic programs are interpreted within the Giry monad \cite{giry}. Probability is an effect.
+This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
+also naturally show up in type of the monadic bind, which motivates it.
+The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 
+this category. Syntactically:
+\[ 
+\mathbb{A}, \mathbb{B} ::= \mathbb{R} \mid \mathcal{P}(\mathbb{A}) \mid 1 \mid \mathbb{A} \times \mathbb{B} \mid \cdots
+\]
+
+Objects in the category of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
+It's the type of probability distributions over $\mathbb{A}$. Actually not quite, since we allow any measure $\mu : \Sigma_A \rightarrow [0, \infty]$,
+rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$.
+must itself form a measurable space. There is some construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
+requirements (we don't go into it here).
+
+The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs, which are well-typed
+in the following cases:
+
+
+We work in the categor
+Below I just state the \texttt{pure} and \texttt{bind} operations in the Giry monad, without proofs of
+the monad laws. 
+To think about commutativity of let bindings we will have to look at the semantics of the sequencing
+operations in a probabi
+
+\subsection{Semantics of sample, observe and normalize}
+
+\section{Lean and relevant recent formalisations}
+
+Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
+of mathematics. Here we are concerned with verification of software, so the theorems in question
+express properties of the software. The axioms of mathematics that we use is a dependent type theory.
+In this setting of dependent type theory, checking the correctness of proof is the same thing as
+checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism \rcite{}.
+Further the tool we use to for machine-checked proofs is an interactive theorem prover with support
+for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
+principles a person would use when writing pen-and-paper proofs. There are two proof assistants
+that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
+of required theorems in measure theory and the latter having the original implementation of the Iris framework.
+Lean was chosen since the front-end of the Iris proof interface (MoSeL, see \ref{MoSeL}) had been fully ported
+to Lean very recently.
+
+There has been an exciting amount of recent activity in formalisations related to this work, which have enabled
+the formalisation of Lilac (see, \ref{psl}) in Lean to be a realistic goal
+
 
 A lot of background in Lean was required to undertake this project.
 The Lean development exercises the full expressivity of inductive types in
@@ -12,18 +135,6 @@ Various representations of formal languages particularly the problem of how
 to represent variables in contexts, with strong guarantees from the types System.
 [Cite chlipala, HOAS, and lean-lang.org]
 
-\section{Probabilistic Program Semantics}
-This section is entirely a summary of the denotational semantics given to Bayesian Probabilistic programs
-given by Staton. The probabilistic programs we aim to provide verification tools for in this work
-do not go beyond the generality of the semantics presented by Staton. A brief overview of key ideas
-is provided below (but it is better to read the )
-\begin{itemize}
-\item A clear treatment of Staton's commutative semantics.
-\item The distinction and intuition behind the difference
-between s-finite and sigma-finite measures. Perhaps
-even why they're used.
-\end{itemize}
-
 
 \section{Separation Logic}
 
@@ -32,13 +143,38 @@ O'Hearn's original paper. PSL, Lilac, BaSL
 It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
 from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
 measure theory may hold some intuitions/inspiration or simplifications 
-\section{Measure Theory}
-
-\subsection{Pi-lambda theorem}
-
-\subsection{Disintegration theorem}
 
 \section{Symbolic Execution tools}
 
 \section{Iris and MoSeL}
+\label{MoSeL}
+Iris \cite{iris} is a step-indexed modal separation logic partly designed as a framework for embedding other separation logics into,
+to take advantage of the Iris Proof Mode (IPM) \cite{ipm}. The Iris proof mode provides state of the art "tactical support", tactic
+based interactive theorem proving. More recently the front of the IPM was abstracted from Iris to any separation logic to
+create MoSeL \cite{mosel}. We aim to use MoSeL in this project for several reasons
+\begin{enumerate}
+\item Neither Lilac nor BaSL is step-indexed, so it is much cleaner to instantiate MoSeL rather than Iris
+\item Making Lilac compatible with Lilac's interface (instantiating an algebraic structure called CMRA \cite{iris}) is an
+unsolved problem (future work section \cite{lilac})
+\item MoSeL was completely ported to Lean, shortly before the start of this project! \cite{iris-lean}.
+\end{enumerate}
 
+MoSeL presents the interface of a "logic of Bunched Implications" which essentially contains all standard connectives of a first order
+logic and the separation logic connectives. The only addition MoSeL adds to this is a persistence modality (which can be instantiated in 
+a trivial way in exchange for defeating any automation it might achieve?).
+
+One of the key  generalisations that MoSeL makes over Iris is parametricity over linear and affine logics. Iris is an affine logic
+meaning separating conjuncts in a premise can be used 0 or 1 time in proving a goal; they can be thrown away if desired. In a linear
+logic however every conjunct must be used exactly once, as in the first separation logic by \citet{og_sl}.
+There is naturally quite an emphasis on describing whether a logic is affine or linear, since throwing away unwanted predicates
+when it is suitable to do so, is exactly the kind of thing a user wants automation for. In BaSL \cite{basl}, there is a short
+discussion stating BaSL is part affine and part linear. Precisely characterising the constructs which are affine and linear or under
+what conditions should be explored for better tactical support.
+
+MoSeL like IPM before it provides tactics mirroring the native Lean tactics, such as \texttt{iIntros} and \texttt{IAssumption}
+
+In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean very re
+
+
+\section{Related Work}
+\Todo{List the quasi borel spaces formalisation and stuff}

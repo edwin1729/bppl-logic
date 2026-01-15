@@ -173,8 +173,8 @@ keywords = {Rocq, measure theory, integration theory, probabilistic programming 
    year={2019},
    month=jan, pages={1–30} }
 
-@software{arklib,
-  author       = {{Verified-zkEVM \faGithub}},
+@misc{arklib,
+  author       = {{Verified-zkEVM}},
   title        = {ArkLib: Formally Verified Arguments of Knowledge in Lean},
   year         = {2025},
   url          = {https://github.com/Verified-zkEVM/ArkLib},
@@ -185,7 +185,7 @@ keywords = {Rocq, measure theory, integration theory, probabilistic programming 
 
 @misc{soteira,
       title={Soteria: Efficient Symbolic Execution as a Functional Library}, 
-      author={Sacha-Élie Ayoun and Opale Sjöstedt and Azalea Raad},
+      author={Sacha-{\'E}lie Ayoun and Opale Sj{\"o}stedt and Azalea Raad},
       year={2025},
       eprint={2511.08729},
       archivePrefix={arXiv},
@@ -193,7 +193,7 @@ keywords = {Rocq, measure theory, integration theory, probabilistic programming 
       url={https://arxiv.org/abs/2511.08729}, 
 }
 @misc{bluebell-impl,
-  author       = {{Verified-zkEVM \faGithub}},
+  author       = {{Verified-zkEVM}},
   title        = {{iris-lean}},
   howpublished = {\url{https://github.com/Verified-zkEVM/iris-lean}},
   year         = {2025},
@@ -214,24 +214,6 @@ booktitle = {Programming Languages and Systems: 26th European Symposium on Progr
 pages = {855–879},
 numpages = {25},
 location = {Uppsala, Sweden}
-}
-
-@INPROCEEDINGS{pinnochio,
- author={Parno, Bryan and Howell, Jon and Gentry, Craig and Raykova, Mariana},
- booktitle={2013 IEEE Symposium on Security and Privacy}, 
- title={Pinocchio: Nearly Practical Verifiable Computation}, 
- year={2013},
- volume={},
- number={},
- pages={238-252},
- keywords={Logic gates;Polynomials;Protocols;Wires;Cryptography;Encoding},
- doi={10.1109/SP.2013.47}}
-  
-@misc{mathlib4-pr-31662,
-  author       = {{leanprover-community}},
-  title        = {{Pull Request \#31662: mathlib4}},
-  howpublished = {\url{https://github.com/leanprover-community/mathlib4/pull/31662}},
-  note         = {GitHub pull request},
 }
 
 @INPROCEEDINGS{sep-logic,
@@ -322,13 +304,150 @@ keywords = {Delegation of computation, Probabilistically checkable proofs, Inter
 location = {Nuremberg, Germany}
 }
 
-@article{kex,
-  title   = {Kex: A Platform For Analysis Of JVM Programs},
-  author  = {Abdullin, Azat and Itsykson, Vladimir},
-  journal = {Informatsionno-upravliaiushchie sistemy},
-  year    = {2022},
-  number  = {1},
-  pages   = {30--43},
-  doi     = {10.31799/1684-8853-2022-1-30-43},
-  url     = {http://i-us.ru/index.php/ius/article/download/15201/15059}
+@InProceedings{lean4,
+author="Moura, Leonardo de
+and Ullrich, Sebastian",
+editor="Platzer, Andr{\'e}
+and Sutcliffe, Geoff",
+title="The Lean 4 Theorem Prover and Programming Language",
+booktitle="Automated Deduction -- CADE 28",
+year="2021",
+publisher="Springer International Publishing",
+address="Cham",
+pages="625--635",
+abstract="Lean 4 is a reimplementation of the Lean interactive theorem prover (ITP) in Lean itself. It addresses many shortcomings of the previous versions and contains many new features. Lean 4 is fully extensible: users can modify and extend the parser, elaborator, tactics, decision procedures, pretty printer, and code generator. The new system has a hygienic macro system custom-built for ITPs. It contains a new typeclass resolution procedure based on tabled resolution, addressing significant performance problems reported by the growing user base. Lean 4 is also an efficient functional programming language based on a novel programming paradigm called functional but in-place. Efficient code generation is crucial for Lean users because many write custom proof automation procedures in Lean itself.",
+isbn="978-3-030-79876-5"
 }
+
+@Inbook{axler,
+author="Axler, Sheldon",
+title="Measures",
+bookTitle="Measure, Integration {\&} Real Analysis",
+year="2020",
+publisher="Springer International Publishing",
+address="Cham",
+pages="13--72",
+abstract="The last section of the previous chapter discusses several deficiencies of Riemann integration. To remedy those deficiencies, in this chapter we extend the notion of the length of an interval to a larger collection of subsets of R. This leads us to measures and then in the next chapter to integration with respect to measures.",
+isbn="978-3-030-33143-6",
+doi="10.1007/978-3-030-33143-6_2",
+url="https://doi.org/10.1007/978-3-030-33143-6_2"
+}
+
+@inproceedings{hakaru,
+	title = {Probabilistic inference by program transformation in Hakaru (system description)},
+	author = {Narayanan, Praveen and Carette, Jacques and Romano, Wren and Shan, Chung{-}chieh and Zinkov, Robert},
+	booktitle = {International Symposium on Functional and Logic Programming - 13th International Symposium, {FLOPS} 2016, Kochi, Japan, March 4-6, 2016, Proceedings},
+	pages = {62--79},
+	year = {2016},
+	organization = {Springer},
+	url = {http://dx.doi.org/10.1007/978-3-319-29604-3_5},
+	doi = {10.1007/978-3-319-29604-3_5},
+}
+
+@inproceedings{gen,
+author = {Cusumano-Towner, Marco F. and Saad, Feras A. and Lew, Alexander K. and Mansinghka, Vikash K.},
+title = {Gen: a general-purpose probabilistic programming system with programmable inference},
+year = {2019},
+isbn = {9781450367127},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3314221.3314642},
+doi = {10.1145/3314221.3314642},
+abstract = {Although probabilistic programming is widely used for some restricted classes of statistical models, existing systems lack the flexibility and efficiency needed for practical use with more challenging models arising in fields like computer vision and robotics. This paper introduces Gen, a general-purpose probabilistic programming system that achieves modeling flexibility and inference efficiency via several novel language constructs: (i) the generative function interface for encapsulating probabilistic models; (ii) interoperable modeling languages that strike different flexibility/efficiency trade-offs; (iii) combinators that exploit common patterns of conditional independence; and (iv) an inference library that empowers users to implement efficient inference algorithms at a high level of abstraction. We show that Gen outperforms state-of-the-art probabilistic programming systems, sometimes by multiple orders of magnitude, on diverse problems including object tracking, estimating 3D body pose from a depth image, and inferring the structure of a time series.},
+booktitle = {Proceedings of the 40th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {221–236},
+numpages = {16},
+keywords = {Markov chain Monte Carlo, Probabilistic programming, sequential Monte Carlo, variational inference},
+location = {Phoenix, AZ, USA},
+series = {PLDI 2019}
+}
+
+@article{stan,
+ title={Stan: A Probabilistic Programming Language},
+ volume={76},
+ url={https://www.jstatsoft.org/index.php/jss/article/view/v076i01},
+ doi={10.18637/jss.v076.i01},
+ number={1},
+ journal={Journal of Statistical Software},
+ author={Carpenter, Bob and Gelman, Andrew and Hoffman, Matthew D. and Lee, Daniel and Goodrich, Ben and Betancourt, Michael and Brubaker, Marcus and Guo, Jiqiang and Li, Peter and Riddell, Allen},
+ year={2017},
+ pages={1–32}
+}⏎   
+
+@misc{tfp,
+      title={TensorFlow Distributions}, 
+      author={Joshua V. Dillon and Ian Langmore and Dustin Tran and Eugene Brevdo and Srinivas Vasudevan and Dave Moore and Brian Patton and Alex Alemi and Matt Hoffman and Rif A. Saurous},
+      year={2017},
+      eprint={1711.10604},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/1711.10604}, 
+}
+
+@InProceedings{giry,
+author="Giry, Mich{\`e}le",
+editor="Banaschewski, B.",
+title="A categorical approach to probability theory",
+booktitle="Categorical Aspects of Topology and Analysis",
+year="1982",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="68--85",
+isbn="978-3-540-39041-1"
+}
+
+@misc{giry-blog,
+  author = {Tobin, Jared},
+  title = {Foundations of the Giry Monad (blog)},
+  year = {2017},
+  month = feb,
+  url = {https://jtobin.io/giry-monad-foundations}
+}
+
+@article{ipm,
+author = {Krebbers, Robbert and Timany, Amin and Birkedal, Lars},
+title = {Interactive proofs in higher-order concurrent separation logic},
+year = {2017},
+issue_date = {January 2017},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {52},
+number = {1},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/3093333.3009855},
+doi = {10.1145/3093333.3009855},
+journal = {SIGPLAN Not.},
+month = jan,
+pages = {205–217},
+numpages = {13},
+keywords = {Separation Logic, Logical Relations, Interactive Theorem Proving, Fine-grained Concurrency, Coq}
+}
+
+@article{mosel,
+author = {Krebbers, Robbert and Jourdan, Jacques-Henri and Jung, Ralf and Tassarotti, Joseph and Kaiser, Jan-Oliver and Timany, Amin and Chargu\'{e}raud, Arthur and Dreyer, Derek},
+title = {MoSeL: a general, extensible modal framework for interactive proofs in separation logic},
+year = {2018},
+issue_date = {September 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {ICFP},
+url = {https://doi.org/10.1145/3236772},
+doi = {10.1145/3236772},
+abstract = {A number of tools have been developed for carrying out separation-logic proofs mechanically using an interactive proof assistant. One of the most advanced such tools is the Iris Proof Mode (IPM) for Coq, which offers a rich set of tactics for making separation-logic proofs look and feel like ordinary Coq proofs. However, IPM is tied to a particular separation logic (namely, Iris), thus limiting its applicability.  In this paper, we propose MoSeL, a general and extensible Coq framework that brings the benefits of IPM to a much larger class of separation logics. Unlike IPM, MoSeL is applicable to both affine and linear separation logics (and combinations thereof), and provides generic tactics that can be easily extended to account for the bespoke connectives of the logics with which it is instantiated. To demonstrate the effectiveness of MoSeL, we have instantiated it to provide effective tactical support for interactive and semi-automated proofs in six very different separation logics.},
+journal = {Proc. ACM Program. Lang.},
+month = jul,
+articleno = {77},
+numpages = {30},
+keywords = {Coq proof assistant, Separation logic, interactive theorem proving, logic of bunched implications, modal logic}
+}
+
+@misc{iris-lean,
+  author = {{leanprover-community}},
+  year = {2026},
+  title = {iris-lean: Lean 4 port of Iris, a higher-order concurrent separation logic framework},
+  howpublished = {\url{https://github.com/leanprover-community/iris-lean/}},
+  note = {Accessed: 18th Jan 2026}
+}
+
+@article{og_sl, title={The Logic of Bunched Implications}, volume={5}, DOI={10.2307/421090}, number={2}, journal={Bulletin of Symbolic Logic}, author={O’Hearn, Peter W. and Pym, David J.}, year={1999}, pages={215–244}}

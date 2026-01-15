@@ -184,7 +184,7 @@ instance : DenotationalMeas Ty where
   | cmp op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | unif01 => ⟨fun _ ↦ uniformOn (Set.Icc (0: ℝ) 1), measurable_const⟩
-  | vect f => ⟨ , ⟩  --sorry --: (Fin n → Term ctx ty) → Term ctx (.exp n ty)
+  | vect f => sorry --: (Fin n → Term ctx ty) → Term ctx (.exp n ty)
   | index N M => sorry -- : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   | «for» n Mᵢ Mₛ => sorry -- : ℕ → Term ctx ty → Term (index :: ty :: ctx) (.G ty) → Term ctx (.G ty)

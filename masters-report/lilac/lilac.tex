@@ -1,0 +1,34 @@
+\chapter{Formalisation of Lilac}
+Here I present the current progress in the formalisation of Lilac, and how I went about it. I divide it into 2 parts
+Initial work which was mostly measure theoretic, and recent work which is more structured.
+As in any project its best to get to the most uncertain parts of it first, to minimise its risk. I think I have somewhat
+intuitively followed this principle in my formalisation so far, also meaning its full of \texttt{sorry}s.
+However the shape of the formalisation
+of Lilac is reasonably clear and I was able to identify some noteworthy problems which show up in the formalisation.
+
+As a brief reflection on the difference in formalisation on the maths and computer science sides, in my limited experience,
+I do think in this project (computer science) I do need to think of multiple things at once and papers generally disseminate
+dependencies more clearly without depending as heavily on the reader to morph and modify lemmas as required. However
+the objects in Lilac are so unconventional from the measure theory in mathlib, that it requires inventing some things from
+scratch and quite challenging. This is ideal for my goals of understanding how to use a dependent type theory for formalisation. 
+As such \ref{pi-lambda} talking about formalisation specific issues. But \ref{dependent-store}
+talks about something more conceptual in Lilac! (My pivot towards the aim of a more theoretical contribution is that
+I feel I have gotten enough Knowledge of Lean from formalising Lilac)
+
+\section{Measure spaces as a dependent type}
+\label{paired-prob-space}
+
+\section{Pi-lambda-theorem as an induction principle}
+\label{pi-lambda}
+The $\pi-\lambda$-theorem is tool in measure theory for showing equality of two measures. It can be thought of as an
+induction principle, (indeed this is how it is defined in Lean) on the structure of a measure. Specifically, the
+defintion
+
+\section{Parametrisation of the "store" by the "heap" in this separation logic}
+\label{dependent-store}
+
+- The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
+- The inductive family definition of a sigma algebra, and the pi lambda theorem being an induction problem complicates thing
+when we can have multiple induction principles and we really want a specific induction principle!
+- Correctly instantiating BI, modelling random variables, "intrinsically type calculus"? 
+- Talk about Lilac, give the intuition that this is the actual line by line semantics

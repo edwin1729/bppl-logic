@@ -1,5 +1,53 @@
 \chapter{Introduction}
-Hello \cite{greenwade93}
+Probabilistic programming languages (Hakaru, Stan, Gen, etc \cite{hakaru, stan, gen}) offer a principled way of 
+creating statistical models complex probability distributions
+over multiple random variables, as code. The programmer (statistician) can
+then interact with the model, evaluating (sampling from) the generated distribution.
+This decouples the specification of a model from the inference algorithm used for sampling.
+Probabilistic programming is in fact also pervasive in computer science, though generally
+not cleanly abstracted into a DSL. Examples include Zero Knowledge Proof Systems (Blockchain) \cite{arklib},
+Differential Privacy and Machine Learning (TensorFlow Probability \cite{tfp}). Formal reasoning about programs in
+these critical applications may be highly beneficial. 
+
+The aim of this project is to extend the reach of foundational
+verification in this direction. The main contributions are:
+\begin{enumerate}
+\item \textbf{C1}: Implementing (formalising) Lilac \cite{lilac} and BaSL \cite{basl} separation logics in the Lean theorem prover,
+with "tactical support", using Iris \cite{iris}.
+\item \textbf{C2}: (if time permits) Develop a theory of compositional symbolic execution (CSE) for probabilistic programs and implement using Soteira \cite{soteira}.
+CSE can automate program verification.
+\end{enumerate}
+
+% {\color{red} Here on is written hypothetically if I finish ALL of my goals}
+
+\textbf{C1} is one of the first (if not the first) foundationally verified (in Lean) implementation of a probabilistic separation logic (PSL).
+There is in fact a simultaneous project formalising the Bluebell PSL \cite{bluebell-impl} for the purpose of verifying the core of a Zero Knowledge Proof
+system \cite{arklib}.
+
+\textbf{C2} would be a novel theoretical contribution. The main
+innovation here, would be either
+The separation logic chosen
+for this may be Lilac or BaSL, but also possibly Bluebell \cite{bluebell}, to directly apply the work in an industrial formalisation project. However
+Bluebell supports both unary
+
+with various subsystems 
+But there are much wider applications
+in computer science, where arguments of correctness are probabilistic in nature. Examples
+expressively and formally verify these arguments if the implementation was carried out in a probabilistic
+programming language/DSL, using Probabilistic Separation Logics (PSL).
+This project is meant as a proof of concept, aiming to be the first implementation of a PSL.
+Specifically in the Lean proof assistant, we implement the lilac separation logic
+using Iris-lean (ported from rocq) to provide ergonomic tactical support. We choose
+Lean for the significant body of measure-theoretic results present in Mathlib, required
+to establish soundness of the logic.
+
+Given time I would also like to pursue formalisation of BaSL or a
+ theory for symbolic execution using lilac or BaSL for probabilistic programs.
+
+
+on top of the Iris framework, in Lean.
+offer an intuitive way to reason about
+probabilistic programs at a suitable level of abstraction. 
 \section{Objectives}
 \section{Challenges}
 \section{Contributions}
