@@ -1,4 +1,4 @@
-\chapter{PROJECT X}
+\chapter{Project Plan}
 
 I want to note that I have not before seen the interpretation of
 a typed calculus, taking both the type and typing context as parameters
@@ -7,7 +7,21 @@ context, actually massively simplifies the lean development
 previous iterations, involved a type inference algorithm, which could fail
 and the denotation function was partial.
 
-Possible goals of this project:
+I present 3 possible goals for the project here. \texttt{M1} is the fallback which is mostly
+formalisation of already existing theory. \texttt{M2} and \texttt{M3} are more
+ambitious goals involving novel theoretical contributions. One of my original motivations for a formalisation project
+was to thoroughly learn and understand a topic in programming language theory, all the way up to the state of the art.
+Simultaneously I would be making a non-trivial contribution by formalising a program logic in a theorem prover and
+developing "tactical support" for it, showing a prototype for what is possible using foundational verification at
+the moment. On top of formally verifying the soundness of Lilac and BaSL, this could show how ergonomic or expressive
+a logic is. However this is still only a prototype because of the requirement to use the toy language (BPPL)
+ This is only  a "prototype"
+
+ The original scope of the project was \texttt{M1}
+alone but t
+
+In the case of \texttt{M2} there is also
+a scope of industrial use of an implementation in Lean.
 \begin{itemize}
 \item Formalisation of Lilac with tactical support
 \item Lean interpreter for the language which is sound w.r.t to the
@@ -25,5 +39,24 @@ denotational semantics
   programs.
 \end{itemize}
 
-terms in
-context
+\begin{figure}[ht]
+  \caption{Example of a parametric plot ($\sin (x), \cos(x), x$)}
+  \centering
+  \includegraphics[width=\linewidth]{project/Screenshot_20260115_123843.png}
+\end{figure}
+
+Put simply my goal is to reach one of the orange boxes. The "full proof of concept" is fallback goal. The major
+contribution here would be the formalisation of BaSL in Lean, which has several unknown elements of pure math proofs
+to it, when compared to to the Lilac formalisation. To name a few
+1) Pi-lambda theorem (elaborate)
+2) Disintegration theorem 
+
+The goal "industrial application" requires the development of a theory of compositional symbolic execution using Bluebell
+as the assertion language. So even if the Lean formalisations I am dependent on to implement a tool, using the
+theory is not available in time, I can still make a significant theoretical contribution here.
+
+
+
+ is dependent on completion of work planned by others, by the time I reach that stage
+of my project. 
+

@@ -4,4 +4,4 @@
 .mcp.json
 
 masters-report/build/*
-!masters-report/build/*.pdf
+masters-report/*.synctex.gz
