@@ -1,0 +1,334 @@
+@article{roulette,
+author = {Moy, Cameron and Czenszak, Jack and Li, John M. and Marshall, Brianna and Holtzen, Steven},
+title = {Roulette: A Language for Expressive, Exact, and Efficient Discrete Probabilistic Programming},
+year = {2025},
+issue_date = {June 2025},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {9},
+number = {PLDI},
+url = {https://doi.org/10.1145/3729334},
+doi = {10.1145/3729334},
+abstract = {Exact probabilistic inference is a requirement for many applications of probabilistic programming languages (PPLs) such as in high-consequence settings or verification. However, designing and implementing a PPL with scalable high-performance exact inference is difficult: exact inference engines, much like SAT solvers, are intricate low-level programs that are hard to implement. Due to this implementation challenge, PPLs that support scalable exact inference are restrictive and lack many features of general-purpose languages.    This paper presents Roulette, the first discrete probabilistic programming language that combines high-performance exact inference with general-purpose language features. Roulette supports a significant subset of Racket, including data structures, first-class functions, surely-terminating recursion, mutable state, modules, and macros, along with probabilistic features such as finitely supported discrete random variables, conditioning, and top-level inference. The key insight is that there is a close connection between exact probabilistic inference and the symbolic evaluation strategy of Rosette. Building on this connection, Roulette generalizes and extends the Rosette solver-aided programming system to reason about probabilistic rather than symbolic quantities. We prove Roulette sound by generalizing a proof of correctness for Rosette to handle probabilities, and demonstrate its scalability and expressivity on a number of examples.},
+journal = {Proc. ACM Program. Lang.},
+month = jun,
+articleno = {231},
+numpages = {25},
+keywords = {probabilistic programming, symbolic evaluation}
+}
+
+@article{bluebell,
+author = {Bao, Jialu and D'Osualdo, Emanuele and Farzan, Azadeh},
+title = {Bluebell: An Alliance of Relational Lifting and Independence for Probabilistic Reasoning},
+year = {2025},
+issue_date = {January 2025},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {9},
+number = {POPL},
+url = {https://doi.org/10.1145/3704894},
+doi = {10.1145/3704894},
+abstract = {We present Bluebell, a program logic for reasoning about    probabilistic programs where unary and relational styles of reasoning    come together to create new reasoning tools. Unary-style reasoning is    very expressive and is powered by foundational mechanisms to reason    about probabilistic behavior like independence and    conditioning. The relational style of reasoning, on the other    hand, naturally shines when the properties of interest compare    the behavior of similar programs (e.g. when proving differential    privacy) managing to avoid having to characterize the output    distributions of the individual programs. So far, the two styles of    reasoning have largely remained separate in the many program logics    designed for the deductive verification of probabilistic programs. In    Bluebell, we unify these styles of reasoning through the introduction of    a new modality called “joint conditioning” that can encode and    illuminate the rich interaction between conditional    independence and relational liftings; the two powerhouses    from the two styles of reasoning.},
+journal = {Proc. ACM Program. Lang.},
+month = jan,
+articleno = {58},
+numpages = {31},
+keywords = {Conditional Independence, Deductive Verification, Relational Lifting, Relational Logic, Weakest Precondition}
+}
+@misc{agt,
+      title={Abstract Gradient Training: A Unified Certification Framework for Data Poisoning, Unlearning, and Differential Privacy}, 
+      author={Philip Sosnin and Matthew Wicker and Josh Collyer and Calvin Tsay},
+      year={2025},
+      eprint={2511.09400},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2511.09400}, 
+}
+
+@misc{basl,
+      title={Bayesian Separation Logic}, 
+      author={Shing Hin Ho and Nicolas Wu and Azalea Raad},
+      year={2025},
+      eprint={2507.15530},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL},
+      url={https://arxiv.org/abs/2507.15530}, 
+}
+
+@article{lilac,
+author = {Li, John M. and Ahmed, Amal and Holtzen, Steven},
+title = {Lilac: A Modal Separation Logic for Conditional Probability},
+year = {2023},
+issue_date = {June 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {7},
+number = {PLDI},
+url = {https://doi.org/10.1145/3591226},
+doi = {10.1145/3591226},
+abstract = {We present Lilac, a separation logic for reasoning about probabilistic programs where separating conjunction captures probabilistic independence. Inspired by an analogy with mutable state where sampling corresponds to dynamic allocation, we show how probability spaces over a fixed, ambient sample space appear to be the natural analogue of heap fragments, and present a new combining operation on them such that probability spaces behave like heaps and measurability of random variables behaves like ownership. This combining operation forms the basis for our model of separation, and produces a logic with many pleasant properties. In particular, Lilac has a frame rule identical to the ordinary one, and naturally accommodates advanced features like continuous random variables and reasoning about quantitative properties of programs. Then we propose a new modality based on disintegration theory for reasoning about conditional probability. We show how the resulting modal logic validates examples from prior work, and give a formal verification of an intricate weighted sampling algorithm whose correctness depends crucially on conditional independence structure.},
+journal = {Proc. ACM Program. Lang.},
+month = jun,
+articleno = {112},
+numpages = {24},
+keywords = {probabilistic programming, separation logic}
+}
+
+@misc{remy,
+      title={Markov kernels in Mathlib's probability library}, 
+      author={Rémy Degenne},
+      year={2025},
+      eprint={2510.04070},
+      archivePrefix={arXiv},
+      primaryClass={cs.DL},
+      url={https://arxiv.org/abs/2510.04070}, 
+}
+
+@InProceedings{quasiborel_isabelle,
+  author =	{Hirata, Michikazu and Minamide, Yasuhiko and Sato, Tetsuya},
+  title =	{{Semantic Foundations of Higher-Order Probabilistic Programs in Isabelle/HOL}},
+  booktitle =	{14th International Conference on Interactive Theorem Proving (ITP 2023)},
+  pages =	{18:1--18:18},
+  series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+  ISBN =	{978-3-95977-284-6},
+  ISSN =	{1868-8969},
+  year =	{2023},
+  volume =	{268},
+  editor =	{Naumowicz, Adam and Thiemann, Ren\'{e}},
+  publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address =	{Dagstuhl, Germany},
+  URL =		{https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITP.2023.18},
+  URN =		{urn:nbn:de:0030-drops-183933},
+  doi =		{10.4230/LIPIcs.ITP.2023.18},
+  annote =	{Keywords: Higher-order probabilistic program, s-finite kernel, Quasi-Borel spaces, Isabelle/HOL}
+}
+
+@article{sfinite_kernel_rocq,
+author = {Affeldt, Reynald and Cohen, Cyril and Saito, Ayumu},
+title = {Semantics of Probabilistic Programs Using s-Finite Kernels in Dependent Type Theory},
+year = {2025},
+issue_date = {September 2025},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {1},
+number = {3},
+url = {https://doi.org/10.1145/3732291},
+doi = {10.1145/3732291},
+abstract = {Probabilistic programming languages are used to write probabilistic models to make probabilistic inferences. A number of rigorous semantics have been developed to reason about transformations of probabilistic programs and their execution. We propose to investigate the formalization of such a semantics to allow for the formal verification of probabilistic programs. Concretely, we extend an existing formalization of measure and integration theory in the Rocq prover, a proof assistant based on dependent type theory, with s-finite kernels, a mathematical structure to interpret typing judgments in the semantics of a probabilistic programming language. We explain the issues raised by organizing kernels as a hierarchy of mathematical structures and use the latter to formalize the semantics of a first-order probabilistic programming language. We use this semantics to establish generic properties of this language, prove rewriting laws to perform symbolic evaluation, and reason about iteration.},
+journal = {ACM Trans. Probab. Mach. Learn.},
+month = aug,
+articleno = {16},
+numpages = {34},
+keywords = {Rocq, measure theory, integration theory, probabilistic programming language}
+}
+
+@inproceedings{quasi-borel,
+   title={A convenient category for higher-order probability theory},
+   url={http://dx.doi.org/10.1109/LICS.2017.8005137},
+   DOI={10.1109/lics.2017.8005137},
+   booktitle={2017 32nd Annual ACM/IEEE Symposium on Logic in Computer Science (LICS)},
+   publisher={IEEE},
+   author={Heunen, Chris and Kammar, Ohad and Staton, Sam and Yang, Hongseok},
+   year={2017},
+   month=jun, pages={1–12} }
+
+@article{iris, title={Iris from the ground up: A modular foundation for higher-order concurrent separation logic}, volume={28}, DOI={10.1017/S0956796818000151}, journal={Journal of Functional Programming}, author={Jung, Ralf and Krebbers, Robbert and Jourdan, Jacques-henri and Bizjak, Aleš and Birkedal, Lars and Dreyer, Derek}, year={2018}, pages={e20}}
+
+@article{fritz_2020,
+   title={A synthetic approach to Markov kernels, conditional independence and theorems on sufficient statistics},
+   volume={370},
+   ISSN={0001-8708},
+   url={http://dx.doi.org/10.1016/j.aim.2020.107239},
+   DOI={10.1016/j.aim.2020.107239},
+   journal={Advances in Mathematics},
+   publisher={Elsevier BV},
+   author={Fritz, Tobias},
+   year={2020},
+   month=aug, pages={107239} }
+
+
+@article{scibior_2017,
+   title={Denotational validation of higher-order Bayesian inference},
+   volume={2},
+   ISSN={2475-1421},
+   url={http://dx.doi.org/10.1145/3158148},
+   DOI={10.1145/3158148},
+   number={POPL},
+   journal={Proceedings of the ACM on Programming Languages},
+   publisher={Association for Computing Machinery (ACM)},
+   author={Ścibior, Adam and Kammar, Ohad and Vákár, Matthijs and Staton, Sam and Yang, Hongseok and Cai, Yufei and Ostermann, Klaus and Moss, Sean K. and Heunen, Chris and Ghahramani, Zoubin},
+   year={2017},
+   month=dec, pages={1–29} }
+
+@article{sato_2019,
+   title={Formal verification of higher-order probabilistic programs: reasoning about approximation, convergence, Bayesian inference, and optimization},
+   volume={3},
+   ISSN={2475-1421},
+   url={http://dx.doi.org/10.1145/3290351},
+   DOI={10.1145/3290351},
+   number={POPL},
+   journal={Proceedings of the ACM on Programming Languages},
+   publisher={Association for Computing Machinery (ACM)},
+   author={Sato, Tetsuya and Aguirre, Alejandro and Barthe, Gilles and Gaboardi, Marco and Garg, Deepak and Hsu, Justin},
+   year={2019},
+   month=jan, pages={1–30} }
+
+@software{arklib,
+  author       = {{Verified-zkEVM \faGithub}},
+  title        = {ArkLib: Formally Verified Arguments of Knowledge in Lean},
+  year         = {2025},
+  url          = {https://github.com/Verified-zkEVM/ArkLib},
+  note         = {Accessed: 2025-12-15},
+  organization = {GitHub},
+  license      = {Apache-2.0 / MIT}
+}
+
+@misc{soteira,
+      title={Soteria: Efficient Symbolic Execution as a Functional Library}, 
+      author={Sacha-Élie Ayoun and Opale Sjöstedt and Azalea Raad},
+      year={2025},
+      eprint={2511.08729},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL},
+      url={https://arxiv.org/abs/2511.08729}, 
+}
+@misc{bluebell-impl,
+  author       = {{Verified-zkEVM \faGithub}},
+  title        = {{iris-lean}},
+  howpublished = {\url{https://github.com/Verified-zkEVM/iris-lean}},
+  year         = {2025},
+  note         = {Fork of the Iris Lean repository, instantiating a probabilistic separation logic, Bluebell},
+}
+
+@inproceedings{prob-semantics,
+author = {Staton, Sam},
+title = {Commutative Semantics for Probabilistic Programming},
+year = {2017},
+isbn = {978-3-662-54433-4},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+url = {https://doi.org/10.1007/978-3-662-54434-1_32},
+doi = {10.1007/978-3-662-54434-1_32},
+abstract = {We show that a measure-based denotational semantics for probabilistic programming is commutative.The idea underlying probabilistic programming languages (Anglican, Church, Hakaru, etc.) is that programs express statistical models as a combination of prior distributions and likelihood of observations. The product of prior and likelihood is an unnormalized posterior distribution, and the inference problem is to find the normalizing constant. One common semantic perspective is thus that a probabilistic program is understood as an unnormalized posterior measure, in the sense of measure theory, and the normalizing constant is the measure of the entire semantic domain.A programming language is said to be commutative if only data flow is meaningful; control flow is irrelevant, and expressions can be re-ordered. It has been unclear whether probabilistic programs are commutative because it is well-known that Fubini-Tonelli theorems for reordering integration fail in general. We show that probabilistic programs are in fact commutative, by characterizing the measures/kernels that arise from programs as ‘s-finite’, i.e. sums of finite measures/kernels.The result is of theoretical interest, but also of practical interest, because program transformations based on commutativity help with symbolic inference and can improve the efficiency of simulation.},
+booktitle = {Programming Languages and Systems: 26th European Symposium on Programming, ESOP 2017, Held as Part of the European Joint Conferences on Theory and Practice of Software, ETAPS 2017, Uppsala, Sweden, April 22–29, 2017, Proceedings},
+pages = {855–879},
+numpages = {25},
+location = {Uppsala, Sweden}
+}
+
+@INPROCEEDINGS{pinnochio,
+ author={Parno, Bryan and Howell, Jon and Gentry, Craig and Raykova, Mariana},
+ booktitle={2013 IEEE Symposium on Security and Privacy}, 
+ title={Pinocchio: Nearly Practical Verifiable Computation}, 
+ year={2013},
+ volume={},
+ number={},
+ pages={238-252},
+ keywords={Logic gates;Polynomials;Protocols;Wires;Cryptography;Encoding},
+ doi={10.1109/SP.2013.47}}
+  
+@misc{mathlib4-pr-31662,
+  author       = {{leanprover-community}},
+  title        = {{Pull Request \#31662: mathlib4}},
+  howpublished = {\url{https://github.com/leanprover-community/mathlib4/pull/31662}},
+  note         = {GitHub pull request},
+}
+
+@INPROCEEDINGS{sep-logic,
+  author={Calcagno, Cristiano and O'Hearn, Peter W. and Yang, Hongseok},
+  booktitle={22nd Annual IEEE Symposium on Logic in Computer Science (LICS 2007)}, 
+  title={Local Action and Abstract Separation Logic}, 
+  year={2007},
+  volume={},
+  number={},
+  pages={366-378},
+  keywords={Concurrent computing;Logic functions;Algebra;Logic programming;Random access memory;Read-write memory;Concrete;Educational institutions;Reasoning about programs;Transformer cores},
+  doi={10.1109/LICS.2007.30}}
+
+@article{cse-og,
+author = {Calcagno, Cristiano and Distefano, Dino and O’Hearn, Peter W. and Yang, Hongseok},
+title = {Compositional Shape Analysis by Means of Bi-Abduction},
+year = {2011},
+issue_date = {December 2011},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {58},
+number = {6},
+issn = {0004-5411},
+url = {https://doi.org/10.1145/2049697.2049700},
+doi = {10.1145/2049697.2049700},
+abstract = {The accurate and efficient treatment of mutable data structures is one of the outstanding problem areas in automatic program verification and analysis. Shape analysis is a form of program analysis that attempts to infer descriptions of the data structures in a program, and to prove that these structures are not misused or corrupted. It is one of the more challenging and expensive forms of program analysis, due to the complexity of aliasing and the need to look arbitrarily deeply into the program heap. This article describes a method of boosting shape analyses by defining a compositional method, where each procedure is analyzed independently of its callers. The analysis algorithm uses a restricted fragment of separation logic, and assigns a collection of Hoare triples to each procedure; the triples provide an over-approximation of data structure usage. Our method brings the usual benefits of compositionality---increased potential to scale, ability to deal with incomplete programs, graceful way to deal with imprecision---to shape analysis, for the first time.The analysis rests on a generalized form of abduction (inference of explanatory hypotheses), which we call bi-abduction. Bi-abduction displays abduction as a kind of inverse to the frame problem: it jointly infers anti-frames (missing portions of state) and frames (portions of state not touched by an operation), and is the basis of a new analysis algorithm. We have implemented our analysis and we report case studies on smaller programs to evaluate the quality of discovered specifications, and larger code bases (e.g., sendmail, an imap server, a Linux distribution) to illustrate the level of automation and scalability that we obtain from our compositional method.This article makes number of specific technical contributions on proof procedures and analysis algorithms, but in a sense its more important contribution is holistic: the explanation and demonstration of how a massive increase in automation is possible using abductive inference.},
+journal = {J. ACM},
+month = dec,
+articleno = {26},
+numpages = {66},
+keywords = {Abstract interpretation, compositionality, program proving, separation logic, static analysis}
+}
+
+@InProceedings{verifast,
+author="Jacobs, Bart
+and Smans, Jan
+and Philippaerts, Pieter
+and Vogels, Fr{\'e}d{\'e}ric
+and Penninckx, Willem
+and Piessens, Frank",
+editor="Bobaru, Mihaela
+and Havelund, Klaus
+and Holzmann, Gerard J.
+and Joshi, Rajeev",
+title="VeriFast: A Powerful, Sound, Predictable, Fast Verifier for C and Java",
+booktitle="NASA Formal Methods",
+year="2011",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="41--55",
+abstract="VeriFast is a prototype verification tool for single-threaded and multithreaded C and Java programs. In this paper, we first describe the basic symbolic execution approach in some formal detail. Then we zoom in on two technical aspects: the approach to permission accounting, including fractional permissions, precise predicates, and counting permissions; and the approach to lemma function termination in the presence of dynamically-bound lemma function calls. Finally, we describe three ongoing efforts: application to JavaCard programs, integration of shape analysis, and application to Linux device drivers.",
+isbn="978-3-642-20398-5"
+}
+
+@article{infer-pulse,
+author = {Le, Quang Loc and Raad, Azalea and Villard, Jules and Berdine, Josh and Dreyer, Derek and O'Hearn, Peter W.},
+title = {Finding real bugs in big programs with incorrectness logic},
+year = {2022},
+issue_date = {April 2022},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {6},
+number = {OOPSLA1},
+url = {https://doi.org/10.1145/3527325},
+doi = {10.1145/3527325},
+abstract = {Incorrectness Logic (IL) has recently been advanced as a logical theory for compositionally proving the presence of bugs—dual to Hoare Logic, which is used to compositionally prove their absence. Though IL was motivated in large part by the aim of providing a logical foundation for bug-catching program analyses, it has remained an open question: is IL useful only retrospectively (to explain existing analyses), or can it actually be useful in developing new analyses which can catch real bugs in big programs?  In this work, we develop Pulse-X, a new, automatic program analysis for catching memory errors, based on ISL, a recent synthesis of IL and separation logic. Using Pulse-X, we have found 15 new real bugs in OpenSSL, which we have reported to OpenSSL maintainers and have since been fixed. In order not to be overwhelmed with potential but false error reports, we develop a compositional bug-reporting criterion based on a distinction between latent and manifest errors, which references the under-approximate ISL abstractions computed by Pulse-X, and we investigate the fix rate resulting from application of this criterion. Finally, to probe the potential practicality of our bug-finding method, we conduct a comparison to Infer, a widely used analyzer which has proven useful in industrial engineering practice.},
+journal = {Proc. ACM Program. Lang.},
+month = apr,
+articleno = {81},
+numpages = {27},
+keywords = {incorrectness proving, incorrectness logic, compositionality, bug catching}
+}
+
+@inproceedings{ior,
+author = {Ben-Sasson, Eli and Chiesa, Alessandro and Goldberg, Lior and Gur, Tom and Riabzev, Michael and Spooner, Nicholas},
+title = {Linear-Size Constant-Query IOPs for Delegating Computation},
+year = {2019},
+isbn = {978-3-030-36032-0},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+url = {https://doi.org/10.1007/978-3-030-36033-7_19},
+doi = {10.1007/978-3-030-36033-7_19},
+abstract = {We study the problem of delegating computations via interactive proofs that can be probabilistically checked. Known as interactive oracle proofs (IOPs), these proofs extend probabilistically checkable proofs (PCPs) to multi-round protocols, and have received much attention due to their application to constructing cryptographic proofs (such as succinct non-interactive arguments). The relevant complexity measures for IOPs in this context are prover and verifier time, and query complexity.We construct highly efficient IOPs for a rich class of nondeterministic algebraic computations, which includes succinct versions of arithmetic circuit satisfiability and rank-one constraint system (R1CS) satisfiability. For a time-T computation, we obtain prover arithmetic complexity  and verifier complexity polylog(T). These IOPs are the first to simultaneously achieve the state of the art in prover complexity, due to [14], and in verifier complexity, due to [7]. We also improve upon the query complexity of both schemes.The efficiency of our prover is a result of our highly optimized proof length; in particular, ours is the first construction that simultaneously achieves linear-size proofs and polylogarithmic-time verification, regardless of query complexity.},
+booktitle = {Theory of Cryptography: 17th International Conference, TCC 2019, Nuremberg, Germany, December 1–5, 2019, Proceedings, Part II},
+pages = {494–521},
+numpages = {28},
+keywords = {Delegation of computation, Probabilistically checkable proofs, Interactive oracle proofs},
+location = {Nuremberg, Germany}
+}
+
+@article{kex,
+  title   = {Kex: A Platform For Analysis Of JVM Programs},
+  author  = {Abdullin, Azat and Itsykson, Vladimir},
+  journal = {Informatsionno-upravliaiushchie sistemy},
+  year    = {2022},
+  number  = {1},
+  pages   = {30--43},
+  doi     = {10.31799/1684-8853-2022-1-30-43},
+  url     = {http://i-us.ru/index.php/ius/article/download/15201/15059}
+}

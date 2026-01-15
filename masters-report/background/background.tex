@@ -1,0 +1,44 @@
+\chapter{Background}
+
+\section{Lean}
+
+A lot of background in Lean was required to undertake this project.
+The Lean development exercises the full expressivity of inductive types in
+Lean, for example and a thorough understanding of propositional vs definitional
+equality which is related to Proof irrelevance [Theorem proving for Lean4] and how that's implemented
+in Lean's type theory by special treatment of the lowest Universe [Mario's thesis]
+
+Various representations of formal languages particularly the problem of how
+to represent variables in contexts, with strong guarantees from the types System.
+[Cite chlipala, HOAS, and lean-lang.org]
+
+\section{Probabilistic Program Semantics}
+This section is entirely a summary of the denotational semantics given to Bayesian Probabilistic programs
+given by Staton. The probabilistic programs we aim to provide verification tools for in this work
+do not go beyond the generality of the semantics presented by Staton. A brief overview of key ideas
+is provided below (but it is better to read the )
+\begin{itemize}
+\item A clear treatment of Staton's commutative semantics.
+\item The distinction and intuition behind the difference
+between s-finite and sigma-finite measures. Perhaps
+even why they're used.
+\end{itemize}
+
+
+\section{Separation Logic}
+
+O'Hearn's original paper. PSL, Lilac, BaSL
+
+It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
+from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
+measure theory may hold some intuitions/inspiration or simplifications 
+\section{Measure Theory}
+
+\subsection{Pi-lambda theorem}
+
+\subsection{Disintegration theorem}
+
+\section{Symbolic Execution tools}
+
+\section{Iris and MoSeL}
+

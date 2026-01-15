@@ -1,0 +1,29 @@
+\chapter{PROJECT X}
+
+I want to note that I have not before seen the interpretation of
+a typed calculus, taking both the type and typing context as parameters
+to give the denotation of a term. This definition of terms with they're typing
+context, actually massively simplifies the lean development
+previous iterations, involved a type inference algorithm, which could fail
+and the denotation function was partial.
+
+Possible goals of this project:
+\begin{itemize}
+\item Formalisation of Lilac with tactical support
+\item Lean interpreter for the language which is sound w.r.t to the
+denotational semantics
+\item The first case of Compositional Symbolic execution for probabilistic separation logic
+  \subitem CSE for the Bluebell separation logic with possible immediate application in industry
+  for verifying correctness of Zero Knowledge Proof systems
+  This could perhaps be a tactic, which actually invokes the symbolic execution
+  to elaborate into a sequence of proof rules?
+
+  This is possibly not so hard
+  \subitem CSE for Lilac or BaSL. this is perhaps out of scope of project. But it
+  connects to the first part of the project formalising Lilac/BaSL which is novel
+  for being the first mechanisation of a separation logic for continuous probabilistic
+  programs.
+\end{itemize}
+
+terms in
+context
