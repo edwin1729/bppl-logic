@@ -6,6 +6,17 @@ intuitively followed this principle in my formalisation so far, also meaning its
 However the shape of the formalisation
 of Lilac is reasonably clear and I was able to identify some noteworthy problems which show up in the formalisation.
 
+The repository can be found on \href{https://github.com/edwin1729/bppl-logic}{GitHub}: It contains most of the syntax and semantics of both the language and program logic for it. 
+These can be regarded as the "data" parts (as opposed to "proof" parts) of the formalisation. There was much consideration (and confusion) in modelling
+both language and logic in a principled manner. We want a representations for free variables and contexts where we don't go out of bounds by construction.
+The approach is inspired by Dependent de Bruijn Indices \cite{cpdt} which also shows how types/propositions and terms in the language/logic are translated consistently
+into lean types and terms repsectively when taking the denotation.
+
+The goal with defining these, data parts is to be able to, using MoSeL, reimplement the case studies
+provided in the Lilac paper in an ergonomic manner (with tactical support), with the proofs of soundness of the logic itself being left as \texttt{sorry}.
+The "proof" parts are mostly incomplete, with the proof of unitarity of the
+unital element of the KRM being almost complete, being a first milestone (as it involves proof of corollaries of the $\pi$-$\lambda$-theorem)
+
 As a brief reflection on the difference in formalisation on the maths and computer science sides, in my limited experience,
 I do think in this project (computer science) I do need to think of multiple things at once and papers generally disseminate
 dependencies more clearly without depending as heavily on the reader to morph and modify lemmas as required. However
@@ -15,20 +26,75 @@ As such \ref{pi-lambda} talking about formalisation specific issues. But \ref{de
 talks about something more conceptual in Lilac! (My pivot towards the aim of a more theoretical contribution is that
 I feel I have gotten enough Knowledge of Lean from formalising Lilac)
 
-\section{Measure spaces as a dependent type}
-\label{paired-prob-space}
-
-\section{Pi-lambda-theorem as an induction principle}
-\label{pi-lambda}
-The $\pi-\lambda$-theorem is tool in measure theory for showing equality of two measures. It can be thought of as an
-induction principle, (indeed this is how it is defined in Lean) on the structure of a measure. Specifically, the
-defintion
+% \section{Measure spaces as a dependent type}
+% \label{paired-prob-space}
 
 \section{Parametrisation of the "store" by the "heap" in this separation logic}
 \label{dependent-store}
+The classical separation logic assertions are written like so $s, h \vdash P$, where the $s$ is a variable store and
+$h$ is a heap. In the satisfiability relation, none of $s$, $h$ or $P$ are dependent on another argument. Consider the
+probabilistic separation logic with satisfiability relation of form $\gamma, D, \mathcal{P} \vdash P$, 
+where $\gamma$ is the deterministic variable store, $D$ is the random variable store and $\mathcal{P}$ is the 
+probability space analagous to heap. I claim that $D$ is dependent on $\mathcal{P}$, and that many of the conditions in
+the satisfiability relation are actually true by construction.
 
-- The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
-- The inductive family definition of a sigma algebra, and the pi lambda theorem being an induction problem complicates thing
-when we can have multiple induction principles and we really want a specific induction principle!
-- Correctly instantiating BI, modelling random variables, "intrinsically type calculus"? 
-- Talk about Lilac, give the intuition that this is the actual line by line semantics
+This unspotted dependent typing is a consequence of how measurable functions are usually just denoted $A \overset{m}{\rightarrow} B$
+with the $\sigma$-algebra on A and B that is required being generally obvious from the context (there is usually only one).
+However in our case, we our changing the $sigma$-algebra we're working with all the time when taking independent combinations,
+in the separating conjunct.
+
+The relevant measurable function here is $D$ the random variable store. Its type is
+$D : [0, 1]^{\mathbb{N}} \overset{m}{\rightarrow} \llbracket \Delta \rrbracket$, where $\llbracket \Delta \rrbracket$ is the 
+denotation of the random variable context, a list of types the random values that can occur in the separation logic proposition
+$P$. As seen in a PSL, $D$ has quite an interesting type as a measurable function which can be composed with an expression
+in a propostion, which is equivalent to substitution for the usual deterministic variables.
+Now no explicit $\sigma$-algebra is provided for the Hilbert cube, the domain of $D$ and the natural candidate for this is
+the $sigma$-algebra for the hilbert cube contained in the probability space $\mathcal{P}$. This interpretation yeilds
+some simplifications in the satisfiability relation of probability specific connectives, exemplified in the \texttt{Own}
+connective. It's semantics is:
+
+$\gamma, 𝐷, ([0, 1]^{\mathbb{N}}, F, \mu) ⊨ own \, 𝐸 \quad iff \quad 𝐸 (\gamma) \circ 𝐷$ is F-measurable
+where $\mathcal{P} = ([0, 1]^{\mathbb{N}}, F, \mu)$ and $F$ is $\mathcal{P}$'s $\sigma$-algebra.
+So $𝐸 (\gamma) \circ 𝐷$ is F-measurable by construction. Ownership as measurability is a key concept of Lilac, and it neatly falls into place.
+
+\section{Pi-lambda-theorem as an induction principle}
+\label{pi-lambda}
+The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
+used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.
+It is similar to an induction principle on the structure of a $\sigma$-algebra. So we need prove some property C holds in the base and inductive cases
+of a $\sigma$-algebra. However there isn't an inductive type underlying this
+induction principle! The reason is two fold 1) when generating a measurable set from some base measurable sets, a specific
+set can be shown to be measurable by multiple different permutations of application of the axioms. For reference below
+is included an inductive defintion generating a $\sigma$-algebra from base measurable seats.
+
+\begin{leancode}
+/-- The smallest σ-algebra containing a collection `s` of basic sets -/
+inductive GenerateMeasurable (s : Set (Set α)) : Set α → Prop
+  | protected basic : ∀ u ∈ s, GenerateMeasurable s u
+  | protected empty : GenerateMeasurable s ∅
+  | protected compl : ∀ t, GenerateMeasurable s t → GenerateMeasurable s tᶜ
+  | protected iUnion : ∀ f : ℕ → Set α, (∀ n, GenerateMeasurable s (f n)) →
+      GenerateMeasurable s (⋃ i, f i)
+\end{leancode}
+
+2) The $\pi$-$\lambda$-theorem provides a relaxation on our proof obligation. We dont prove that the property C holds for countable unions 
+(\texttt{iUnion} above) if it holds for each of the sets we're taking a union over. Instead we only need to do so for countably pairwise disjoint unions.
+
+Being closed under disjoint unions instead of unions, is the difference between a $\lambda$-system compared to a $\sigma$-algebra. This relaxtion is the 
+content of the $\pi$-$\lambda$-theorem which we don't go into here.
+However there is an alternative "inductive" definition of a $\lambda$ system with the following axioms: 
+\begin{enumerate}
+\item The system $\mathcal{C}$ containt the base measurable sets we chose
+\item be closed under proper difference, for $\forall V, U \in \mathcal{C}, V \subseteq U \rightarrow U \setminus V \in \mathcal{C}$
+\item closed under increasing limits, take $i \in \mathbb{N}$ and $U_i \in \mathcal{C}$ then $\bigcup_{i \in \mathbb{N}} U_i \in \mathcal{C}$
+\end{enumerate}
+
+Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it doesn't provide the "induction principle" according to this definition.
+For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
+measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
+
+
+% - The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
+
+% - Correctly instantiating BI, modelling random variables, "intrinsically type calculus"? 
+% - Talk about Lilac, give the intuition that this is the actual line by line semantics
