@@ -8,7 +8,18 @@
 %% Sets page size and margins
 \usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 
+% %% setup for lean
+\usepackage{fontspec}
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{FreeMono}
+\usepackage[outputdir=build]{minted}
+\newmintinline[lean]{lean4}{bgcolor=white}
+\newminted[leancode]{lean4}{fontsize=\footnotesize}
+\usemintedstyle{tango}  % a nice, colorful theme
+
 %% Useful packages
+\usepackage{stmaryrd} % for \(ll/rr)bracket
+\usepackage{parskip}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{graphicx}
