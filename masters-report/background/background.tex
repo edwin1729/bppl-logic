@@ -10,10 +10,10 @@ bayesian perspective underpinned by Baye's law which describes how we update a p
 
 \Todo{buses and days and instantiation of Baye's law}
 
-
 A simple example taken from \cite{prob-semantics} is reproduced below to show how 
 
 \section{Measure Theory}
+\label{sec:measure_theory}
 In order to understand the semantics of a probabilistic programming, a formal definition for probability is needed.
 Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
 probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
@@ -41,14 +41,14 @@ $\forall G \in \mathcal{G}, f^{-1}(G) \in \mathcal{F}$.
 \Todo Define lebesgue integration, since it's used in the Giry monad.
 \Todo Define s-finite measures and kernels
 
-\subsection{Pi-lambda theorem}
+% \subsection{Pi-lambda theorem}
 
-\subsection{Disintegration theorem}
-The disintegration theorem allows a more general definition conditional variables where conditioning on events with
-with zero probability is well defined under certain conditions. This is required, since if conditioning
-is defined in a program logic, it must handle all edge cases
+% \subsection{Disintegration theorem}
+% The disintegration theorem allows a more general definition conditional variables where conditioning on events with
+% with zero probability is well defined under certain conditions. This is required, since if conditioning
+% is defined in a program logic, it must handle all edge cases
 
-\Todo more details in final report (as I haven't studied this yet)
+% \Todo more details in final report (as I haven't studied this yet)
 
 \section{Semantics of Probabilistic Programs}
 Staton provided a compositional semantics to first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
@@ -58,6 +58,7 @@ semantics. Note that supporting bayesian updates, involves the construct \texttt
 more complete semantics.
 The key contribution of the paper is the introduction of \texttt{s-finite kernels}, motivated by validating a basic commutativity property that programmers expect.
 Specifically:
+\begin{figure}[h]
 \[
 \begin{array}{c@{\qquad=\qquad}c}
 \begin{array}{l}
@@ -73,15 +74,15 @@ v
 \end{array}
 \end{array}
 \]
+    \caption{commutative program transformation}
+    \label{fig:commute-syntax}
+\end{figure}
 when neither x is free in u nor y is free in t. Another benefit of this semantics is a line-by-line compositionality, ie, the semantics of every subterm
 in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
 as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
 s-finite kernels denote open programs and s-finite measures denote closed programs.
 
-\subsection{Semantics of Let binding}
-Probabilistic programs are interpreted within the Giry monad \cite{giry}. Probability is an effect.
-This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
-also naturally show up in type of the monadic bind, which motivates it.
+\subsection{Types in BPPL}
 The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 
 this category. Syntactically:
 \[ 
@@ -94,17 +95,80 @@ rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the c
 must itself form a measurable space. There is some construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
 requirements (we don't go into it here).
 
-The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs, which are well-typed
-in the following cases:
+\subsection{Semantics of Let binding}
+Probabilistic programs are interpreted using the Giry monad \cite{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
+This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
+also naturally show up in type of the monadic bind, which motivates it. 
 
+The Giry functor takes some object (measurable space) $(A, \Sigma_A)$
+to a measurable space on the measures of $(\Sigma_A \rightarrow [0, \infty], \, \cdots)$ (the $\sigma$-algebra is ommitted). We'll denote $\Sigma_A \rightarrow [0, \infty]$ as \texttt{Measure A},
+for readability.
 
-We work in the categor
-Below I just state the \texttt{pure} and \texttt{bind} operations in the Giry monad, without proofs of
-the monad laws. 
-To think about commutativity of let bindings we will have to look at the semantics of the sequencing
-operations in a probabi
+The explanation focuses on intuition through diagrams. For a measurabe space $(A, \Sigma_A)$, a probability measure is of type
+$\mu : \Sigma_A \rightarrow [0, 1]$. This gives a distribution on A. The intuition behind $\mu$ is that we can sample some event using it.
+A kernel from $A$ to $B$ has type $\kappa : A \rightarrow Measure B$. Each triangle below is a kernel. And the types of it input and
+output are indicated, and we compose the kernels along the type B as $\kappa \underset{B}{\circ} \iota$. The types of the induvidual kernels and composed kernel of Fig \ref{fig:semantics},
+is given below
+
+\begin{align}
+\iota &: A \to \text{Measure } B \\
+\kappa &: B \to \text{Measure } C \\
+\kappa \underset{B}{\circ} \iota &: A \to \text{Measure } C
+\end{align}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\linewidth]{background/simple-semantics.png}
+    \label{fig:semantics}
+    \caption{A simple probabilistic program}
+\end{figure}
+
+The interpretation of the kernel $\iota$ is that for every (deterministic) value of $A$ it gets, it will give you a (probabilistic value) distribution over type $B$.
+So composition here, is sampling from the \texttt{Measure }$B$, getting a deterministic value of type $B$ and passing that to the kernel $\kappa$. This sampling
+is done ranging over all the values of $B$ in proportion to their distribution, and taking a weighted average of the values of type \texttt{Measure }$C$. More precisely,
+this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a. \int \lambda b. \; \kappa(b) \; d\iota(a)$ 
+(integral will be explained in \ref{sec:measure_theory} in the final draft). Notice that $\circ$ has a type very similar to the monadic bind (in the Giry monad).
+We now write $\mathcal{G}(A)$ instead of \texttt{Measure} $A$, for the Giry functor. 
+$\circ : ((B) \to \mathcal{G}(C)) \to ((A) \to \mathcal{G}(B)) \to \mathcal{G}(C)$. If we just swap the arguments and partially apply an $a : A$ on $\iota$, we see
+that the bind of the Giry monad composes a measure with a kernel like so $\iota(a) \bind \kappa : \mathcal{G}(B) \to (B \to \mathcal{G}(C)) \to \mathcal{G}(C)$
+
+The most interesting part of Staton's commutative semantics is that when kernels have multiple inputs (this does extend into the realm of multi-categories but
+we don't go into that here). To clarify, these kernels have multiple deterministic values they take in order to return a single probabilistic value (a measure).
+The commutativity property illustrated by the equality of the two programs in Fig \ref{fig:commute-semantics}. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{background/commute-semantics.png}
+    \label{fig:commute-semantics}
+    \caption{Commutativity of let bindings }
+\end{figure}
+
+$\kappa \underset{B}{\circ} \iota$ is given by the following on the left and right respectively
+
+$\lambda a \; c. \int \lambda e. \; \left(\int \lambda b. \; \kappa(b, e) \; d\iota(a)\right) d\eta(c)$
+
+$\lambda a \; c. \int \lambda b. \; \left(\int \lambda e. \; \kappa(b, e) \; d\eta(c)\right) d\iota(a)$
+
+Though these look rather unreadable, all that's happening is swapping the order of integration, and there is a theorem which allows us to this in certain conditions.
+In \cite{prob-semantics} it is shown that this theorem holds if instead of general kernels, we restrict ourselves to s-finite-kernels. A kernel
+ $\kappa : A \to \mathcal{G}(B)$ is ﬁnite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
+$\kappa$ is s-ﬁnite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
+kernels and $\Sigma_{i=1\ldots \infty} \; \kappa_i = \kappa$.
+
+In short topological transformations of these diagrams corresponding to the motivating example in \ref{fig:commute-syntax} do not change the semantics.
+
+% \begin{align}
+% \iota &: A \to \text{Measure } B \\
+% \kappa &: B \times C \to \text{Measure } D \\
+% \kappa \underset{B}{\circ} \iota &: A \times C \to \text{Measure } D
+% \end{align}
+% this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a \; c. \int \lambda b. \; \kappa(b, c) \; d\iota(a)$ 
+
 
 \subsection{Semantics of sample, observe and normalize}
+The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs \texttt{sample}, \texttt{observe} and \texttt{normalize}
+
+\Todo a description of these constructs
 
 \section{Lean and relevant recent formalisations}
 
@@ -124,27 +188,44 @@ to Lean very recently.
 There has been an exciting amount of recent activity in formalisations related to this work, which have enabled
 the formalisation of Lilac (see, \ref{psl}) in Lean to be a realistic goal
 
-
 A lot of background in Lean was required to undertake this project.
 The Lean development exercises the full expressivity of inductive types in
 Lean, for example and a thorough understanding of propositional vs definitional
 equality which is related to Proof irrelevance [Theorem proving for Lean4] and how that's implemented
 in Lean's type theory by special treatment of the lowest Universe [Mario's thesis]
 
-Various representations of formal languages particularly the problem of how
-to represent variables in contexts, with strong guarantees from the types System.
-[Cite chlipala, HOAS, and lean-lang.org]
+% Various representations of formal languages particularly the problem of how
+% to represent variables in contexts, with strong guarantees from the types System.
+% [Cite chlipala, HOAS, and lean-lang.org]
 
 
 \section{Separation Logic}
+Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \cite{og_sl}.
+The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
+usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it, the most fundamental one being
+a partial commutative monoid (PCM) with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
+later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a very natural tool reason about imperative programs mutating heap based memory, and concurrent programs.
 
-O'Hearn's original paper. PSL, Lilac, BaSL
+\subsection{Reviewing Probabilistic Separation Logics}
+More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
+\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
+updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
+probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
 
-It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
-from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
-measure theory may hold some intuitions/inspiration or simplifications 
+There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
+probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
+from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
+expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
+in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
+More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
 
-\section{Symbolic Execution tools}
+\subsection{Lilac}
+
+% It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
+% from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
+% measure theory may hold some intuitions/inspiration or simplifications 
+
+% \section{Symbolic Execution tools}
 
 \section{Iris and MoSeL}
 \label{MoSeL}
@@ -173,8 +254,51 @@ what conditions should be explored for better tactical support.
 
 MoSeL like IPM before it provides tactics mirroring the native Lean tactics, such as \texttt{iIntros} and \texttt{IAssumption}
 
-In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean very re
+In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean right before the beginning of this project
+\cite{iris-lean-impl, iris-lean}. So the formalisation builds on this. The interface provided by MoSeL is quite general. The interface
+defines a pre-orderered Set  (PROP, Entails)
+\begin{leancode}
+class BIBase (PROP : Type u) where
+%   ⊢ : PROP → PROP → Prop -- Entails
+  pure : Prop → PROP
+  ∧ : PROP → PROP → PROP
+  → : PROP → PROP → PROP
+  * : PROP → PROP → PROP -- separating conjunct
+  -∗ : PROP → PROP → PROP -- magic wand
+  persistently : PROP → PROP
+  ...
+\end{leancode}
 
+The type class \texttt{BIBase} defines the interface for the "data" parts of the separation logic, while the axioms that these
+need to satisfy (the "proof" parts) are defined in an extension of this type class.  We are defining the separation logic, Lilac or BaSL, in the meta-logic, Lean. 
+So \texttt{BIBase} is parametrised by a type \texttt{PROP} which is a proposition in the separation logic (as opposed to \texttt{Prop} in lean).
+
+We draw the reader's attention to the \texttt{Entails} which allows us to provide the semantics of entailment. The soundness of MoSeL's
+syntactic entailments are established by the semantics provided when instantiating \texttt{Entails}. This gives us a little flexibility
+in how we'd like to instantiate \texttt{PROP}. For simpler logics we could have \texttt{PROP}, directly capture the semantis of that
+proposition, giving \texttt{PROP} this shape. 
+
+\begin{leancode}
+PROP := Store → Heap → Prop
+\end{leancode}
+
+My understanding is that this precisely encodes a relation: the satisfiability relation. An n-ary relation is encoded as a function
+from the n parameters to a Proposition. In other words it's a set of n-tuples. (Sets of type A are encoded as $A \rightarrow Prop$).
+Notice however that $s, h \vDash P$ should be of the form 
+
+\begin{leancode}
+PROP := Store → Heap → PROP → Prop
+\end{leancode}
+
+where did the $P$ (of type \texttt{PROP}) go? It's given implicitly through the inductive construction of a term of \texttt{PROP}
+through the constructors defined by \texttt{and}, \texttt{sep}, etc. Any term of \texttt{PROP} implicitly contains the tree of
+constructors used to create it.
+
+This is standard for the simple example instantiations of MoSeL (such as classical separation logic, but quite convoluted
+conceptuall. We may wish to split the representations of the separation logic assertions into syntax and
+semantics, which is what is done in non-trivial logics and this projects formalisation. There is a denotation function of type
+$Store \rightarrow Heap \rightarrow PROP \rightarrow Prop$ (exactly how the satisfiability relation should look) 
+used in the instantiation of Entails; much more natural!
 
 \section{Related Work}
 \Todo{List the quasi borel spaces formalisation and stuff}

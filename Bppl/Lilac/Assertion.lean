@@ -94,7 +94,7 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
 -- Useing `MeasurableSpace.HC
 instance : MeasurableSpace HC := inferInstance
-
+-- ∧
 open MeasureTheory
 
 -- def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
