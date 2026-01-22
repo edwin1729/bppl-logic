@@ -1,45 +1,47 @@
 \chapter{Background}
 Probabilistic programming is a paradigm where we are defining statistical models using code. It is a means of describing
 complex distributions over some space in a structured way. Probabilistic programming language (PPL) also come with an interpreter
-(probabilistic inference engine) ehich allows the programmer to sample a term from the distribution denoted by a program
+(probabilistic inference engine) which allows the programmer to sample a term from the distribution denoted by a program
 and indeed sample distributions while constructing new distributions.
 
-More interestingly a Bayesian probabilistic programming language (BPPL) also allows one to "observe" an event and update
+More interestingly a Bayesian probabilistic programming languages (BPPL) also allows one to "observe" an event and update
 their belief of the world (update the probability distribution they associate with some ocurrence). Here we take the
 bayesian perspective underpinned by Baye's law which describes how we update a probability distribution based
 
-\Todo{buses and days and instantiation of Baye's law}
 
 A simple example taken from \cite{prob-semantics} is reproduced below to show how 
+
+\Todo{example of bus frequency on weekends vs weekdays}
+
+\Todo{State Baye's law through the example}
 
 \section{Measure Theory}
 \label{sec:measure_theory}
 In order to understand the semantics of a probabilistic programming, a formal definition for probability is needed.
 Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
 probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
-variable we first need to define Measures and Measurable Space. A measurable space is a pair $(\Omega, \mathcal{F})$,
-where $\Omega$ is some Set, and $\mathcal{F} \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\mathcal{F}$
-to be an event (such as a coin flip landing heads). We would like the $\sigma$-algebra to closed under complements and
-countable unions. From the presentation so far it may seem like all singleton sets must be events but
+variable we first need to define Measures and Measurable Space. A measurable space is a pair $(\Omega, \Sigma_\Omega)$,
+where $\Omega$ is some Set, and $\Sigma_\Omega \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\Sigma_\Omega$
+to be an event (such as a coin flip landing heads). We would like the $\sigma$-algebra to be closed under complements and
+countable unions. From the presentation so far, it may seem like all singleton sets must be events but
 due to technical reasons (see \cite{axler} Ch. 2), this cannot be in certain cases where $\Sigma$ is infinite.
 
 A measure on a measurable space is a function
- $\mu : \mathcal{F} \rightarrow [0, \infty]$ 
+ $\mu : \Sigma_\Omega \rightarrow [0, \infty]$. 
 
+A probability measure on the other hand is more restrictive: $\mu : \Sigma_\Omega \rightarrow [0, 1]$.
 This is essentially providing a probability density or probability mass function for the set of events
-$\mathcal{F}$. A similar but more general notion than what a measure gives us, is a random variable: a measurable
+$\Sigma_\Omega$. A similar but more general notion than what a measure gives us, is a random variable: a measurable
 function between two measurable spaces. I say "more general notion", since using the identity measurable function
-yields the measure we started with. A measurable function denoted $f : (\Omega_1, \mathcal{F})  \xrightarrow{m} (\Omega_2, \mathcal{G})$
-$f : \Omega_1  \xrightarrow{m} \Omega_2$ is well defined when there is an ambient measurable space structure $(\Omega_1, \mathcal{F})$
+yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \xrightarrow{m} (\Omega_2, \mathcal{G})$
+$f : \Omega_1  \xrightarrow{m} \Omega_2$ is well defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
 and $(\Omega_2, \mathcal{G})$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
-$\Omega_1 = [1,6]^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = [1,12]^2$.
-A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \mathcal{F})$ to the pushforward measure $\mu'$ on $(\Omega_2, \mathcal{G})$.
+$\Omega_1 = \{1,\ldots,6\}^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = \{1,\ldots,12\}$.
+A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\Omega)$ to the pushforward measure $\mu'$ on $(\Omega_2, \mathcal{G})$.
 In order for this to always be well defined we require the following measurability to be satisfied by all measurable functions:
-$\forall G \in \mathcal{G}, f^{-1}(G) \in \mathcal{F}$.
+$\forall G \in \mathcal{G}, f^{-1}(G) \in \Sigma_\Omega$.
 
-
-\Todo Define lebesgue integration, since it's used in the Giry monad.
-\Todo Define s-finite measures and kernels
+\Todo{Define lebesgue integration}
 
 % \subsection{Pi-lambda theorem}
 
@@ -51,11 +53,11 @@ $\forall G \in \mathcal{G}, f^{-1}(G) \in \mathcal{F}$.
 % \Todo more details in final report (as I haven't studied this yet)
 
 \section{Semantics of Probabilistic Programs}
-Staton provided a compositional semantics to first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
+Staton provided a compositional semantics for first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
 validation of inference algorithms, etc. The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
-are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. BaSL uses exactly this
-semantics. Note that supporting bayesian updates, involves the construct \texttt{observe} and \texttt{normalize} in the language. We will present here the
-more complete semantics.
+are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. BaSL uses exactly Staton's
+semantics. Note that supporting bayesian updates, involves the constructs \texttt{observe} and \texttt{normalize} in the language. We will present here the
+Staton's semantics.
 The key contribution of the paper is the introduction of \texttt{s-finite kernels}, motivated by validating a basic commutativity property that programmers expect.
 Specifically:
 \begin{figure}[h]
@@ -77,7 +79,7 @@ v
     \caption{commutative program transformation}
     \label{fig:commute-syntax}
 \end{figure}
-when neither x is free in u nor y is free in t. Another benefit of this semantics is a line-by-line compositionality, ie, the semantics of every subterm
+when neither x is free in u nor y is free in t. Another benefit of this semantics is a term-wise compositionality, ie, the semantics of every subterm
 in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
 as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
 s-finite kernels denote open programs and s-finite measures denote closed programs.
@@ -89,10 +91,10 @@ this category. Syntactically:
 \mathbb{A}, \mathbb{B} ::= \mathbb{R} \mid \mathcal{P}(\mathbb{A}) \mid 1 \mid \mathbb{A} \times \mathbb{B} \mid \cdots
 \]
 
-Objects in the category of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
+Objects in this category are of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
 It's the type of probability distributions over $\mathbb{A}$. Actually not quite, since we allow any measure $\mu : \Sigma_A \rightarrow [0, \infty]$,
-rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$.
-must itself form a measurable space. There is some construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
+rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$,
+must itself form a measurable space. There is a construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
 requirements (we don't go into it here).
 
 \subsection{Semantics of Let binding}
@@ -168,31 +170,39 @@ In short topological transformations of these diagrams corresponding to the moti
 \subsection{Semantics of sample, observe and normalize}
 The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs \texttt{sample}, \texttt{observe} and \texttt{normalize}
 
-\Todo a description of these constructs
+\Todo{description of these constructs}
 
-\section{Lean and relevant recent formalisations}
+\section{Lean and related formalisation projects}
 
 Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
 of mathematics. Here we are concerned with verification of software, so the theorems in question
 express properties of the software. The axioms of mathematics that we use is a dependent type theory.
 In this setting of dependent type theory, checking the correctness of proof is the same thing as
-checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism \rcite{}.
+checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
 Further the tool we use to for machine-checked proofs is an interactive theorem prover with support
 for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
 principles a person would use when writing pen-and-paper proofs. There are two proof assistants
 that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
 of required theorems in measure theory and the latter having the original implementation of the Iris framework.
-Lean was chosen since the front-end of the Iris proof interface (MoSeL, see \ref{MoSeL}) had been fully ported
+Lean was chosen since the front-end of the Iris proof mode (MoSeL, see \ref{MoSeL}) had been fully ported
 to Lean very recently.
 
-There has been an exciting amount of recent activity in formalisations related to this work, which have enabled
-the formalisation of Lilac (see, \ref{psl}) in Lean to be a realistic goal
+There has been an exciting amount of recent activity in formalisations related to this work, which has enabled
+the formalisation of Lilac (see, \ref{lilac}) in Lean to be a realistic goal. Most importantly, the formalisation of the 
+disintegration theorem in \cite{remy} is only available in Lean at the moment. Disintegration theorem also involved the
+formalisation of kernels which are actually available in several other proof assistants.
+ Quasi-borel spaces \cite{quasi-borel} (in which higher order
+probabilistic programs are interpreted) have been formalised in Isabelle/HOL in \cite{quasi-borel-impl}, along with kernels.
+s-finite-kernels can also be found in rocq \cite{sfinite_kernel_rocq}.
 
 A lot of background in Lean was required to undertake this project.
-The Lean development exercises the full expressivity of inductive types in
-Lean, for example and a thorough understanding of propositional vs definitional
-equality which is related to Proof irrelevance [Theorem proving for Lean4] and how that's implemented
-in Lean's type theory by special treatment of the lowest Universe [Mario's thesis]
+For example, we use the full expressivity of inductive types and inductive families.
+Also an understanding of propositional vs definitional
+equality which is related to Proof irrelevance \cite{theorem-proving-in-lean} and how that's implemented
+in Lean's type theory by special treatment of the lowest Universe \cite{mario}, is very helpful.
+
+\subsection{Inductive families in Lean}
+\subsection{Excerpt of Lean type theory bringing about proof irrelevance}
 
 % Various representations of formal languages particularly the problem of how
 % to represent variables in contexts, with strong guarantees from the types System.
@@ -202,9 +212,10 @@ in Lean's type theory by special treatment of the lowest Universe [Mario's thesi
 \section{Separation Logic}
 Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \cite{og_sl}.
 The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
-usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it, the most fundamental one being
-a partial commutative monoid (PCM) with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
-later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a very natural tool reason about imperative programs mutating heap based memory, and concurrent programs.
+usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it: the most fundamental one being
+a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
+later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool toreason about imperative programs mutating heap based memory
+at a suitable level of abstraction. It then found success also in reasoning about concurrent programs \cite{csl}.
 
 \subsection{Reviewing Probabilistic Separation Logics}
 More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
@@ -220,6 +231,22 @@ in fact be more expressive making it important. Relational reasoning for probabi
 More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
 
 \subsection{Lilac}
+\label{lilac}
+The following are a few core intuitions behind Lilac. Lilac aims to reason about random variables, which is a higher level of abstraction that we generally
+reason in informally (as opposed to descending down into measure theory and lebesgue integrals). Since it's a separation logic, it is also compositional but
+along a different axis to compositionality of the denotational semantics. I call the compositionality of probabilistic separation logic a line-by-line compositionality
+(as opposed to term-wise compositionality). Each let binding creates a new "line" and we can compose our reasoning about each of line. In the denotational semantics
+we would instead reason compositionally about the arguments to the monadic bind operator (an s-finite measure and an s-finite-kernel). The former is a more natural way to reason
+about a sequencing operator.
+
+This reasoning style is acheived by defining a resource which gets carried through and composed and split according to the laws of separation logic. This resource or state is
+a canonical source of randomness, the Hilbert cube, along with a measure space structure over it. It can be argued that the Hilbert cube could be replaced with something else,
+and indeed the definitions are parametric over this choice of measure space for a while. Any distribution can be constructed from the Hilbert cube (which is like a uniform distribution)
+using the operations/terms of the language.
+
+\Todo{ownership as measurability}
+
+\Todo{independent combinations if probability spaces}
 
 % It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
 % from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
@@ -294,11 +321,11 @@ where did the $P$ (of type \texttt{PROP}) go? It's given implicitly through the 
 through the constructors defined by \texttt{and}, \texttt{sep}, etc. Any term of \texttt{PROP} implicitly contains the tree of
 constructors used to create it.
 
-This is standard for the simple example instantiations of MoSeL (such as classical separation logic, but quite convoluted
+This is standard for the simple example instantiations of MoSeL (such as classical separation logic), but quite convoluted
 conceptuall. We may wish to split the representations of the separation logic assertions into syntax and
 semantics, which is what is done in non-trivial logics and this projects formalisation. There is a denotation function of type
 $Store \rightarrow Heap \rightarrow PROP \rightarrow Prop$ (exactly how the satisfiability relation should look) 
 used in the instantiation of Entails; much more natural!
 
-\section{Related Work}
-\Todo{List the quasi borel spaces formalisation and stuff}
+% \section{Related Work}
+% \Todo{List the quasi borel spaces formalisation and stuff}
