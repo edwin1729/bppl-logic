@@ -84,7 +84,7 @@ keywords = {probabilistic programming, separation logic}
       url={https://arxiv.org/abs/2510.04070}, 
 }
 
-@InProceedings{quasiborel_isabelle,
+@InProceedings{quasi-borel-impl,
   author =	{Hirata, Michikazu and Minamide, Yasuhiko and Sato, Tetsuya},
   title =	{{Semantic Foundations of Higher-Order Probabilistic Programs in Isabelle/HOL}},
   booktitle =	{14th International Conference on Interactive Theorem Proving (ITP 2023)},
@@ -524,3 +524,57 @@ keywords = {coq proof assistant, cryptographic proofs, observational equivalence
 location = {Savannah, GA, USA},
 series = {POPL '09}
 }
+
+@article{loom,
+author = {Gladshtein, Vladimir and P\^{\i}rlea, George and Zhao, Qiyuan and Kurin, Vitaly and Sergey, Ilya},
+title = {Foundational Multi-Modal Program Verifiers},
+year = {2026},
+issue_date = {January 2026},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {10},
+number = {POPL},
+url = {https://doi.org/10.1145/3776719},
+doi = {10.1145/3776719},
+abstract = {Multi-modal program verification is a process of validating code against its specification using both dynamic and symbolic techniques, and proving its correctness by a combination of automated and interactive machine-assisted tools. In order to be trustworthy, such verification tools must themselves come with formal soundness proofs, establishing that any program verified in them against a certain specification does not violate the specification's statement when executed. Verification tools that are proven sound in a general-purpose proof assistant with a small trusted core are commonly referred to as foundational.    We present a framework that facilitates and streamlines construction of program verifiers that are both foundational and multi-modal. Our approach adopts the well-known idea of monadic shallow embedding of an executable program semantics into the programming language of a theorem prover based on higher-order logic, in our case, the Lean proof assistant. We provide a library of monad transformers for such semantics, encoding a variety of computational effects, including state, divergence, exceptions, and non-determinism. The key theoretical innovation of our work are monad transformer algebras that enable automated derivation of the respective sound verification condition generators. We show that proofs of the resulting verification conditions enjoy automation using off-the-shelf SMT solvers and allow for an interactive proof mode when automation fails. To demonstrate versatility of our framework, we instantiated it to embed two foundational multi-modal verifiers into Lean for reasoning about (1) distributed protocol safety and (2) Dafny-style specifications of imperative programs, and used them to mechanically verify a number of non-trivial case studies.},
+journal = {Proc. ACM Program. Lang.},
+month = jan,
+articleno = {77},
+numpages = {32},
+keywords = {Dijkstra monads, Lean, mechanised proofs, multi-modal verification}
+}
+
+@mastersthesis{mario,
+  author = {Carneiro, Mario},
+  title = {The Type Theory of Lean},
+  school = {Carnegie Mellon University},
+  year = {2019},
+  url = {https://github.com/digama0/lean-type-theory/releases/download/v1.0/main.pdf}
+} 
+
+@book{theorem-proving-in-lean,
+  author = {Avigad, Jeremy and de Moura, Leonardo and Kong, Soonho and Ullrich, Sebastian},
+  title = {Theorem Proving in Lean 4},
+  year = {2024},
+  url = {https://leanprover.github.io/theorem_proving_in_lean4/},
+  note = {with contributions from the Lean Community}
+}
+
+@article{csl,
+author = {Brookes, Stephen and O'Hearn, Peter W.},
+title = {Concurrent separation logic},
+year = {2016},
+issue_date = {July 2016},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {3},
+number = {3},
+url = {https://doi.org/10.1145/2984450.2984457},
+doi = {10.1145/2984450.2984457},
+abstract = {Concurrent Separation Logic (CSL) was originally advanced in papers of the authors published in Theoretical Computer Science for John Reynolds's 70th Birthday Festschrift (2007). Preliminary versions appeared as invited papers in the CONCUR'04 conference proceedings. Foundational work leading to these papers began in 2002. Since then there have been significant developments stemming from CSL, both in theoretical and practical research. In this retrospective paper we describe the main ideas that underpin CSL, placing these ideas into historical context by summarizing the prevailing tendencies in concurrency verification and programming language semantics when the logic was being invented in 2002-2003. We end with a snapshot of the state-of-the-art as of 2016. Along the way we describe some of the main developments in the intervening period, and we attempt to classify the work that has been done, along broad lines. While we do not intend an exhaustive survey, we do hope to provide some general perspective on what has been achieved in the field, what remains to be done, and directions for future work.},
+journal = {ACM SIGLOG News},
+month = aug,
+pages = {47–65},
+numpages = {19}
+}
+
