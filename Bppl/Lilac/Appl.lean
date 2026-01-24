@@ -50,12 +50,13 @@ instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (
     MeasurableSpace ⟦t⟧ :=
   d.instMeasurable t
 
-abbrev MeasurableFunction (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
+abbrev MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
   := {f: α → β // Measurable f}
 
-notation α " -m→ " β => {f: α → β // Measurable f}
+notation α " -m→ " β => MeasurableFun α β
 
-instance [MeasurableSpace α] [MeasurableSpace β] : CoeFun (α -m→ β) (fun _ => α → β) where
+instance instCoeMeasurableFun [MeasurableSpace α] [MeasurableSpace β] :
+    CoeFun (α -m→ β) (fun _ => α → β) where
   coe f := f.val
 
 
@@ -135,8 +136,10 @@ noncomputable section
 def foo (p : ℝ × ℝ) : Bool := p.1 < p.2
 
 lemma foop : Measurable (foo) := by
+  -- apply measurable_to_bool -- much simpler method using this
   rw [Measurable]
   intro t ht
+
   have h : t = ∅ ∨ t = {true} ∨ t = {false} ∨ t = Set.univ := by
     rcases em (true ∈ t) with ht' | ht' <;> rcases em (false ∈ t) with hf' | hf'
     · right; right; right; ext b; cases b <;> simp [*]
@@ -194,7 +197,7 @@ to give an element of a measurable space -/
   | ite P M N => ⟨fun env ↦ if P.den.1 env then M.den.1 env else N.den.1 env,
       -- This is just a slightly finicky sorry, to show the function translating from bool to Prop
       -- is Measurable. Just need that as an additional lemma
-      Measurable.ite (sorry) M.den.2 N.den.2⟩
+      Measurable.ite (by sorry) M.den.2 N.den.2⟩
   | flip p hp => ⟨fun _ ↦ (bernoulli p hp).toMeasure, measurable_const⟩
   | r x => ⟨fun _ ↦ x, measurable_const⟩
   | arith op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),

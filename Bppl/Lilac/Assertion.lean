@@ -55,22 +55,34 @@ of `Meas` is also in `Set`)-/
 -- separately, and for the moment let
 
 /- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
-dentoation must have a measurable space structure -/
+denotation must have a measurable space structure -/
 variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
+
+abbrev E {ds : List TyDet} {rs : List TyRand} {A : TyRand} :=
+  (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ ⟦A⟧)
 
 -- Here Term means Assertion actually
 inductive Term : List TyDet → List TyRand → Type
   -- | var   : Member ty ctx → Term ctx
-  | bot : Term ds rs -- ds: deterministic context, rs: random variable context
+  | top : Term ds rs -- ds: deterministic context, rs: random variable context
+  | bot : Term ds rs
   | and  : Term ds rs  → Term ds rs → Term ds rs
+  | or  : Term ds rs  → Term ds rs → Term ds rs
+  | imp  : Term ds rs  → Term ds rs → Term ds rs
   | sep  : Term ds rs  → Term ds rs → Term ds rs
+  | wand : Term ds rs  → Term ds rs → Term ds rs
   | persistently  : Term ds rs  → Term ds rs
-  | forall : Term (d :: ds) rs → Term ds rs
+  | forall (d : TyDet) : Term (d :: ds) rs → Term ds rs
+  | exists (d : TyDet) : Term (d :: ds) rs → Term ds rs
+  -- is it a problem that only types at the head of the list can be quantified over?
+  | forall_rv (r : TyRand) : Term ds (r :: rs) → Term ds rs
+  | exists_rv (r : TyRand) : Term ds (r :: rs) → Term ds rs
   -- | app   : Term ctx (.fn dom ran) → Term ctx dom → Term ctx ran
   -- | let : Term ctx ty₁ → Term (ty₁ :: ctx) ty₂ → Term ctx ty₂
-  | own {ds : List TyDet} {rs : List TyRand} {A : TyRand} :
-      (HList (⟦·⟧) ds → {f : List.TProd (⟦·⟧) rs → ⟦A⟧ // Measurable f})
-      → Term ds rs
+  | own : --{ds : List TyDet} {rs : List TyRand} {A : TyRand} :
+      @E _ _ _ _ ds rs _ → Term ds rs
+  -- | distrib {ds : List TyDet} {rs : List TyRand} {A : TyRand} :
+
 -- ⊤ | ⊥ | 𝑃 ∧ 𝑄 | 𝑃 ∨ 𝑄 | 𝑃 → 𝑄 |
 -- 𝑃 ∗ 𝑄 | 𝑃 −∗ 𝑄 | □ 𝑃 |
 -- ∀𝑥:𝑆.𝑃 | ∃𝑥:𝑆.𝑃 | ∀rv𝑋 :𝐴.𝑃 | ∃rv𝑋 :𝐴.𝑃 |
@@ -99,23 +111,38 @@ open MeasureTheory
 -- This section was made originally to be used with `own E` or any other probability specfic
 -- connectives. But we may not need this at all, since `Own E` is alway `True` if one is able
 -- to construct an `E` in the first place!
-section
+namespace MeasurableFunc
 variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
 
-def MeasurableFunction.compose (g : MeasurableFunction β γ) (f : MeasurableFunction α β)
-  : MeasurableFunction α γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
+def comp (g : β -m→ γ) (f : α -m→ β)
+  : α -m→ γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
 
-notation g " ∘ " f => MeasurableFunction.compose g f
+notation g " ∘ " f => comp g f
 
-end
+def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
+  ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
+
+notation x " :: " xs => fun_prod x xs
+
+end MeasurableFunc
+
+/-- Todo add finite footprint condition -/
+abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → HList (⟦·⟧) ds → (HC -m→ (List.TProd (⟦·⟧) rs)) → PSp HC → Prop
+    Term ds rs → HList (⟦·⟧) ds → RV (List.TProd (⟦·⟧) rs) → PSp HC → Prop
+  | top, _, _, _  => True
   | bot, _, _, _  => False
   | and P Q, γ, D, φ => P.denote γ D φ ∧ Q.denote γ D φ
-  | sep P Q, γ, D, φ => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | or P Q, γ, D, φ => P.denote γ D φ ∨ Q.denote γ D φ
+  | imp P Q, γ, D, φ => ∀ φ', φ ≤ φ' → P.denote γ D φ' → Q.denote γ D φ'
+  | sep P Q, γ, D, φ => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ some φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | wand P Q, γ, D, φ => ∀ φp, ∃ φq, φp • φ = some φq ∧ (P.denote γ D φp → Q.denote γ D φq)
   | persistently P, γ, D, _ => P.denote γ D 1
-  | «forall» P, γ, D, φ => ∀ x, P.denote (x :: γ) D φ
+  | «forall» d P, γ, D, φ => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | «exists» d P, γ, D, φ => ∃ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | forall_rv r P, γ, D, φ => ∀ X : RV ⟦r⟧, P.denote γ (X :: D) φ -- note the cons notation ;)
+  | exists_rv r P, γ, D, φ => ∃ X : RV ⟦r⟧, P.denote γ (X :: D) φ
   | own E, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1)
 
 /-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
