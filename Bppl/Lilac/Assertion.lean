@@ -86,15 +86,12 @@ inductive Term : List TyDet → List TyRand → Type
 -- for encoding the four way satisfiabilty relation: γ, D 𝒫 ⊨ P
 variable {α : Type*} [nonempty : Nonempty α]
 
-
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
-
--- Hilbert Cube
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
--- Useing `MeasurableSpace.HC
+-- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
--- ∧
+
 open MeasureTheory
 
 -- def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
@@ -113,7 +110,7 @@ notation g " ∘ " f => MeasurableFunction.compose g f
 end
 
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → HList (⟦·⟧) ds → MeasurableFunction HC (List.TProd (⟦·⟧) rs) → PSp HC → Prop
+    Term ds rs → HList (⟦·⟧) ds → (HC -m→ (List.TProd (⟦·⟧) rs)) → PSp HC → Prop
   | bot, _, _, _  => False
   | and P Q, γ, D, φ => P.denote γ D φ ∧ Q.denote γ D φ
   | sep P Q, γ, D, φ => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
