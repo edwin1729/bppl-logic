@@ -54,12 +54,25 @@ of `Meas` is also in `Set`)-/
 -- we're struggling to see how to couple the logic with the language. So let's tackle that
 -- separately, and for the moment let
 
+open MeasureTheory
+
 /- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
 denotation must have a measurable space structure -/
 variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
 
-abbrev E {ds : List TyDet} {rs : List TyRand} {A : TyRand} :=
+/-- Deterministic Value -/
+abbrev detVal (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → ⟦A⟧)
+
+/-- Random Value -/
+abbrev randVal (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
   (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ ⟦A⟧)
+
+/-- Deterministic distribution -/
+abbrev detDist (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → Measure ⟦A⟧)
+
+/-- Random distribution -/
+abbrev randDist (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
+  (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ Measure ⟦A⟧)
 
 -- Here Term means Assertion actually
 inductive Term : List TyDet → List TyRand → Type
@@ -79,9 +92,13 @@ inductive Term : List TyDet → List TyRand → Type
   | exists_rv (r : TyRand) : Term ds (r :: rs) → Term ds rs
   -- | app   : Term ctx (.fn dom ran) → Term ctx dom → Term ctx ran
   -- | let : Term ctx ty₁ → Term (ty₁ :: ctx) ty₂ → Term ctx ty₂
-  | own : --{ds : List TyDet} {rs : List TyRand} {A : TyRand} :
-      @E _ _ _ _ ds rs _ → Term ds rs
-  -- | distrib {ds : List TyDet} {rs : List TyRand} {A : TyRand} :
+  | own : randVal ds rs A → Term ds rs
+  | dist : randVal ds rs A → detDist ds A → Term ds rs
+  | eq : randVal ds rs A₁ → randVal ds rs A₂ → Term ds rs -- almost sure equality
+  -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
+  -- denotation is ℝ
+  | wp : randDist ds rs A → Term ds (A :: rs) → Term ds rs
+
 
 -- ⊤ | ⊥ | 𝑃 ∧ 𝑄 | 𝑃 ∨ 𝑄 | 𝑃 → 𝑄 |
 -- 𝑃 ∗ 𝑄 | 𝑃 −∗ 𝑄 | □ 𝑃 |
@@ -104,8 +121,6 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
 
-open MeasureTheory
-
 -- def RV (A : Type) [MeausurableSpace A] := {f : α → A // measurable }
 
 -- This section was made originally to be used with `own E` or any other probability specfic
@@ -122,12 +137,20 @@ notation g " ∘ " f => comp g f
 def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
   ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
 
-notation x " :: " xs => fun_prod x xs
+notation x " ; " xs => fun_prod x xs
 
 end MeasurableFunc
 
 /-- Todo add finite footprint condition -/
 abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
+
+-- abbrev RV' (rs : List TyRand) := HC -m→ (List.TProd (⟦·⟧) rs)
+
+-- Do we really need a measurable space on the domain of D and D to be measurable?
+-- and why do we need finite footprint?o
+
+-- Interesting that measure on the hilbert cube is not uniform, or is it?
+-- for σ-algebra with finite footprint at least??
 
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
     Term ds rs → HList (⟦·⟧) ds → RV (List.TProd (⟦·⟧) rs) → PSp HC → Prop
@@ -141,9 +164,28 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
   | persistently P, γ, D, _ => P.denote γ D 1
   | «forall» d P, γ, D, φ => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
   | «exists» d P, γ, D, φ => ∃ x : ⟦d⟧, P.denote (x :: γ) D φ
-  | forall_rv r P, γ, D, φ => ∀ X : RV ⟦r⟧, P.denote γ (X :: D) φ -- note the cons notation ;)
-  | exists_rv r P, γ, D, φ => ∃ X : RV ⟦r⟧, P.denote γ (X :: D) φ
+  | forall_rv r P, γ, D, φ => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+  | exists_rv r P, γ, D, φ => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
   | own E, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1)
+
+  | dist E μ, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1) ∧
+      μ γ = .bind φ.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
+  -- confirm if (X₁, X₂)⁻¹ (A) = X₁⁻¹ (A) ∪ X₂⁻¹ (A) ∪
+  -- Do we need different types A₁ and A₂ (what's the use of almost sure equality)
+  | eq E₁ E₂, γ, D, φ =>
+    let X₁ := (E₁ γ).1 ∘ D.1
+    let X₂ := (E₂ γ).1 ∘ D.1
+    -- let F := {ω | X₁ ω = X₂ ω}
+    sorry --: randVal ds rs A → randVal ds rs A → Term ds rs -- almost sure equality
+    -- consider just taking another PSp instead of μ, if it might simplify proof later
+  | @wp _ _ _ _ _ _ A M Q, γ, D, φ => ∀ φ_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
+      φ_fr • φ ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
+      ∀ D' : RV (List.TProd (⟦·⟧) (rs' ++ rs)),
+      ∃ X : RV ⟦A⟧, ∃ φ' : PSp HC,
+      ∃ μ' : ProbabilityMeasure HC, φ_fr • φ' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
+      (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
+        (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
+      Q.denote γ (X ; D) φ'
 
 /-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `φ` -/
