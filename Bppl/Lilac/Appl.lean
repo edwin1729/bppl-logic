@@ -55,6 +55,10 @@ abbrev MeasurableFunction (α β : Type*) [MeasurableSpace α] [MeasurableSpace 
 
 notation α " -m→ " β => {f: α → β // Measurable f}
 
+instance [MeasurableSpace α] [MeasurableSpace β] : CoeFun (α -m→ β) (fun _ => α → β) where
+  coe f := f.val
+
+
 -- TODO: The below two don't actually work, because of clash with indexing notation.
 open MeasureTheory in
 /-- Optionally provide non-standard domain φ-algebra -/
@@ -74,7 +78,7 @@ inductive Ty where
   | index
   | G : Ty → Ty
 
-scoped notation ty₁ " × " ty₂ => Ty.prod ty₁ ty₂
+-- scoped notation ty₁ " × " ty₂ => Ty.prod ty₁ ty₂
 
 inductive Arith where
   | add : Arith
@@ -92,9 +96,9 @@ inductive Term : List Ty → Ty → Type
   | var : Member ty ctx → Term ctx ty
   | ret : Term ctx ty → Term ctx (.G ty)
   | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
-  | pair  : Term ctx ty₁ → Term ctx ty₂ → Term ctx (ty₁ × ty₂)
-  | fst : Term ctx (ty₁ × ty₂) → Term ctx ty₁
-  | snd : Term ctx (ty₁ × ty₂) → Term ctx ty₂
+  | pair  : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
+  | fst : Term ctx (.prod ty₁ ty₂) → Term ctx ty₁
+  | snd : Term ctx (.prod ty₁ ty₂) → Term ctx ty₂
   | T : Term ctx .bool
   | F : Term ctx .bool
   | ite : Term ctx .bool → Term ctx ty → Term ctx ty → Term ctx ty
@@ -106,7 +110,7 @@ inductive Term : List Ty → Ty → Type
   | vect : (Fin n → Term ctx ty) → Term ctx (.exp n ty)
   | index : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
-  | for : ℕ → Term ctx ty → Term (index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
+  | for : ℕ → Term ctx ty → Term (.index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
 
 noncomputable section
 -- Most of the MeasurableSpace instance provided in
@@ -128,7 +132,7 @@ noncomputable section
   | div => ⟨fun (x,y) ↦ x / y, measurable_div⟩
   | pow => ⟨fun (x,y) ↦ x ^ y, measurable_pow⟩
 
-def foo (p: ℝ × ℝ) : Bool := p.1 < p.2
+def foo (p : ℝ × ℝ) : Bool := p.1 < p.2
 
 lemma foop : Measurable (foo) := by
   rw [Measurable]
@@ -160,14 +164,28 @@ instance : DenotationalMeas Ty where
   den ty := ↑ty.den
   instMeasurable ty := ty.den.2
 
+instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
+  default := match ty with
+    | .prod ty₁ ty₂ =>
+      (@default ty₁.den.carrier (arbitrary ty₁), @default ty₂.den.carrier (arbitrary ty₂))
+    | (Ty.G ty) => Measure.dirac (@default ty.den.carrier (arbitrary ty))
+    | Ty.index => default
+    | Ty.exp _ ty => fun _ ↦ @default ty.den.carrier (arbitrary ty)
+    | Ty.real => default
+    | Ty.bool => default
+
 -- Sadly Classes can't be annotate without reducible to. So the notation `⟦⟧` can't
 -- may used through a type class and still be made reducible? Investigate
 -- and at the same time I struggle to get type class inference to notice the M
+
+/-- Takes the term and variable environment (which is a measurable function)
+to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟦·⟧) ctx -m→ ty.den
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
   | ret X => ⟨fun env ↦ .dirac (X.den.1 env),
       MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
-  | bind M N => sorry -- the arguemnt `X` is the extra term in `N`'s context
+  -- the arguemnt `X` is the extra term in `N`'s context
+  | bind M N => ⟨fun env ↦ Measure.bind (M.den.1 env) (fun X ↦ N.den.1 (X, env)), sorry⟩
   | pair M N => ⟨fun env ↦ (M.den.1 env, N.den.1 env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den.1 env).fst, Measurable.fst M.den.2⟩
   | snd M => ⟨fun env ↦ (M.den.1 env).snd, Measurable.snd M.den.2⟩
@@ -184,10 +202,18 @@ instance : DenotationalMeas Ty where
   | cmp op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | unif01 => ⟨fun _ ↦ uniformOn (Set.Icc (0: ℝ) 1), measurable_const⟩
-  | vect f => sorry --: (Fin n → Term ctx ty) → Term ctx (.exp n ty)
-  | index N M => sorry -- : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
+  -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
+  -- has inverse images measurable
+  | vect f => ⟨fun env ↦ (fun n ↦ (f n).den.1 env), sorry⟩
+  | @index _ len _ N M => ⟨fun env ↦
+    let n : ℕ := (N.den.1 env)
+    if h: n < len then (M.den.1 env) ⟨n, h⟩ else default, sorry⟩
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
-  | «for» n Mᵢ Mₛ => sorry -- : ℕ → Term ctx ty → Term (index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
+  | @«for» _ ty n Mᵢ Mₛ =>
+    let rec loop (k : ℕ) (v : ⟦ty⟧) (f : ℕ → ⟦ty⟧ → Measure ⟦ty⟧) := if n ≤ k then
+      .dirac v else
+      Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
+    ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
 end
 end Appl
