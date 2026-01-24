@@ -34,19 +34,22 @@ class KRM (α : Type*) extends PCM' α, PartialOrder α where
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
 
-def PSp (α : Type*) := Σ (m: MeasurableSpace α), @ProbabilityMeasure α m
+structure PSp (α : Type*) where
+  sig : MeasurableSpace α
+  vol : Measure α
+  is_prob : IsProbabilityMeasure vol
 
 open Classical
 
 -- The relevant lemma for explicitly stating what `⊥` is, is `measurableSet_bot_iff`
 noncomputable instance instOne {α : Type*} [nonempty : Nonempty α] : One (PSp α) where
-  one := ⟨⊥, ⟨@Measure.ofMeasurable α ⊥ (fun s hs ↦ if s = ∅ then 0 else 1) (by simp) sorry,
+  one := ⟨⊥, @Measure.ofMeasurable α ⊥ (fun s hs ↦ if s = ∅ then 0 else 1) (by simp) sorry,
       -- prove that the measure is a probability measure, μ univ = 1
       ⟨by
         rw [@Measure.ofMeasurable_apply α ⊥]
         · simp
         · exact MeasurableSet.univ
-      ⟩⟩
+      ⟩
   ⟩
 
 section indep_comb
@@ -73,7 +76,7 @@ end indep_comb
 
 noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (PSp α) where
   binop ℰ ℱ := if h : existence_cond ℰ ℱ
-    then some ⟨ℰ.1 ⊔ ℱ.1, Classical.choose h⟩
+    then some ⟨ℰ.1 ⊔ ℱ.1, (Classical.choose h).1, (Classical.choose h).2 ⟩
     else none
 
 -- lemma binop_indep {α : Type*} [nonempty : Nonempty α] (ℰ ℱ : PrSp α) : indep_comb ℰ ℱ (ℰ • ℱ)
