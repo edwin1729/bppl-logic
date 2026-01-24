@@ -111,19 +111,15 @@ def MeasurableFunction.compose (g : MeasurableFunction β γ) (f : MeasurableFun
 notation g " ∘ " f => MeasurableFunction.compose g f
 
 end
--- `by coarser` might be a nice custom tactic name for dealing with those sorries
+
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → (φ : PSp HC) → HList (⟦·⟧) ds → {f : HC → List.TProd (⟦·⟧) rs // Measurable[φ.1] f } → Prop
+    Term ds rs → HList (⟦·⟧) ds → MeasurableFunction HC (List.TProd (⟦·⟧) rs) → PSp HC → Prop
   | bot, _, _, _  => False
-  | and P Q, φ, γ, D => P.denote φ γ D ∧ Q.denote φ γ D
-  -- Fill sorry with a lemma that `φ₁ ≤ φ` and `φ₂ ≤ φ`
-  | sep P Q, φ, γ, D => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ some φ ∧ P.denote φ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote φ₂ γ ⟨D.1, Measurable.le sorry D.2⟩
-  -- Fill sorry with ∀ φ : PSp α, 1.1 ≤ φ.1. In words, The sigma algebra of `1` is the least or coarsest
-  | persistently P, _, γ, D => P.denote 1 γ ⟨D.1, Measurable.le (sorry) D.2⟩
-  | «forall» P, φ, γ, D => ∀ x, P.denote φ (x :: γ) D
-  -- We could just say `True` for the semantics of `own E`
-  | own E, φ, γ, D => Measurable[φ.1] ((E γ).1 ∘ D.1) -- hmmm. Curiously, this must hold by construction!
-  -- Our model using dependent types is doing much of the heavy lifting at the syntactic stage to begin with
+  | and P Q, γ, D, φ => P.denote γ D φ ∧ Q.denote γ D φ
+  | sep P Q, γ, D, φ => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | persistently P, γ, D, _ => P.denote γ D 1
+  | «forall» P, γ, D, φ => ∀ x, P.denote (x :: γ) D φ
+  | own E, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1)
 
 /-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `φ` -/
