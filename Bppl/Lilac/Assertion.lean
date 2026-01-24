@@ -113,21 +113,21 @@ notation g " ∘ " f => MeasurableFunction.compose g f
 end
 -- `by coarser` might be a nice custom tactic name for dealing with those sorries
 @[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → (σ : PSp HC) → HList (⟦·⟧) ds → {f : HC → List.TProd (⟦·⟧) rs // Measurable[σ.1] f } → Prop
+    Term ds rs → (φ : PSp HC) → HList (⟦·⟧) ds → {f : HC → List.TProd (⟦·⟧) rs // Measurable[φ.1] f } → Prop
   | bot, _, _, _  => False
-  | and P Q, σ, γ, D => P.denote σ γ D ∧ Q.denote σ γ D
-  -- Fill sorry with a lemma that `σ₁ ≤ σ` and `σ₂ ≤ σ`
-  | sep P Q, σ, γ, D => ∃ σ₁ σ₂ : PSp HC, σ₁ • σ₂ ≤ some σ ∧ P.denote σ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote σ₂ γ ⟨D.1, Measurable.le sorry D.2⟩
-  -- Fill sorry with ∀ σ : PSp α, 1.1 ≤ σ.1. In words, The sigma algebra of `1` is the least or coarsest
+  | and P Q, φ, γ, D => P.denote φ γ D ∧ Q.denote φ γ D
+  -- Fill sorry with a lemma that `φ₁ ≤ φ` and `φ₂ ≤ φ`
+  | sep P Q, φ, γ, D => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ some φ ∧ P.denote φ₁ γ ⟨D.1, Measurable.le sorry D.2⟩ ∧ Q.denote φ₂ γ ⟨D.1, Measurable.le sorry D.2⟩
+  -- Fill sorry with ∀ φ : PSp α, 1.1 ≤ φ.1. In words, The sigma algebra of `1` is the least or coarsest
   | persistently P, _, γ, D => P.denote 1 γ ⟨D.1, Measurable.le (sorry) D.2⟩
-  | «forall» P, σ, γ, D => ∀ x, P.denote σ (x :: γ) D
+  | «forall» P, φ, γ, D => ∀ x, P.denote φ (x :: γ) D
   -- We could just say `True` for the semantics of `own E`
-  | own E, σ, γ, D => Measurable[σ.1] ((E γ).1 ∘ D.1) -- hmmm. Curiously, this must hold by construction!
+  | own E, φ, γ, D => Measurable[φ.1] ((E γ).1 ∘ D.1) -- hmmm. Curiously, this must hold by construction!
   -- Our model using dependent types is doing much of the heavy lifting at the syntactic stage to begin with
 
-/-- Satisfaction relation: `(γ, D, σ)⊨ P` means `P` holds under deterministic env `γ`,
-    random env `D`, and resource `σ` -/
-notation:50 "(" γ ", " D ", " σ ")⊨ " P => Term.denote P γ D σ
+/-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
+    random env `D`, and resource `φ` -/
+notation:50 "(" γ ", " D ", " φ ")⊨ " P => Term.denote P γ D φ
 
 open Iris.BI Iris
 
@@ -136,20 +136,20 @@ abbrev PROP (α : Type*) [nonempty : Nonempty α] := PSp α → Prop
 -- Instantiate basic connectives in BI
 
 instance instBIBase {α : Type*} [nonempty : Nonempty α] : BIBase (PROP α ) where
-  Entails P Q      := ∀ σ, P σ → Q σ
-  emp            σ := σ = 1
+  Entails P Q      := ∀ φ, P φ → Q φ
+  emp            φ := φ = 1
   pure φ         _ := φ
-  and P Q        σ := P σ ∧ Q σ
-  or P Q         σ := P σ ∨ Q σ
-  imp P Q        σ := P σ → Q σ
-  sForall Ψ      σ := ∀ p, Ψ p → p σ
-  sExists Ψ      σ := ∃ p, Ψ p ∧ p σ
-  sep P Q        σ := ∃ σ1 σ2 : PSp α, σ1 • σ2 = some σ ∧ P σ1 ∧ Q σ2
-  wand P Q       σ := ∀ σ' : PSp α, (h : (σ • σ').isSome) → P σ' → Q ((σ • σ').get h)
+  and P Q        φ := P φ ∧ Q φ
+  or P Q         φ := P φ ∨ Q φ
+  imp P Q        φ := P φ → Q φ
+  sForall Ψ      φ := ∀ p, Ψ p → p φ
+  sExists Ψ      φ := ∃ p, Ψ p ∧ p φ
+  sep P Q        φ := ∃ φ1 φ2 : PSp α, φ1 • φ2 = some φ ∧ P φ1 ∧ Q φ2
+  wand P Q       φ := ∀ φ' : PSp α, (h : (φ • φ').isSome) → P φ' → Q ((φ • φ').get h)
   -- could we do better than this? Identify what more is persistent/affine
   -- wasn't BaSL partially affine? What does that mean?
   persistently P _ := P 1
-  later P        σ := P σ -- there is no step indexing
+  later P        φ := P φ -- there is no step indexing
 
 instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
 

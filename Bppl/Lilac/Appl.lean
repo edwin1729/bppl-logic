@@ -57,11 +57,11 @@ notation α " -m→ " β => {f: α → β // Measurable f}
 
 -- TODO: The below two don't actually work, because of clash with indexing notation.
 open MeasureTheory in
-/-- Optionally provide non-standard domain σ-algebra -/
-notation α " -m[ " σ₁  "]→ " β => {f: α → β // Measurable[σ₁] f}
+/-- Optionally provide non-standard domain φ-algebra -/
+notation α " -m[ " φ₁  "]→ " β => {f: α → β // Measurable[φ₁] f}
 open MeasureTheory in
-/-- Optionally provide non-standard (co)domain σ-algebra -/
-notation α " -m[ " σ₁ ", " σ₂ "]→ " β => {f: α → β // Measurable[σ₁, σ₂] f}
+/-- Optionally provide non-standard (co)domain φ-algebra -/
+notation α " -m[ " φ₁ ", " φ₂ "]→ " β => {f: α → β // Measurable[φ₁, φ₂] f}
 
 open NNReal MeasureTheory PMF Measurable ProbabilityTheory
 namespace Appl
