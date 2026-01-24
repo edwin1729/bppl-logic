@@ -16,7 +16,7 @@ section KRM
 class PCM (α : Type*) extends One α where
   binop : α → α → Option α -- partial binary operation
 
-notation a:arg " • " b:arg => PCM.binop a b
+notation a:arg " ⋆ " b:arg => PCM.binop a b
 
 class PCM' (α : Type*) extends PCM α where
   one_mul : ∀ a : α, binop 1 a = a
@@ -29,7 +29,7 @@ class PCM' (α : Type*) extends PCM α where
 class KRM (α : Type*) extends PCM' α, PartialOrder α where
   ge_mul_mono : ∀ x x' y y' p' : α,
     x ≤ x' → y ≤ y' →
-    (x' • y' = some p') → ∃ p, (x • y = some p) ∧  p ≤ p'
+    (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧  p ≤ p'
 
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
@@ -79,7 +79,7 @@ noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (PSp 
     then some ⟨ℰ.1 ⊔ ℱ.1, (Classical.choose h).1, (Classical.choose h).2 ⟩
     else none
 
--- lemma binop_indep {α : Type*} [nonempty : Nonempty α] (ℰ ℱ : PrSp α) : indep_comb ℰ ℱ (ℰ • ℱ)
+-- lemma binop_indep {α : Type*} [nonempty : Nonempty α] (ℰ ℱ : PrSp α) : indep_comb ℰ ℱ (ℰ ⋆ ℱ)
 
 lemma inter_diff_space {α : Type*} {m m0 : MeasurableSpace α} {s : Set α} (hm: m ≤ m0) (hs: @MeasurableSet α m s)
   : @MeasurableSet α m0 s := by

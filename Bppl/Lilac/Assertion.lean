@@ -58,7 +58,7 @@ open MeasureTheory
 
 /- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
 denotation must have a measurable space structure -/
-variable {TyDet TyRand : Type} [Denotational TyDet] [DenotationalMeas TyRand]
+variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 
 /-- Deterministic Value -/
 abbrev detVal (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → ⟦A⟧)
@@ -75,29 +75,30 @@ abbrev randDist (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
   (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ Measure ⟦A⟧)
 
 -- Here Term means Assertion actually
-inductive Term : List TyDet → List TyRand → Type
+inductive Assertion : List TyDet → List TyRand → Type
   -- | var   : Member ty ctx → Term ctx
-  | top : Term ds rs -- ds: deterministic context, rs: random variable context
-  | bot : Term ds rs
-  | and  : Term ds rs  → Term ds rs → Term ds rs
-  | or  : Term ds rs  → Term ds rs → Term ds rs
-  | imp  : Term ds rs  → Term ds rs → Term ds rs
-  | sep  : Term ds rs  → Term ds rs → Term ds rs
-  | wand : Term ds rs  → Term ds rs → Term ds rs
-  | persistently  : Term ds rs  → Term ds rs
-  | forall (d : TyDet) : Term (d :: ds) rs → Term ds rs
-  | exists (d : TyDet) : Term (d :: ds) rs → Term ds rs
+  | top : Assertion ds rs -- ds: deterministic context, rs: random variable context
+  | bot : Assertion ds rs
+  | and  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | or  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | imp  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | sep  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | wand : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | persistently  : Assertion ds rs  → Assertion ds rs
+  | forall (d : TyDet) : Assertion (d :: ds) rs → Assertion ds rs
+  | exists (d : TyDet) : Assertion (d :: ds) rs → Assertion ds rs
   -- is it a problem that only types at the head of the list can be quantified over?
-  | forall_rv (r : TyRand) : Term ds (r :: rs) → Term ds rs
-  | exists_rv (r : TyRand) : Term ds (r :: rs) → Term ds rs
+  | forall_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
+  | exists_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
+  -- | sForall (Term ds rs)
   -- | app   : Term ctx (.fn dom ran) → Term ctx dom → Term ctx ran
   -- | let : Term ctx ty₁ → Term (ty₁ :: ctx) ty₂ → Term ctx ty₂
-  | own : randVal ds rs A → Term ds rs
-  | dist : randVal ds rs A → detDist ds A → Term ds rs
-  | eq : randVal ds rs A₁ → randVal ds rs A₂ → Term ds rs -- almost sure equality
+  | own : randVal ds rs A → Assertion ds rs
+  | dist : randVal ds rs A → detDist ds A → Assertion ds rs
+  | eq : randVal ds rs A₁ → randVal ds rs A₂ → Assertion ds rs -- almost sure equality
   -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
   -- denotation is ℝ
-  | wp : randDist ds rs A → Term ds (A :: rs) → Term ds rs
+  | wp : randDist ds rs A → Assertion ds (A :: rs) → Assertion ds rs
 
 
 -- ⊤ | ⊥ | 𝑃 ∧ 𝑄 | 𝑃 ∨ 𝑄 | 𝑃 → 𝑄 |
@@ -152,66 +153,68 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 -- Interesting that measure on the hilbert cube is not uniform, or is it?
 -- for σ-algebra with finite footprint at least??
 
-@[simp] noncomputable def Term.denote {ds : List TyDet} {rs : List TyRand} :
-    Term ds rs → HList (⟦·⟧) ds → RV (List.TProd (⟦·⟧) rs) → PSp HC → Prop
-  | top, _, _, _  => True
-  | bot, _, _, _  => False
-  | and P Q, γ, D, φ => P.denote γ D φ ∧ Q.denote γ D φ
-  | or P Q, γ, D, φ => P.denote γ D φ ∨ Q.denote γ D φ
-  | imp P Q, γ, D, φ => ∀ φ', φ ≤ φ' → P.denote γ D φ' → Q.denote γ D φ'
-  | sep P Q, γ, D, φ => ∃ φ₁ φ₂ : PSp HC, φ₁ • φ₂ ≤ some φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
-  | wand P Q, γ, D, φ => ∀ φp, ∃ φq, φp • φ = some φq ∧ (P.denote γ D φp → Q.denote γ D φq)
-  | persistently P, γ, D, _ => P.denote γ D 1
-  | «forall» d P, γ, D, φ => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
-  | «exists» d P, γ, D, φ => ∃ x : ⟦d⟧, P.denote (x :: γ) D φ
-  | forall_rv r P, γ, D, φ => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
-  | exists_rv r P, γ, D, φ => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
-  | own E, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1)
+@[simp] noncomputable def Assertion.denote {ds : List TyDet} {rs : List TyRand}
+    (P : Assertion ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+  match P with
+  | top  => True
+  | bot  => False
+  | and P Q => P.denote γ D φ ∧ Q.denote γ D φ
+  | or P Q => P.denote γ D φ ∨ Q.denote γ D φ
+  | imp P Q => ∀ φ', φ ≤ φ' → P.denote γ D φ' → Q.denote γ D φ'
+  | sep P Q => ∃ φ₁ φ₂ : PSp HC, φ₁ ⋆ φ₂ ≤ some φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | wand P Q => ∀ φp, ∃ φq, φp ⋆ φ = some φq ∧ (P.denote γ D φp → Q.denote γ D φq)
+  | persistently P => P.denote γ D 1
+  | «forall» d P => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | «exists» d P => ∃ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | forall_rv r P => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+  | exists_rv r P => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+  | own E => Measurable[φ.1] ((E γ).1 ∘ D.1)
 
-  | dist E μ, γ, D, φ => Measurable[φ.1] ((E γ).1 ∘ D.1) ∧
+  | dist E μ => Measurable[φ.1] ((E γ).1 ∘ D.1) ∧
       μ γ = .bind φ.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
   -- confirm if (X₁, X₂)⁻¹ (A) = X₁⁻¹ (A) ∪ X₂⁻¹ (A) ∪
   -- Do we need different types A₁ and A₂ (what's the use of almost sure equality)
-  | eq E₁ E₂, γ, D, φ =>
+  | eq E₁ E₂ =>
     let X₁ := (E₁ γ).1 ∘ D.1
     let X₂ := (E₂ γ).1 ∘ D.1
     -- let F := {ω | X₁ ω = X₂ ω}
     sorry --: randVal ds rs A → randVal ds rs A → Term ds rs -- almost sure equality
     -- consider just taking another PSp instead of μ, if it might simplify proof later
-  | @wp _ _ _ _ _ _ A M Q, γ, D, φ => ∀ φ_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
-      φ_fr • φ ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
+  | @wp _ _ _ _ _ _ A M Q => ∀ φ_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
+      φ_fr ⋆ φ ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
       ∀ D' : RV (List.TProd (⟦·⟧) (rs' ++ rs)),
       ∃ X : RV ⟦A⟧, ∃ φ' : PSp HC,
-      ∃ μ' : ProbabilityMeasure HC, φ_fr • φ' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
+      ∃ μ' : ProbabilityMeasure HC, φ_fr ⋆ φ' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
       (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
         (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
       Q.denote γ (X ; D) φ'
 
 /-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `φ` -/
-notation:50 "(" γ ", " D ", " φ ")⊨ " P => Term.denote P γ D φ
+notation:50 "(" γ ", " D ", " φ ")⊨ " P => Assertion.denote P γ D φ
 
 open Iris.BI Iris
 
-abbrev PROP (α : Type*) [nonempty : Nonempty α] := PSp α → Prop
-
+-- abbrev PROP (α : Type*) [nonempty : Nonempty α] := PSp α → Prop
+-- def PROP := ∀ ds : List TyDet, ∀ rs : List TyRand, @Term TyDet TyRand td tdm ds rs
 -- Instantiate basic connectives in BI
 
-instance instBIBase {α : Type*} [nonempty : Nonempty α] : BIBase (PROP α ) where
-  Entails P Q      := ∀ φ, P φ → Q φ
-  emp            φ := φ = 1
-  pure φ         _ := φ
-  and P Q        φ := P φ ∧ Q φ
-  or P Q         φ := P φ ∨ Q φ
-  imp P Q        φ := P φ → Q φ
-  sForall Ψ      φ := ∀ p, Ψ p → p φ
-  sExists Ψ      φ := ∃ p, Ψ p ∧ p φ
-  sep P Q        φ := ∃ φ1 φ2 : PSp α, φ1 • φ2 = some φ ∧ P φ1 ∧ Q φ2
-  wand P Q       φ := ∀ φ' : PSp α, (h : (φ • φ').isSome) → P φ' → Q ((φ • φ').get h)
-  -- could we do better than this? Identify what more is persistent/affine
-  -- wasn't BaSL partially affine? What does that mean?
-  persistently P _ := P 1
-  later P        φ := P φ -- there is no step indexing
+instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (Assertion ds rs) where
+  Entails P Q    := ∀ γ D φ, P.denote γ D φ → Q.denote γ D φ
+  emp            := sorry --φ = 1
+  pure φ         := sorry --φ
+  and         := .and
+  or          := .or
+  imp        := .imp
+  sForall Ψ      := sorry --∀ p, Ψ p → p φ
+  sExists Ψ      := sorry --∃ p, Ψ p ∧ p φ
+  sep        := .sep
+  wand       := .wand
+  -- could we do ttesorry --r than this? Identify what more is persistent/affine
+  -- wasn't BaSL rtisorry --ally affine? What does that mean?
+  persistently := .persistently
+  later P        := sorry --P φ -- there is no step indexing
+
 
 instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
 
