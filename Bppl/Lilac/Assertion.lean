@@ -74,6 +74,15 @@ abbrev detDist (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → Measur
 abbrev randDist (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
   (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ Measure ⟦A⟧)
 
+
+-- inductive Foo where
+--   | fill : (Foo → Prop) → Foo
+inductive Assertionn : List TyDet → List TyRand → Type
+  | iForall : ∀ {α}, (α → Assertionn ds rs) → Assertionn ds rs
+
+inductive Assertionnn : List TyDet → List TyRand → Type
+  | sForall : (Assertionnn ds rs → Prop) → Assertionnn ds rs
+
 -- Here Term means Assertion actually
 inductive Assertion : List TyDet → List TyRand → Type
   -- | var   : Member ty ctx → Term ctx
@@ -90,7 +99,12 @@ inductive Assertion : List TyDet → List TyRand → Type
   -- is it a problem that only types at the head of the list can be quantified over?
   | forall_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
   | exists_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
-  -- | sForall (Term ds rs)
+  -- The idea is to get a singleton set of a ∀ or ∀ᵣᵥ assertion as input and the same term
+  -- as output (when taking denotation). So the ds and rs type indices are the same
+  -- | sForall : (Ψ : Assertion ds rs → Prop) → Assertion ds rs
+  | iForall : ∀ {α}, (α → Assertion ds rs) → Assertion ds rs
+  -- | sExists : (Ψ : Assertion ds rs → Prop) → Assertion ds rs
+  -- | iExists : ∀ α, (α → Assertion ds rs) → Assertion ds rs
   -- | app   : Term ctx (.fn dom ran) → Term ctx dom → Term ctx ran
   -- | let : Term ctx ty₁ → Term (ty₁ :: ctx) ty₂ → Term ctx ty₂
   | own : randVal ds rs A → Assertion ds rs
@@ -153,6 +167,8 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 -- Interesting that measure on the hilbert cube is not uniform, or is it?
 -- for σ-algebra with finite footprint at least??
 
+-- γ, φ ⊨ P
+
 @[simp] noncomputable def Assertion.denote {ds : List TyDet} {rs : List TyRand}
     (P : Assertion ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
   match P with
@@ -169,7 +185,7 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
   | forall_rv r P => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
   | exists_rv r P => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
   | own E => Measurable[φ.1] ((E γ).1 ∘ D.1)
-
+  |
   | dist E μ => Measurable[φ.1] ((E γ).1 ∘ D.1) ∧
       μ γ = .bind φ.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
   -- confirm if (X₁, X₂)⁻¹ (A) = X₁⁻¹ (A) ∪ X₂⁻¹ (A) ∪
@@ -193,7 +209,21 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
     random env `D`, and resource `φ` -/
 notation:50 "(" γ ", " D ", " φ ")⊨ " P => Assertion.denote P γ D φ
 
-open Iris.BI Iris
+-- open Iris.BI Iris
+
+class BIBase (PROP : Type u) where
+  Entails : PROP → PROP → Prop
+  emp : PROP
+  pure : Prop → PROP
+  and : PROP → PROP → PROP
+  or : PROP → PROP → PROP
+  imp : PROP → PROP → PROP
+  iForall : ∀ {α}, (α → PROP) → PROP
+  -- iExists : ∀ {α}, (α → PROP) → PROP
+  sep : PROP → PROP → PROP
+  wand : PROP → PROP → PROP
+  persistently : PROP → PROP
+  later : PROP → PROP
 
 -- abbrev PROP (α : Type*) [nonempty : Nonempty α] := PSp α → Prop
 -- def PROP := ∀ ds : List TyDet, ∀ rs : List TyRand, @Term TyDet TyRand td tdm ds rs
@@ -203,11 +233,11 @@ instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (Assertion ds 
   Entails P Q    := ∀ γ D φ, P.denote γ D φ → Q.denote γ D φ
   emp            := sorry --φ = 1
   pure φ         := sorry --φ
-  and         := .and
-  or          := .or
-  imp        := .imp
-  sForall Ψ      := sorry --∀ p, Ψ p → p φ
-  sExists Ψ      := sorry --∃ p, Ψ p ∧ p φ
+  and            := .and
+  or             := .or
+  imp            := .imp
+  iForall        := .iForall
+  -- iExists      := .iExists
   sep        := .sep
   wand       := .wand
   -- could we do ttesorry --r than this? Identify what more is persistent/affine
@@ -216,51 +246,51 @@ instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (Assertion ds 
   later P        := sorry --P φ -- there is no step indexing
 
 
-instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
+-- instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
 
-instance instBI {α : Type*} [nonempty : Nonempty α] : BI (PROP α) where
-  equiv_iff := sorry
-  entails_preorder := sorry
-  and_ne := sorry
-  or_ne := sorry
-  imp_ne := sorry
-  sForall_ne := sorry
-  sExists_ne := sorry
-  sep_ne := sorry
-  wand_ne := sorry
-  persistently_ne := sorry
-  later_ne := sorry
-  pure_intro := sorry
-  pure_elim' := sorry
-  and_elim_l := sorry
-  and_elim_r := sorry
-  and_intro := sorry
-  or_intro_l := sorry
-  or_intro_r := sorry
-  or_elim := sorry
-  imp_intro := sorry
-  imp_elim := sorry
-  sForall_intro := sorry
-  sForall_elim := sorry
-  sExists_intro := sorry
-  sExists_elim := sorry
-  sep_mono := sorry
-  emp_sep := sorry
-  sep_symm := sorry
-  sep_assoc_l := sorry
-  wand_intro := sorry
-  wand_elim := sorry
-  persistently_mono := sorry
-  persistently_idem_2 := sorry
-  persistently_emp_2 := sorry
-  persistently_and_2 := sorry
-  persistently_sExists_1 := sorry
-  persistently_absorb_l := sorry
-  persistently_and_l := sorry
-  later_mono := sorry
-  later_intro := sorry
-  later_sForall_2 := sorry
-  later_sExists_false := sorry
-  later_sep := sorry
-  later_persistently := sorry
-  later_false_em := sorry
+-- instance instBI {α : Type*} [nonempty : Nonempty α] : BI (PROP α) where
+--   equiv_iff := sorry
+--   entails_preorder := sorry
+--   and_ne := sorry
+--   or_ne := sorry
+--   imp_ne := sorry
+--   sForall_ne := sorry
+--   sExists_ne := sorry
+--   sep_ne := sorry
+--   wand_ne := sorry
+--   persistently_ne := sorry
+--   later_ne := sorry
+--   pure_intro := sorry
+--   pure_elim' := sorry
+--   and_elim_l := sorry
+--   and_elim_r := sorry
+--   and_intro := sorry
+--   or_intro_l := sorry
+--   or_intro_r := sorry
+--   or_elim := sorry
+--   imp_intro := sorry
+--   imp_elim := sorry
+--   sForall_intro := sorry
+--   sForall_elim := sorry
+--   sExists_intro := sorry
+--   sExists_elim := sorry
+--   sep_mono := sorry
+--   emp_sep := sorry
+--   sep_symm := sorry
+--   sep_assoc_l := sorry
+--   wand_intro := sorry
+--   wand_elim := sorry
+--   persistently_mono := sorry
+--   persistently_idem_2 := sorry
+--   persistently_emp_2 := sorry
+--   persistently_and_2 := sorry
+--   persistently_sExists_1 := sorry
+--   persistently_absorb_l := sorry
+--   persistently_and_l := sorry
+--   later_mono := sorry
+--   later_intro := sorry
+--   later_sForall_2 := sorry
+--   later_sExists_false := sorry
+--   later_sep := sorry
+--   later_persistently := sorry
+--   later_false_em := sorry
