@@ -89,6 +89,13 @@ def sForall (Ψ : lProp ds rs → Prop)
     (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
   ∀ P, Ψ P → P γ D φ
 
+def sExists (Ψ : lProp ds rs → Prop)
+    (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+  ∃ P, Ψ P → P γ D φ
+
+def pure (P : Prop) : lProp ds rs := fun _ _ _ ↦ P
+def emp : lProp ds rs := fun _ _ φ ↦ φ = 1
+
 def top : lProp ds rs := fun _ _ _ ↦ True
 def bot : lProp ds rs := fun _ _ _ ↦ False
 
@@ -109,7 +116,7 @@ def wand (P Q : lProp ds rs)
   ∀ φp, ∃ φq, φp ⋆ φ = some φq ∧ (P γ D φp → Q γ D φq)
 
 def persistently (P : lProp ds rs)
-    (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+    (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (_ : PSp HC) : Prop :=
   P γ D 1
 
 -- is it a problem that only types at the head of the list can be quantified over?
@@ -159,9 +166,9 @@ def wp (M : randDist ds rs A) (Q : lProp ds (A :: rs))
 
 end lProp
 
-/-- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
+/- Satisfaction relation: `(γ, D, φ)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `φ` -/
-notation:50 "(" γ ", " D ", " φ ")⊨ " P => Assertion.denote P γ D φ
+-- notation:50 "(" γ ", " D ", " φ ")⊨ " P => Assertion.denote P γ D φ
 
 open Iris.BI Iris
 
@@ -171,65 +178,238 @@ open Iris.BI Iris
 
 instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (lProp ds rs) where
   Entails P Q    := ∀ γ D φ, P γ D φ → Q γ D φ
-  emp            := sorry --φ = 1
-  pure φ         := sorry --φ
+  emp            := .emp
+  pure           := .pure
   and            := .and
   or             := .or
   imp            := .imp
   sForall        := .sForall
-  -- iExists      := .iExists
-  sep        := .sep
-  wand       := .wand
-  -- could we do ttesorry --r than this? Identify what more is persistent/affine
-  -- wasn't BaSL rtisorry --ally affine? What does that mean?
-  persistently := .persistently
-  later P        := sorry --P φ -- there is no step indexing
+  sExists        := .sExists
+  sep            := .sep
+  wand           := .wand
+  -- could we do better than this? Identify what more is persistent/affine
+  -- wasn't BaSL partially affine? What does that mean?
+  persistently   := .persistently
+  later P        := P -- there is no step indexing
 
--- instance {α : Type*} [nonempty : Nonempty α] : COFE (PROP α) := COFE.ofDiscrete Eq equivalence_eq
+instance {ds : List TyDet} {rs : List TyRand} : COFE (lProp ds rs) :=
+  COFE.ofDiscrete Eq equivalence_eq
 
--- instance instBI {α : Type*} [nonempty : Nonempty α] : BI (PROP α) where
---   equiv_iff := sorry
---   entails_preorder := sorry
---   and_ne := sorry
---   or_ne := sorry
---   imp_ne := sorry
---   sForall_ne := sorry
---   sExists_ne := sorry
---   sep_ne := sorry
---   wand_ne := sorry
---   persistently_ne := sorry
---   later_ne := sorry
---   pure_intro := sorry
---   pure_elim' := sorry
---   and_elim_l := sorry
---   and_elim_r := sorry
---   and_intro := sorry
---   or_intro_l := sorry
---   or_intro_r := sorry
---   or_elim := sorry
---   imp_intro := sorry
---   imp_elim := sorry
---   sForall_intro := sorry
---   sForall_elim := sorry
---   sExists_intro := sorry
---   sExists_elim := sorry
---   sep_mono := sorry
---   emp_sep := sorry
---   sep_symm := sorry
---   sep_assoc_l := sorry
---   wand_intro := sorry
---   wand_elim := sorry
---   persistently_mono := sorry
---   persistently_idem_2 := sorry
---   persistently_emp_2 := sorry
---   persistently_and_2 := sorry
---   persistently_sExists_1 := sorry
---   persistently_absorb_l := sorry
---   persistently_and_l := sorry
---   later_mono := sorry
---   later_intro := sorry
---   later_sForall_2 := sorry
---   later_sExists_false := sorry
---   later_sep := sorry
---   later_persistently := sorry
---   later_false_em := sorry
+instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
+  equiv_iff {P Q} := ⟨
+    fun h : P = Q => h ▸ ⟨refl, refl⟩,
+    fun ⟨h₁, h₂⟩ => by ext γ D φ; exact ⟨h₁ γ D φ, h₂ γ D φ⟩
+  ⟩
+  entails_preorder := sorry -- by infer_instance
+
+  and_ne          := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
+  or_ne           := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
+  imp_ne          := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
+  sep_ne          := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
+  wand_ne         := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
+  persistently_ne := ⟨by rintro _ _ _ rfl; rfl⟩
+  later_ne        := ⟨by rintro _ _ _ rfl; rfl⟩
+  sForall_ne {_ P Q} h := liftRel_eq.1 h ▸ rfl
+  sExists_ne {_ P Q} h := liftRel_eq.1 h ▸ rfl
+
+  pure_intro h _ _ := h
+  pure_elim' h_φP σ h_φ := h_φP h_φ σ ⟨⟩
+
+  and_elim_l := by
+    intros
+    simp only [BI.Entails, BI.and]
+    intro _ h
+    exact h.left
+  and_elim_r := by
+    simp only [BI.Entails, BI.and]
+    intro _ _ _ h
+    exact h.right
+  and_intro := by
+    simp only [BI.Entails, BI.and]
+    intro _ _ _ h_PQ h_PR σ h_P
+    constructor
+    · exact h_PQ σ h_P
+    · exact h_PR σ h_P
+
+  or_intro_l := by
+    simp only [BI.Entails, BI.or]
+    intro _ _ _ h
+    apply Or.inl
+    exact h
+  or_intro_r := by
+    simp only [BI.Entails, BI.or]
+    intro _ _ _ h
+    apply Or.inr
+    exact h
+  or_elim := by
+    simp only [BI.Entails, BI.or]
+    intro _ _ _ h_PR h_QR σ h_PQ
+    cases h_PQ
+    case inl h_P =>
+      exact h_PR σ h_P
+    case inr h_Q =>
+      exact h_QR σ h_Q
+
+  imp_intro := by
+    simp only [BI.Entails, BI.imp, BI.and]
+    intro _ _ _ h_PQR σ h_P h_Q
+    exact h_PQR σ ⟨h_P, h_Q⟩
+  imp_elim := by
+    simp only [BI.Entails, BI.imp, BI.and]
+    intro _ _ _ h_PQR σ ⟨h_P, h_Q⟩
+    exact h_PQR σ h_P h_Q
+
+  sForall_intro := by
+    simp only [BI.Entails]
+    intro _ _ h_PΨ σ h_P p hp
+    exact h_PΨ p hp σ h_P
+  sForall_elim := by
+    simp only [BI.Entails]
+    intro _ p hp _ h_Ψ
+    exact h_Ψ p hp
+
+  sExists_intro := by
+    simp only [BI.Entails]
+    intro _ p hp _ h_Ψ
+    exact ⟨p, hp, h_Ψ⟩
+  sExists_elim := by
+    simp only [BI.Entails]
+    intro _ _ h_ΦQ σ ⟨p, hp, h_Φ⟩
+    exact h_ΦQ p hp σ h_Φ
+
+  sep_mono := by
+    simp only [BI.Entails, BI.sep]
+    intro _ _ _ _ h_PQ h_P'Q' _ ⟨σ₁, σ₂, h_union, h_disjoint, h_P, h_P'⟩
+    apply Exists.intro σ₁
+    apply Exists.intro σ₂
+    constructor
+    · exact h_union
+    constructor
+    · exact h_disjoint
+    constructor
+    · exact h_PQ σ₁ h_P
+    · exact h_P'Q' σ₂ h_P'
+  emp_sep.mp := by
+    simp only [BI.Entails, BI.sep, BI.emp]
+    intro _ ⟨σ₁, σ₂, h_union, _, h_emp, h_P⟩
+    rw [h_emp] at h_union
+    rw [← empty_union] at h_union
+    rw [h_union]
+    exact h_P
+  emp_sep.mpr := by
+    simp only [BI.Entails, BI.sep, BI.emp]
+    intro σ h_P
+    apply Exists.intro ∅
+    apply Exists.intro σ
+    constructor
+    · exact empty_union
+    constructor
+    · exact empty_disjoint
+    constructor
+    · rfl
+    · exact h_P
+  sep_symm := by
+    simp only [BI.Entails, BI.sep]
+    intro _ _ _ ⟨σ₁, σ₂, h_union, h_disjoint, h_P, h_Q⟩
+    apply Exists.intro σ₂
+    apply Exists.intro σ₁
+    constructor
+    · rw [union_comm] ; exact h_union
+    constructor
+    · rw [disjoint_comm] ; exact h_disjoint
+    constructor
+    · exact h_Q
+    · exact h_P
+  sep_assoc_l := by
+    simp only [BI.Entails, BI.sep]
+    intro _ _ _ _
+      ⟨σ₁, σ₂, h_union₁₂, h_disjoint₁₂, ⟨σ₃, σ₄, h_union₃₄, h_disjoint₃₄, h_P, h_Q⟩, h_R⟩
+    apply Exists.intro σ₃
+    apply Exists.intro (σ₄ ∪ σ₂)
+    constructor
+    · rw [h_union₃₄] at h_union₁₂
+      rw [← union_assoc]
+      exact h_union₁₂
+    constructor
+    · apply disjoint_union
+      · exact h_disjoint₃₄
+      · rw [h_union₃₄] at h_disjoint₁₂
+        let h_disjoint := disjoint_assoc h_disjoint₁₂ h_disjoint₃₄
+        exact h_disjoint.left
+    constructor
+    · exact h_P
+    apply Exists.intro σ₄
+    apply Exists.intro σ₂
+    constructor
+    · rw [union_comm]
+    constructor
+    · rw [h_union₃₄] at h_disjoint₁₂
+      let h_disjoint := disjoint_assoc h_disjoint₁₂ h_disjoint₃₄
+      exact h_disjoint.right
+    constructor
+    · exact h_Q
+    · exact h_R
+
+  wand_intro := by
+    simp only [BI.Entails, BI.wand, BI.sep]
+    intro _ _ _ h_PQR σ h_P σ' h_disjoint h_Q
+    apply h_PQR (σ ∪ σ')
+    apply Exists.intro σ
+    apply Exists.intro σ'
+    constructor
+    · rfl
+    constructor
+    · exact h_disjoint
+    constructor
+    · exact h_P
+    · exact h_Q
+  wand_elim := by
+    simp only [BI.Entails, BI.wand, BI.sep]
+    intro _ _ _ h_PQR _ ⟨σ, σ', h_union, h_disjoint, h_P, h_Q⟩
+    rw [h_union]
+    exact h_PQR σ h_P σ' h_disjoint h_Q
+
+  persistently_mono := by
+    simp only [BI.Entails, BI.persistently]
+    intro _ _ h_PQ _ h_P
+    exact h_PQ ∅ h_P
+  persistently_idem_2 := by
+    simp only [BI.Entails, BI.persistently]
+    intro _ _ h
+    exact h
+  persistently_emp_2 := by
+    simp only [BI.Entails, BI.persistently, BI.emp]
+    intro _ _
+    simp
+  persistently_and_2 := by
+    simp only [BI.Entails, BI.persistently, BI.and]
+    intro _ _ _ h
+    exact h
+  persistently_sExists_1 := by
+    simp only [BI.Entails, BI.persistently, BI.exists]
+    intro _ _ ⟨p, hp, h⟩
+    exact ⟨_, ⟨_, rfl⟩, hp, h⟩
+  persistently_absorb_l := by
+    simp only [BI.Entails, BI.persistently, BI.sep]
+    intro _ _ _ ⟨_, _, _, _, h_P, _⟩
+    exact h_P
+  persistently_and_l := by
+    simp only [BI.Entails, BI.persistently, BI.and, BI.sep]
+    intro _ _ σ ⟨h_P, h_Q⟩
+    apply Exists.intro ∅
+    apply Exists.intro σ
+    constructor
+    · exact empty_union
+    constructor
+    · exact empty_disjoint
+    constructor
+    · exact h_P
+    · exact h_Q
+
+  later_mono := id
+  later_intro _ := id
+  later_sForall_2 _ h _ hp := h _ ⟨_, rfl⟩ hp
+  later_sExists_false _ := fun ⟨p, hp⟩ => .inr ⟨_, ⟨_, rfl⟩, hp⟩
+  later_sep := ⟨fun _ => id, fun _ => id⟩
+  later_persistently := ⟨fun _ => id, fun _ => id⟩
+  later_false_em _ h := .inr fun _ => h
