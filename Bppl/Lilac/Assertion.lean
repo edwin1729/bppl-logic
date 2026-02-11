@@ -83,10 +83,14 @@ namespace lProp
 -- ds: deterministic context, rs: random variable context
 variable {ds : List TyDet} {rs : List TyRand}
 
+-- This is probably an unjustified use of macros
+macro "DetEnv" : term => `(HList (⟦·⟧) ds)
+macro "RandEnv" : term => `(RV (List.TProd (⟦·⟧) rs))
+
 -- The idea is to get a singleton set of a ∀ or ∀ᵣᵥ assertion as input and the same term
 -- as output (when taking denotation). So the ds and rs type indices are the same
 def sForall (Ψ : lProp ds rs → Prop)
-    (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+    (γ : DetEnv) (D : RandEnv) (φ : PSp HC) : Prop :=
   ∀ P, Ψ P → P γ D φ
 
 def sExists (Ψ : lProp ds rs → Prop)
@@ -170,13 +174,16 @@ end lProp
     random env `D`, and resource `φ` -/
 -- notation:50 "(" γ ", " D ", " φ ")⊨ " P => Assertion.denote P γ D φ
 
+namespace BI
 open Iris.BI Iris
+-- ds: deterministic context, rs: random variable context
+variable {ds : List TyDet} {rs : List TyRand}
 
 -- abbrev PROP (α : Type*) [nonempty : Nonempty α] := PSp α → Prop
 
 -- Instantiate basic connectives in BI
 
-instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (lProp ds rs) where
+instance instBIBase : BIBase (lProp ds rs) where
   Entails P Q    := ∀ γ D φ, P γ D φ → Q γ D φ
   emp            := .emp
   pure           := .pure
@@ -192,16 +199,27 @@ instance instBIBase {ds : List TyDet} {rs : List TyRand} : BIBase (lProp ds rs) 
   persistently   := .persistently
   later P        := P -- there is no step indexing
 
+instance : Std.Preorder (Entails (PROP := lProp ds rs)) where
+  refl := by
+    simp only [BI.Entails]
+    intro _ _ _ _ h
+    exact h
+  trans := by
+    simp only [BI.Entails]
+    intro _ _ _ h_xy h_yz γ D σ h_x
+    apply h_yz γ D σ
+    apply h_xy γ D σ
+    exact h_x
+
 instance {ds : List TyDet} {rs : List TyRand} : COFE (lProp ds rs) :=
   COFE.ofDiscrete Eq equivalence_eq
 
 instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
+  entails_preorder := by infer_instance
   equiv_iff {P Q} := ⟨
     fun h : P = Q => h ▸ ⟨refl, refl⟩,
     fun ⟨h₁, h₂⟩ => by ext γ D φ; exact ⟨h₁ γ D φ, h₂ γ D φ⟩
   ⟩
-  entails_preorder := sorry -- by infer_instance
-
   and_ne          := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
   or_ne           := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
   imp_ne          := ⟨by rintro _ _ _ rfl _ _ rfl; rfl⟩
@@ -413,3 +431,5 @@ instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
   later_sep := ⟨fun _ => id, fun _ => id⟩
   later_persistently := ⟨fun _ => id, fun _ => id⟩
   later_false_em _ h := .inr fun _ => h
+
+end BI
