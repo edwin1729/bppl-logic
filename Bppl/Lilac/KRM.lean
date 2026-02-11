@@ -13,12 +13,12 @@ open MeasureTheory MeasurableSpace
 section KRM
 -- set_option quotPrecheck false
 /-- Partial Commutative Monoid -/
-class PCM (α : Type*) extends One α where
+class PcmBase (α : Type*) extends One α where
   binop : α → α → Option α -- partial binary operation
 
-notation a:arg " ⋆ " b:arg => PCM.binop a b
+notation a:arg " ⋆ " b:arg => PcmBase.binop a b
 
-class PCM' (α : Type*) extends PCM α where
+class Pcm (α : Type*) extends PcmBase α where
   one_mul : ∀ a : α, binop 1 a = a
   mul_one : ∀ a : α, binop a 1 = a
   comm : ∀ a b, binop a b = binop b a
@@ -26,10 +26,10 @@ class PCM' (α : Type*) extends PCM α where
     (binop a b) >>= (fun ab => (binop ab c)) =
     (binop b c) >>= (fun bc => (binop a bc))
 
-class KRM (α : Type*) extends PCM' α, PartialOrder α where
+class Krm (α : Type*) extends Pcm α, PartialOrder α where
   ge_mul_mono : ∀ x x' y y' p' : α,
     x ≤ x' → y ≤ y' →
-    (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧  p ≤ p'
+    (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
 
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
@@ -74,7 +74,7 @@ def existence_cond : Prop := ∃ ρ, indep_comb_measure ℰ ℱ ρ
 
 end indep_comb
 
-noncomputable instance instPCM {α : Type*} [nonempty : Nonempty α] : PCM (PSp α) where
+noncomputable instance instPcmBase {α : Type*} [nonempty : Nonempty α] : PcmBase (PSp α) where
   binop ℰ ℱ := if h : existence_cond ℰ ℱ
     then some ⟨ℰ.1 ⊔ ℱ.1, (Classical.choose h).1, (Classical.choose h).2 ⟩
     else none
@@ -85,7 +85,7 @@ lemma inter_diff_space {α : Type*} {m m0 : MeasurableSpace α} {s : Set α} (hm
   : @MeasurableSet α m0 s := by
     measurability
 
-noncomputable instance instPCM' {α : Type*} [nonempty : Nonempty α] : PCM' (PSp α) where
+noncomputable instance instPcm {α : Type*} [nonempty : Nonempty α] : Pcm (PSp α) where
   one_mul 𝒢 := sorry
   mul_one := sorry
   comm := sorry
@@ -97,7 +97,7 @@ noncomputable instance instPartialOrder {α : Type*} : PartialOrder (PSp α) whe
   le_trans := sorry
   le_antisymm := sorry
 
-noncomputable instance instKRM {α : Type*} [nonempty : Nonempty α] : KRM (PSp α) where
+noncomputable instance instKrm {α : Type*} [nonempty : Nonempty α] : Krm (PSp α) where
   ge_mul_mono := sorry
 
 end KRM
