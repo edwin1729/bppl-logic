@@ -4,6 +4,5 @@
 .mcp.json
 
 Bppl/Lilac/scratch.lean
-
 masters-report/build/*
 masters-report/*.synctex.gz

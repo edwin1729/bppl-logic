@@ -18,15 +18,15 @@ class PcmBase (α : Type*) extends One α where
 
 notation a:arg " ⋆ " b:arg => PcmBase.binop a b
 
+
 class Pcm (α : Type*) extends PcmBase α where
   one_mul : ∀ a : α, binop 1 a = a
   mul_one : ∀ a : α, binop a 1 = a
   comm : ∀ a b, binop a b = binop b a
   assoc : ∀ a b c : α,
-    (binop a b) >>= (fun ab => (binop ab c)) =
-    (binop b c) >>= (fun bc => (binop a bc))
+    binop <$> (binop a b) <*> (some c) = binop <$> (some a) <*> (binop b c)
 
-class Krm (α : Type*) extends Pcm α, PartialOrder α where
+class Krm (α : Type*) extends Pcm α, Preorder α where
   ge_mul_mono : ∀ x x' y y' p' : α,
     x ≤ x' → y ≤ y' →
     (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
@@ -92,7 +92,7 @@ noncomputable instance instPcm {α : Type*} [nonempty : Nonempty α] : Pcm (PSp 
   assoc := sorry
 
 noncomputable instance instPartialOrder {α : Type*} : PartialOrder (PSp α) where
-  le := sorry
+  le ℰ ℱ := ∀ h : ℰ.sig ≤ ℱ.sig, ℰ.vol = ℱ.vol.trim h
   le_refl := sorry
   le_trans := sorry
   le_antisymm := sorry
