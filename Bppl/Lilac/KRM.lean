@@ -31,6 +31,9 @@ class Krm (α : Type*) extends Pcm α, Preorder α where
     x ≤ x' → y ≤ y' →
     (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
 
+instance {α : Type*} [Preorder α] : Preorder (Option α) where
+
+
 -- Now we want to instantiate this with a probability space
 -- We need a type of probability spaces parametrized by given carrier type α
 
