@@ -6,8 +6,9 @@ import Iris.BI
 import Iris.Algebra.OFE
 import Iris.Std.Equivalence
 
-import Bppl.Lilac.KRM
+-- import Bppl.Lilac.KRM
 import Bppl.Lilac.Appl
+import Bppl.Lilac.BI
 
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
@@ -59,9 +60,15 @@ abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 abbrev EnvDet (ds : List TyDet) := HList (⟦·⟧) ds
 abbrev EnvRand (rs : List TyRand) := RV (List.TProd (⟦·⟧) rs)
 
+-- abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
+--   EnvDet ds → EnvRand rs → PSp HC → Prop
+
+open Iris.Instances.Intuitionistic
+open Iris.Instances.Intuitionistic.instBIBase
+
 /-- Lilac propositions -/
-abbrev lProp (ds : List TyDet) (rs : List TyRand) :=
-  EnvDet ds → EnvRand rs → PSp HC → Prop
+abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
+  IProp (EnvDet ds × EnvRand rs) (PSp HC)
 
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
@@ -81,87 +88,48 @@ notation x " ; " xs => fun_prod x xs
 
 end MeasurableFunc
 
-namespace lProp
+namespace LProp
 
 -- ds: deterministic context, rs: random variable context
 variable {ds : List TyDet} {rs : List TyRand}
 
--- The idea is to get a singleton set of a ∀ or ∀ᵣᵥ assertion as input and the same term
--- as output (when taking denotation). So the ds and rs type indices are the same
-def sForall (Ψ : lProp ds rs → Prop)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∀ P, Ψ P → P γ D Ω
-
-def sExists (Ψ : lProp ds rs → Prop)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∃ P, Ψ P ∧ P γ D Ω
-
-def pure (φ : Prop) : lProp ds rs := fun _ _ _ ↦ φ
-def emp : lProp ds rs := fun _ _ Ω ↦ Ω = 1
-
-def top : lProp ds rs := fun _ _ _ ↦ True
-def bot : lProp ds rs := fun _ _ _ ↦ False
-
-def and (P Q : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  P γ D Ω ∧ Q γ D Ω
-def or (P Q : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  P γ D Ω ∨ Q γ D Ω
-def imp (P Q : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∀ Ω', Ω ≤ Ω' → P γ D Ω' → Q γ D Ω'
-def sep (P Q : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∃ Ω₁ Ω₂ : PSp HC, Ω₁ ⋆ Ω₂ ≤ some Ω ∧ P γ D Ω₁ ∧ Q γ D Ω₂
-def wand (P Q : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∀ Ωp, ∃ Ωq, Ωp ⋆ Ω = some Ωq ∧ (P γ D Ωp → Q γ D Ωq)
-
--- could we do better than this? Identify what more is persistent/affine
--- wasn't BaSL partially affine? What does that mean?
-def persistently (P : lProp ds rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (_ : PSp HC) : Prop :=
-  P γ D 1
--- there is no step indexing
-def later (P : lProp ds rs) : lProp ds rs := P
-
 -- is it a problem that only types at the head of the list can be quantified over?
-def «forall» (d : TyDet) (P : lProp (d :: ds) rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∀ x : ⟦d⟧, P (x :: γ) D Ω
-def «exists» (d : TyDet) (P : lProp (d :: ds) rs)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∃ x : ⟦d⟧, P (x :: γ) D Ω
-def forall_rv (r : TyRand) (P : lProp ds (r :: rs))
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∀ X : RV ⟦r⟧, P γ (X ; D) Ω
-def exists_rv (r : TyRand) (P : lProp ds (r :: rs))
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  ∃ X : RV ⟦r⟧, P γ (X ; D) Ω
+def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦ ∀ x : ⟦d⟧, P.1 ((x :: γ), D) Ω, sorry⟩
+def «exists» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦ ∃ x : ⟦d⟧, P.1 ((x :: γ), D) Ω, sorry⟩
+def forall_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦ ∀ X : RV ⟦r⟧, P.1 (γ, (X ; D)) Ω, sorry⟩
+def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟦r⟧, P.1 (γ, (X ; D)) Ω, sorry⟩
 
-def own (E : ValRand ds rs A)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  Measurable[Ω.1] ((E γ).1 ∘ D.1)
+def own (E : ValRand ds rs A) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦ Measurable[Ω.1] ((E γ).1 ∘ D.1), sorry⟩
 
-def dist (E : ValRand ds rs A) (μ : DistDet ds A)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  Measurable[Ω.1] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
+def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦
+    Measurable[Ω.1] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
+  , sorry⟩
+
+-- TODO
+-- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
+-- denotation is ℝ
 
 -- confirm if (X₁, X₂)⁻¹ (A) = X₁⁻¹ (A) ∪ X₂⁻¹ (A) ∪
 -- Do we need different types A₁ and A₂ (what's the use of almost sure equality)
--- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
--- denotation is ℝ
-def eq (E₁ E₂ : ValRand ds rs A)
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
-  let X₁ := (E₁ γ).1 ∘ D.1
-  let X₂ := (E₂ γ).1 ∘ D.1
-  -- let F := {ω | X₁ ω = X₂ ω}
-  sorry --: randVal ds rs A → randVal ds rs A → Term ds rs -- almost sure equality
+def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
+  ⟨fun (γ, D) ⟨ℱ, μ, hμ⟩ ↦
+    let X₁ := (E₁ γ).1 ∘ D.1
+    let X₂ := (E₂ γ).1 ∘ D.1
+    let F := {ω | X₁ ω = X₂ ω}
+    MeasurableSet[ℱ] F ∧ μ F = 1 ∧
+    -- inverse of a function from a point to a set is being taken here
+    ∀ x₁ x₂ : ⟦A⟧, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
+    , sorry⟩
 
 -- consider just taking another PSp instead of μ, if it might simplify proof later
-def wp (M : DistRand ds rs A) (Q : lProp ds (A :: rs))
-    (γ : EnvDet ds) (D : EnvRand rs) (Ω : PSp HC) : Prop :=
+def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
+  ⟨fun (γ, D) Ω ↦
   ∀ Ω_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
   Ω_fr ⋆ Ω ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
   ∀ D' : RV (List.TProd (⟦·⟧) (rs' ++ rs)),
@@ -169,9 +137,10 @@ def wp (M : DistRand ds rs A) (Q : lProp ds (A :: rs))
   ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
-  Q γ (X ; D) Ω'
+  Q.1 (γ, (X ; D)) Ω'
+  , sorry⟩
 
-end lProp
+end LProp
 
 /- Satisfaction relation: `(γ, D, Ω)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `Ω` -/
@@ -186,7 +155,7 @@ variable {ds : List TyDet} {rs : List TyRand}
 
 -- Instantiate basic connectives in BI
 
-instance instBIBase : BIBase (lProp ds rs) where
+instance instBIBase : BIBase (LProp ds rs) where
   Entails P Q    := ∀ γ D Ω, P γ D Ω → Q γ D Ω
   emp            := .emp
   pure           := .pure
@@ -200,7 +169,7 @@ instance instBIBase : BIBase (lProp ds rs) where
   persistently   := .persistently
   later          := .later
 
-instance : Std.Preorder (Entails (PROP := lProp ds rs)) where
+instance : Std.Preorder (Entails (PROP := LProp ds rs)) where
   refl := by
     simp only [BI.Entails]
     intro _ _ _ _ h
@@ -212,13 +181,13 @@ instance : Std.Preorder (Entails (PROP := lProp ds rs)) where
     apply h_xy γ D Ω
     exact h_x
 
-instance {ds : List TyDet} {rs : List TyRand} : COFE (lProp ds rs) :=
+instance {ds : List TyDet} {rs : List TyRand} : COFE (LProp ds rs) :=
   COFE.ofDiscrete Eq equivalence_eq
 
 /-- These proofs have been ported from the Iris-lean to the classical separation logic,
 modified as necessary. The similarities between the two logics is the lack of step-indexing
 and general similarity in non-spatial axioms -/
-instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
+instance instBI {ds : List TyDet} {rs : List TyRand} : BI (LProp ds rs) where
   entails_preorder := by infer_instance
   equiv_iff {P Q} := ⟨
     fun h : P = Q => h ▸ ⟨fun _ _ _ φ ↦ φ, fun _ _ _ φ ↦ φ⟩,
@@ -349,7 +318,7 @@ instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
   persistently_emp_2 := by
     simp only [BI.Entails, BI.persistently, BI.emp]
     intro γ D Ω P
-    rw [lProp.emp] at P
+    rw [LProp.emp] at P
     rw [lProp.persistently, lProp.emp]
   persistently_and_2 := by
     simp only [BI.Entails, BI.persistently, BI.and]
@@ -377,7 +346,7 @@ instance instBI {ds : List TyDet} {rs : List TyRand} : BI (lProp ds rs) where
   later_mono := id
   later_intro _ _ _ := id
   later_sForall_2 {Φ} γ D Ω P := by
-    simp only [later, lProp.later, sForall, lProp.sForall] -- for clarity, can delete
+    simp only [later, LProp.later, sForall, LProp.sForall] -- for clarity, can delete
     intro Q h_Q
     let foo := P Q
     apply foo

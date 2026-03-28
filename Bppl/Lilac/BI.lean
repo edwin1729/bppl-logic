@@ -26,7 +26,9 @@ variable {Env Resource : Type*} [Krm Resource]
 directly providing the semantics.
 In this subtype the data part, `sem`, defines the satisfiability relation, and we add the
 monotonicity constraint: any `IProp` satisfied by a "less informative" resource is also satisfied
-by a more informative resource. -/
+by a more informative resource.
+The `Env` is modelled as a single type, so if we need a deterministic and random environment,
+it needs to be expressed as a tuple. -/
 abbrev IProp (Env Resource : Type*) [Krm Resource]
   := {sem : Env → Resource → Prop // ∀ s σ₁ σ₂, σ₁ ≤ σ₂ → sem s σ₁ → sem s σ₂}
 
@@ -78,6 +80,8 @@ instance instBIBase : BIBase (IProp Env Resource) where
   imp P Q        := ⟨fun s σ ↦ ∀ σ', σ ≤ σ' → (P.1 s σ' → Q.1 s σ'),
     fun s σ₁ σ₂ σ₁_le_σ₂ hσ₁ σ' σ₂_le_σ' hPσ' ↦ hσ₁ σ' (σ₁_le_σ₂.trans σ₂_le_σ') hPσ'
   ⟩
+  -- The idea is to get a singleton set of a ∀ or ∀ᵣᵥ assertion as input and the same term
+  -- as output (when taking denotation). So the ds and rs type indices are the same
   sForall Ψ      := ⟨fun s σ ↦ ∀ p, Ψ p → p.1 s σ, by
     intro s σ₁ σ₂ σ₁_le_σ₂ hσ₁ p hp
     exact p.2 s σ₁ σ₂ σ₁_le_σ₂ (hσ₁ p hp)
