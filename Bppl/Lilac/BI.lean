@@ -30,6 +30,40 @@ by a more informative resource. -/
 abbrev IProp (Env Resource : Type*) [Krm Resource]
   := {sem : Env → Resource → Prop // ∀ s σ₁ σ₂, σ₁ ≤ σ₂ → sem s σ₁ → sem s σ₂}
 
+prefix:max "✓'" => Option.isSome
+
+abbrev foo {x : Option α} (h : x.isSome) := x.get h
+
+prefix:max "↓" => foo
+
+theorem Krm.ge_mul_mono' {α : Type*} [k: Krm α] (x x' y y' : α) :
+    (∀ p' : α, x ≤ x' → y ≤ y' →
+    (some p' = x' ⋆ y') → ∃ p, (some p = x ⋆ y) ∧ p ≤ p')
+    ↔
+    (x ≤ x' → y ≤ y' →
+    ∀ p' : ✓'(x' ⋆ y'), ∃ p: ✓'(x ⋆ y), ↓p ≤ ↓p') := by
+  constructor
+  ·
+    intro h x_le y_le p'
+    have ⟨p, hp, p_le_p'⟩ := h ↓p' x_le y_le (Option.some_get p')
+    use hp ▸ @Option.isSome_some _ p
+    trans p
+    ·
+      apply le_of_eq
+      rw [foo]
+      -- nth_rewrite 1 [← hp]
+
+      -- exact (Option.get_some p (hp ▸ Option.isSome_some))
+      sorry
+    · exact p_le_p'
+
+  · sorry
+
+
+
+-- instance {α : Type*} {x : Option α} : Coe (x.isSome = true) α where
+--   coe (h : x.isSome = true) := x.get h
+
 instance instBIBase : BIBase (IProp Env Resource) where
   Entails P Q    := ∀ s σ, P.1 s σ → Q.1 s σ
   emp            := ⟨fun _ _ ↦ True, fun _ _ _ _ _ ↦ trivial⟩
@@ -52,27 +86,19 @@ instance instBIBase : BIBase (IProp Env Resource) where
     intro s σ₁ σ₂ σ₁_le_σ₂ ⟨p, hp, hpσ₁⟩
     exact ⟨p, hp, p.2 s σ₁ σ₂ σ₁_le_σ₂ hpσ₁⟩
   ⟩
-  sep P Q        := ⟨fun s σ ↦ ∃ σ₁ σ₂, σ₁ ⋆ σ₂ ≤ σ ∧ P.1 s σ₁ ∧ Q.1 s σ₂, by
-    intro s σ₁ σ₂ σ₁_le_σ₂ ⟨σP, σQ, hσPQ, hP, hQ⟩
-    use σP, σQ
-    constructor
-    · sorry
-      -- have foo : some σ₁ ≤ some σ₂ := by exact σ₁_le_σ₂
-      -- #check Preorder.le_transWithBot.instPreorder
-      -- #check WithBot.
-      -- exact @Preorder.le_trans (Option Resource) WithBot.preorder _ (some σ₁) (some σ₂) hσPQ foo
-      -- trans (some σ₂)
+  sep P Q        :=
+    ⟨fun s σ ↦ ∃ σ₁ σ₂, ∃ (σ₁₂ : ✓'(σ₁ ⋆ σ₂)), ↓σ₁₂ ≤ σ ∧ P.1 s σ₁ ∧ Q.1 s σ₂,
+    by
+      intro s σ₁ σ₂ σ₁_le_σ₂ ⟨σP, σQ, h_exists, h_le, hP, hQ⟩
+      use σP, σQ, h_exists
+      exact ⟨h_le.trans σ₁_le_σ₂, hP, hQ⟩
+    ⟩
+  wand P Q       := ⟨fun s σ ↦ ∀ σP, ∀ σQ : ✓'(σP ⋆ σ), (P.1 s σP → Q.1 s ↓σQ), by
+      intro s σ₁ σ₂ σ₁_le_σ₂ h σP σQ hP
 
-    · sorry
-    --   · σ₁_le_σ₂
-    --   · hσPQ
-    --  by trans
-    --  --hσPQ.trans σ₁_le_σ₂
-    --  · sorry
-    --  · sorry
-    --  , hP, hQ⟩
-  ⟩
-  wand P Q       := ⟨fun s σ ↦ ∀ σp, ∃ σq, σp ⋆ σ = some σq ∧ (P.1 s σp → Q.1 s σq), sorry⟩
+      sorry
+      -- exact h σP σQ hP
+    ⟩
   persistently P := ⟨fun s σ ↦ P.1 s 1, sorry⟩
   later P        := ⟨fun s σ ↦ P.1 s σ, sorry⟩
 
@@ -181,7 +207,8 @@ instance instBI : BI (IProp Env Resource) where
     simp only [BI.Entails, BI.sep]
     intro _ _ _ _ h_PQ h_P'Q' s σ ⟨σ₁, σ₂, h_Ω, h_P, h_P'⟩
     use σ₁, σ₂
-    exact ⟨h_Ω, h_PQ s σ₁ h_P, h_P'Q' s σ₂ h_P'⟩
+    sorry
+    -- exact ⟨h_Ω, h_PQ s σ₁ h_P, h_P'Q' s σ₂ h_P'⟩
   emp_sep.mp := by
     simp only [BI.Entails, BI.sep, BI.emp]
 
@@ -201,12 +228,12 @@ instance instBI : BI (IProp Env Resource) where
     intro _ _ _ _ ⟨σ₁, σ₂, h_union, h_P, h_Q⟩
     use σ₂, σ₁
     rw [Pcm.comm]
-    exact ⟨h_union, h_Q, h_P⟩
+    sorry
+    -- exact ⟨h_union, h_Q, h_P⟩
   sep_assoc_l := by
     simp only [BI.Entails, BI.sep]
-    intro _ _ _ _ _
-      ⟨Ω₁₂, Ω₃, h_Ω₁₂₃ₗ, ⟨Ω₁, Ω₂, h_Ω₁₂, h_P₁, h_P₂⟩, h_P₃⟩
-    use Ω₁
+    -- intro _ _ _ _ _ ⟨Ω₁₂, Ω₃, h_Ω₁₂₃ₗ, ⟨Ω₁, Ω₂, h_Ω₁₂, h_P₁, h_P₂⟩, h_P₃⟩
+    -- use Ω₁
     -- usage of Pcm.assoc is obstructed by ≤
     sorry  -- Todo ≤
 
@@ -237,17 +264,19 @@ instance instBI : BI (IProp Env Resource) where
   persistently_absorb_l := by
     simp only [BI.Entails, BI.persistently, BI.sep]
     intro _ _ _ _ ⟨_, _, _, h_P, _⟩
-    exact h_P
+    sorry
+    -- exact h_P
   persistently_and_l := by
     simp only [BI.Entails, BI.persistently, BI.and, BI.sep]
     intro _ _ _ σ ⟨h_P, h_Q⟩
     apply Exists.intro 1
     apply Exists.intro σ
-    constructor
-    · rw [Pcm.one_mul, Option.some_le_some]
-    constructor
-    · exact h_P
-    · exact h_Q
+    sorry
+    -- constructor
+    -- · rw [Pcm.one_mul, Option.some_le_some]
+    -- constructor
+    -- · exact h_P
+    -- · exact h_Q
 
   later_mono := id
   later_intro _ _ := id
