@@ -309,5 +309,18 @@ instance instBI : BI (IProp Env Resource) where
     -- exact h
   )
 
+-- Intuitionistic is supposed to mean a proposition can be freely duplicated or dropped,
+-- ie, persistent + affine (according to the MoSeL paper).
+
+-- But my understanding of what the ordering relation in a KRM allows is
+-- `Affine` not `Intuitionistic`. Clear up this confusion and clarify the
+-- terminology for the report.
+
+-- For now I assume:
+
+/-- A KRM generates a separation logic where every proposition is
+affine (may be dropped in a proof) -/
+instance KRM_BIAffine : BIAffine (IProp Env Resource) where
+  affine P := sorry
 
 end Iris.Instances.Intuitionistic

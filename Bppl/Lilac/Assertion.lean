@@ -140,6 +140,22 @@ def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   Q.1 (γ, (X ; D)) Ω'
   , sorry⟩
 
+syntax:52 term:53 " ∼ " term:53 : term
+
+macro_rules
+  | `(iprop($rv ∼ $dist)) => `(dist $rv $dist)
+
+delab_rule dist
+  | `($_ $rv $dist) => `(iprop($rv ∼ $dist))
+
+syntax:54 term:53 " ≗ " term:53 : term
+
+macro_rules
+  | `(iprop($E₁ ≗ $E₂)) => `(eq $E₁ $E₂)
+
+delab_rule eq
+  | `($_ $E₁ $E₂) => `(iprop($E₁ ≗ $E₂))
+
 end LProp
 
 /- Satisfaction relation: `(γ, D, Ω)⊨ P` means `P` holds under deterministic env `γ`,

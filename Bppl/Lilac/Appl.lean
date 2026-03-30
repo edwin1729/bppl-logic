@@ -42,6 +42,10 @@ class Denotational (Ty : Type u) where
 
 notation "⟦" t "⟧" => Denotational.den t
 
+--TODO: 1) Make sure that some type has denotation `ℝ`
+-- 2) The denotations must be measurable spaces which support equality
+-- 3) Make a tactic to show that products of measurable spaces which support
+-- equality also support equality
 class DenotationalMeas (Ty : Type u) extends Denotational Ty where
   instMeasurable : ∀ t, MeasurableSpace (den t)
 
