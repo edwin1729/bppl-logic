@@ -42,6 +42,10 @@ class Denotational (Ty : Type u) where
 
 notation "⟦" t "⟧" => Denotational.den t
 
+--TODO: 1) Make sure that some type has denotation `ℝ`
+-- 2) The denotations must be measurable spaces which support equality
+-- 3) Make a tactic to show that products of measurable spaces which support
+-- equality also support equality
 class DenotationalMeas (Ty : Type u) extends Denotational Ty where
   instMeasurable : ∀ t, MeasurableSpace (den t)
 
@@ -188,6 +192,8 @@ to give an element of a measurable space -/
   | ret X => ⟨fun env ↦ .dirac (X.den.1 env),
       MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
   -- the arguemnt `X` is the extra term in `N`'s context
+  -- sorry notes: `Measure.measurable_bind'` is not exactly what we want since
+  -- `(fun X ↦ N.den.1 (X, env))` uses `env`
   | bind M N => ⟨fun env ↦ Measure.bind (M.den.1 env) (fun X ↦ N.den.1 (X, env)), sorry⟩
   | pair M N => ⟨fun env ↦ (M.den.1 env, N.den.1 env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den.1 env).fst, Measurable.fst M.den.2⟩

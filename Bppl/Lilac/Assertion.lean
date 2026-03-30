@@ -115,8 +115,6 @@ def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
 -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
 -- denotation is ℝ
 
--- confirm if (X₁, X₂)⁻¹ (A) = X₁⁻¹ (A) ∪ X₂⁻¹ (A) ∪
--- Do we need different types A₁ and A₂ (what's the use of almost sure equality)
 def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
   ⟨fun (γ, D) ⟨ℱ, μ, hμ⟩ ↦
     let X₁ := (E₁ γ).1 ∘ D.1
@@ -127,6 +125,7 @@ def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
     ∀ x₁ x₂ : ⟦A⟧, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
     , sorry⟩
 
+-- The extension `rs' ++ rs` may not be necessary
 -- consider just taking another PSp instead of μ, if it might simplify proof later
 def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
@@ -139,6 +138,22 @@ def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
   Q.1 (γ, (X ; D)) Ω'
   , sorry⟩
+
+syntax:52 term:53 " ∼ " term:53 : term
+
+macro_rules
+  | `(iprop($rv ∼ $dist)) => `(dist $rv $dist)
+
+delab_rule dist
+  | `($_ $rv $dist) => `(iprop($rv ∼ $dist))
+
+syntax:54 term:53 " ≗ " term:53 : term
+
+macro_rules
+  | `(iprop($E₁ ≗ $E₂)) => `(eq $E₁ $E₂)
+
+delab_rule eq
+  | `($_ $E₁ $E₂) => `(iprop($E₁ ≗ $E₂))
 
 end LProp
 
