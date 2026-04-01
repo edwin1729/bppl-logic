@@ -101,7 +101,7 @@ inductive Term : List Ty → Ty → Type
   | var : Member ty ctx → Term ctx ty
   | ret : Term ctx ty → Term ctx (.G ty)
   | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
-  | pair  : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
+  | pair : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
   | fst : Term ctx (.prod ty₁ ty₂) → Term ctx ty₁
   | snd : Term ctx (.prod ty₁ ty₂) → Term ctx ty₂
   | T : Term ctx .bool
