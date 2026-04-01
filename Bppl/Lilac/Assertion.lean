@@ -31,25 +31,25 @@ of `Meas` is also in `Set`)-/
 
 -/
 
-open MeasureTheory
+open MeasureTheory Appl.Denotation
 
 /- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
 denotation must have a measurable space structure -/
 variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 
 /-- Deterministic Value -/
-abbrev ValDet (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → ⟦A⟧)
+abbrev ValDet (ds : List TyDet) (A : TyRand) := (HList (⟪·⟫) ds → ⟪A⟫)
 
 /-- Random Value -/
 abbrev ValRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ ⟦A⟧)
+  (HList (⟪·⟫) ds → List.TProd (⟪·⟫) rs -m→ ⟪A⟫)
 
 /-- Deterministic distribution -/
-abbrev DistDet (ds : List TyDet) (A : TyRand) := (HList (⟦·⟧) ds → Measure ⟦A⟧)
+abbrev DistDet (ds : List TyDet) (A : TyRand) := (HList (⟪·⟫) ds → Measure ⟪A⟫)
 
 /-- Random distribution -/
 abbrev DistRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (HList (⟦·⟧) ds → List.TProd (⟦·⟧) rs -m→ Measure ⟦A⟧)
+  (HList (⟪·⟫) ds → List.TProd (⟪·⟫) rs -m→ Measure ⟪A⟫)
 
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
@@ -57,8 +57,8 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 /-- Todo add finite footprint condition -/
 abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 
-abbrev EnvDet (ds : List TyDet) := HList (⟦·⟧) ds
-abbrev EnvRand (rs : List TyRand) := RV (List.TProd (⟦·⟧) rs)
+abbrev EnvDet (ds : List TyDet) := HList (⟪·⟫) ds
+abbrev EnvRand (rs : List TyRand) := RV (List.TProd (⟪·⟫) rs)
 
 -- abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
 --   EnvDet ds → EnvRand rs → PSp HC → Prop
@@ -95,13 +95,13 @@ variable {ds : List TyDet} {rs : List TyRand}
 
 -- is it a problem that only types at the head of the list can be quantified over?
 def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∀ x : ⟦d⟧, P.1 ((x :: γ), D) Ω, sorry⟩
+  ⟨fun (γ, D) Ω ↦ ∀ x : ⟪d⟫, P.1 ((x :: γ), D) Ω, sorry⟩
 def «exists» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∃ x : ⟦d⟧, P.1 ((x :: γ), D) Ω, sorry⟩
+  ⟨fun (γ, D) Ω ↦ ∃ x : ⟪d⟫, P.1 ((x :: γ), D) Ω, sorry⟩
 def forall_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∀ X : RV ⟦r⟧, P.1 (γ, (X ; D)) Ω, sorry⟩
+  ⟨fun (γ, D) Ω ↦ ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
 def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟦r⟧, P.1 (γ, (X ; D)) Ω, sorry⟩
+  ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
 
 def own (E : ValRand ds rs A) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦ Measurable[Ω.1] ((E γ).1 ∘ D.1), sorry⟩
@@ -122,7 +122,7 @@ def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
     let F := {ω | X₁ ω = X₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
     -- inverse of a function from a point to a set is being taken here
-    ∀ x₁ x₂ : ⟦A⟧, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
+    ∀ x₁ x₂ : ⟪A⟫, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
     , sorry⟩
 
 -- The extension `rs' ++ rs` may not be necessary
@@ -131,8 +131,8 @@ def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
   ∀ Ω_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
   Ω_fr ⋆ Ω ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
-  ∀ D' : RV (List.TProd (⟦·⟧) (rs' ++ rs)),
-  ∃ X : RV ⟦A⟧, ∃ Ω' : PSp HC,
+  ∀ D' : RV (List.TProd (⟪·⟫) (rs' ++ rs)),
+  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp HC,
   ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧

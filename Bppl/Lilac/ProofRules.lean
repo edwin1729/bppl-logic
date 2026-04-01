@@ -7,7 +7,7 @@ import Bppl.Lilac.Assertion
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
-open Iris.BI.BIBase LProp Iris.BI
+open Iris.BI.BIBase LProp Iris.BI Appl.Denotation
 
 namespace LProp
 

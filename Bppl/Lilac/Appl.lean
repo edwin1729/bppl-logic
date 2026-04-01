@@ -37,23 +37,6 @@ theorem List.TProd.measurable_get [∀ i, MeasurableSpace (β i)] (mem : Member 
   | head => exact measurable_fst
   | tail _ ih => exact ih.comp measurable_snd
 
-class Denotational (Ty : Type u) where
-  den : Ty → Type
-
-notation "⟦" t "⟧" => Denotational.den t
-
---TODO: 1) Make sure that some type has denotation `ℝ`
--- 2) The denotations must be measurable spaces which support equality
--- 3) Make a tactic to show that products of measurable spaces which support
--- equality also support equality
-class DenotationalMeas (Ty : Type u) extends Denotational Ty where
-  instMeasurable : ∀ t, MeasurableSpace (den t)
-
-
-instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
-    MeasurableSpace ⟦t⟧ :=
-  d.instMeasurable t
-
 abbrev MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
   := {f: α → β // Measurable f}
 
@@ -167,9 +150,29 @@ lemma foop : Measurable (foo) := by
   | le => ⟨fun p ↦ p.1 ≤ p.2, sorry⟩
   | eq => ⟨fun p ↦ p.1 = p.2, sorry⟩
 
+namespace Denotation
+class Denotational (Ty : Type u) where
+  den : Ty → Type
+
+notation "⟪" t "⟫" => Denotational.den t
+
+--TODO: 1) Make sure that some type has denotation `ℝ`
+-- 2) The denotations must be measurable spaces which support equality
+-- 3) Make a tactic to show that products of measurable spaces which support
+-- equality also support equality
+class DenotationalMeas (Ty : Type u) extends Denotational Ty where
+  instMeasurable : ∀ t, MeasurableSpace (den t)
+
+
+instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
+    MeasurableSpace ⟪t⟫ :=
+  d.instMeasurable t
+
 instance : DenotationalMeas Ty where
   den ty := ↑ty.den
   instMeasurable ty := ty.den.2
+
+end Denotation
 
 instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with
@@ -181,13 +184,13 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
     | Ty.real => default
     | Ty.bool => default
 
--- Sadly Classes can't be annotate without reducible to. So the notation `⟦⟧` can't
+-- Sadly Classes can't be annotate without reducible to. So the notation `⟪⟫` can't
 -- may used through a type class and still be made reducible? Investigate
 -- and at the same time I struggle to get type class inference to notice the M
 
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
-@[simp] def Term.den : Term ctx ty → List.TProd (⟦·⟧) ctx -m→ ty.den
+@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
   | ret X => ⟨fun env ↦ .dirac (X.den.1 env),
       MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
@@ -219,7 +222,7 @@ to give an element of a measurable space -/
     if h: n < len then (M.den.1 env) ⟨n, h⟩ else default, sorry⟩
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   | @«for» _ ty n Mᵢ Mₛ =>
-    let rec loop (k : ℕ) (v : ⟦ty⟧) (f : ℕ → ⟦ty⟧ → Measure ⟦ty⟧) := if n ≤ k then
+    let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
       .dirac v else
       Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
     ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩

@@ -24,8 +24,8 @@ def unif1 : Term [] Ty.real.G :=
   ret (var head)
 )
 
--- TODO `⟦Ty.real⟧` shoud reduce to `ℝ` providing this instance directly
-instance : Preorder ⟦Ty.real⟧ := sorry
+-- TODO `⟪Ty.real⟫` shoud reduce to `ℝ` providing this instance directly
+instance : Preorder ⟪Ty.real⟫ := sorry
 
 -- TODO 1) the deterministic context never get's used hence it isn't
 -- inferred that we want to use `Ty` for both `TyDet` and `TyRand`. Can just hardcode that buttt...
