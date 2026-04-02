@@ -227,5 +227,11 @@ to give an element of a measurable space -/
       Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
     ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
+/-- The denotations of programs are unconcerned with the deterministic context.
+So we make this helper, which simply ignores the determinisitic context. -/
+def Term.den' {ds : List Ty} (M : Appl.Term ctx ty) := fun (_ : HList (⟪·⟫) ds) ↦ M.den
+
+notation " ⦃ " M " ⦄ " => Term.den' M
+
 end
 end Appl

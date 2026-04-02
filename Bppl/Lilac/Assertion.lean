@@ -155,6 +155,16 @@ macro_rules
 delab_rule eq
   | `($_ $E₁ $E₂) => `(iprop($E₁ ≗ $E₂))
 
+-- Why am I needing to use nested iprop when using this notation??
+-- My delab rules are naive, they need to use unpack?
+syntax:52 " ∀ᵣᵥ: " term:53 " , " term:53 : term
+
+macro_rules
+  | `(iprop(∀ᵣᵥ: $A , $P)) => `(forall_rv $A $P)
+
+delab_rule eq
+  | `($_ $A $P) => `(iprop(∀ᵣᵥ:$A , $P))
+
 end LProp
 
 /- Satisfaction relation: `(γ, D, Ω)⊨ P` means `P` holds under deterministic env `γ`,

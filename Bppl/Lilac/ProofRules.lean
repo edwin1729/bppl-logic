@@ -1,6 +1,7 @@
 import Iris.BI.BIBase
 import Iris.BI
 import Iris.BI.Classes
+import Iris.ProofMode
 
 import Bppl.Lilac.Assertion
 
@@ -9,7 +10,8 @@ set_option relaxedAutoImplicit true
 
 open Iris.BI.BIBase LProp Iris.BI Appl.Denotation
 
-namespace LProp
+/- Almost Surely EQual-/
+namespace Aseq
 
 variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 {ds : List TyDet} {rs : List TyRand} {A : TyRand}
@@ -43,13 +45,36 @@ lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
 -- B.19, don't think this is needed
 
 -- Appendix B.22 from Lilac paper
+
+end Aseq
 namespace WP
+open ProbabilityTheory MeasureTheory Appl PMF NNReal
+-- variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
+variable {ds : List Ty} {rs : List Ty} {A ty₁ ty₂ : Ty}
+noncomputable section
 
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
 
+/-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
+def unif01_sem : HList (⟪·⟫) ds → Measure ℝ := fun _ ↦ uniformOn (Set.Icc 0 1)
 
+def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : HList (⟪·⟫) ds → Measure Bool :=
+  fun _ ↦ (bernoulli p hp).toMeasure
 
+/-- Variable at the head of the random environment list. -/
+def fst_rand : ValRand ds (A::rs) A :=
+  fun _d_env ↦ ⟨fun r_env ↦ r_env.get .head , List.TProd.measurable_get .head⟩
 
+lemma wp_unif (Q : LProp ds (Ty.real :: rs)) :
+    forall_rv Ty.real iprop(fst_rand ∼ unif01_sem -∗ Q) ⊢ wp ⦃Term.unif01⦄ Q :=
+  sorry
 
+lemma wp_flip (p : ℝ≥0) (hp : p ≤ 1) (Q : LProp ds (Ty.bool :: rs)) :
+    forall_rv Ty.bool iprop(fst_rand ∼ (ber_sem p hp) -∗ Q) ⊢ wp ⦃Term.flip p hp⦄ Q :=
+  sorry
+
+-- lemma wp_let (M : Term rs (.G ty₁)) (N : Term (ty₁ :: rs) (.G ty₂))
+-- Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
+
+end
 end WP
-end LProp
