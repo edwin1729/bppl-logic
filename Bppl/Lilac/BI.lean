@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2026 Edwin Fernando. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Edwin Fernando
+-/
+
 import Iris.BI.BIBase
 import Iris.BI
 import Iris.Algebra.OFE
