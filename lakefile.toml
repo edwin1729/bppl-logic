@@ -13,12 +13,12 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-version = "git#v4.24.0"
+version = "git#v4.28.0"
 
 [[require]]
 name = "iris"
 git = "https://github.com/leanprover-community/iris-lean.git"
-version = "git#v4.24.0"
+version = "git#v4.28.0"
 
 [[lean_lib]]
 name = "Bppl"
