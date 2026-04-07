@@ -1,4 +1,5 @@
 import Bppl.Lilac.Appl
+import Bppl.Lilac.MeasureOnSpace
 import Bppl.Lilac.KRM
 import Bppl.Lilac.BI
 import Bppl.Lilac.Assertion
