@@ -45,7 +45,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
     change (if h: ∃! r, r =ᵢ unit ⊕ᵢ p then some h.choose else none) = some p
     have comb : ∃! r, r =ᵢ unit ⊕ᵢ p := existsUnique_of_exists_of_unique
         ⟨p, indepenendentProduct_identity⟩ (uniqueness unit p)
-    rw [dite_cond_eq_true (eq_true comb)]
+    rw [dif_pos comb]
     simp only [Option.some.injEq]
     rw [ExistsUnique.choose_eq_iff comb]
     exact indepenendentProduct_identity
@@ -57,7 +57,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
         have h₁' : ∃! r, r =ᵢ p ⊕ᵢ q := existsUnique_of_exists_of_unique h₁ (uniqueness p q)
         have h₂' : ∃! r, r =ᵢ q ⊕ᵢ p := existsUnique_of_exists_of_unique h₂ (uniqueness q p)
         dsimp [PcmBase.binop]
-        rw [dite_cond_eq_true (eq_true h₁'), dite_cond_eq_true (eq_true h₂'),
+        rw [dif_pos h₁', dif_pos h₂',
           Option.some.injEq, ExistsUnique.choose_eq_iff h₁']
         apply independentProduct_comm
         rw [← ExistsUnique.choose_eq_iff h₂']
@@ -84,35 +84,73 @@ noncomputable instance instPcm : Pcm (PSpace α) where
 -- could be shortened with order dual like technique? Notes on symmetry of the cases where relevant
   assoc p q r := by
     by_cases h_pq: ∃ pq, pq =ᵢ p ⊕ᵢ q
-    ·
-      by_cases h_qr: ∃ qr, qr =ᵢ q ⊕ᵢ r
-      ·
-        have h_pq' : ∃! pq, pq =ᵢ p ⊕ᵢ q := existsUnique_of_exists_of_unique h_pq (uniqueness p q)
+    · by_cases h_qr: ∃ qr, qr =ᵢ q ⊕ᵢ r
+      · have h_pq' : ∃! pq, pq =ᵢ p ⊕ᵢ q := existsUnique_of_exists_of_unique h_pq (uniqueness p q)
         obtain ⟨pq, h_pq⟩ := h_pq'
         by_cases h_pq_r: ∃ s, s =ᵢ pq ⊕ᵢ r
-        ·
-          have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
+        · have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
           obtain ⟨qr, h_qr⟩ := h_qr'
           by_cases h_p_qr: ∃ s, s =ᵢ p ⊕ᵢ qr
           · -- (1) The "interesting" case where all independent products exist
-            have h_pq_r' : ∃! s, s =ᵢ pq ⊕ᵢ r := existsUnique_of_exists_of_unique h_pq_r (uniqueness pq r)
-            have h_p_qr' : ∃! s, s =ᵢ p ⊕ᵢ qr := existsUnique_of_exists_of_unique h_p_qr (uniqueness p qr)
+            have h_pq_r' : ∃! s, s =ᵢ pq ⊕ᵢ r
+              := existsUnique_of_exists_of_unique h_pq_r (uniqueness pq r)
+            have h_p_qr' : ∃! s, s =ᵢ p ⊕ᵢ qr
+              := existsUnique_of_exists_of_unique h_p_qr (uniqueness p qr)
             dsimp [PcmBase.binop]
-            rw [dite_cond_eq_true (eq_true ⟨pq, h_pq⟩), dite_cond_eq_true (eq_true ⟨qr, h_qr⟩)]
-            simp only [Option.map_some, Option.seq_some, Option.join_some]
-
-            -- dsimp [dite_cond_eq_true (eq_true h_pq_r'), dite_cond_eq_true (eq_true h_p_qr')]
-            sorry
-          · -- (2)
-            sorry
-        ·
-          have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
+            rw [dif_pos ⟨pq, h_pq⟩, dif_pos ⟨qr, h_qr⟩]
+            dsimp only [Option.map_some, Option.seq_some, Option.join_some]
+            have h_pq' : ∃! pq, pq =ᵢ p ⊕ᵢ q := ⟨pq, h_pq⟩
+            have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := ⟨qr, h_qr⟩
+            have heq₁ : h_pq'.choose = pq := (ExistsUnique.choose_eq_iff h_pq').2 h_pq.1
+            have heq₂ : h_qr'.choose = qr := (ExistsUnique.choose_eq_iff h_qr').2 h_qr.1
+            rw [heq₁, heq₂]
+            rw [dif_pos h_pq_r', dif_pos h_p_qr', Option.some.injEq]
+            rw [ExistsUnique.choose_eq_iff h_pq_r']
+            suffices ∃ pq, pq =ᵢ p ⊕ᵢ q ∧ h_p_qr'.choose =ᵢ pq ⊕ᵢ r by
+              obtain ⟨pq', h_pq'⟩ := this
+              have eq : pq' = pq := uniqueness p q pq' pq h_pq'.1 h_pq.1
+              exact eq ▸ h_pq'.2
+            apply independentProduct_assoc_right h_qr.1
+            exact (Exists.choose_spec h_p_qr').1
+          · -- (2) lhs = some rhs = none
+            obtain ⟨s, h_s⟩ := h_pq_r
+            have : ∃ s, s =ᵢ p ⊕ᵢ qr := by
+              obtain ⟨qr', h_qr'⟩ := independentProduct_assoc h_pq.1 h_s
+              have eq : qr' = qr := uniqueness q r qr' qr h_qr'.1 h_qr.1
+              exact ⟨s, eq ▸ h_qr'.2⟩
+            contradiction
+        · have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
           obtain ⟨qr, h_qr⟩ := h_qr'
-          by_cases h_p_qr: ∃ s, s =ᵢ p ⊕ᵢ qr
-          · -- (3)
-            sorry
-          · -- (4)
-            sorry
+          by_cases h_p_qr : ∃ s, s =ᵢ p ⊕ᵢ qr
+          · -- (3) lhs = none rhs = some. dual to (2)
+            obtain ⟨s, h_s⟩ := h_p_qr
+            have : ∃ s, s =ᵢ pq ⊕ᵢ r := by
+              obtain ⟨pq', h_pq'⟩ := independentProduct_assoc_right h_qr.1 h_s
+              have eq : pq' = pq := uniqueness p q pq' pq h_pq'.1 h_pq.1
+              exact ⟨s, eq ▸ h_pq'.2⟩
+            contradiction
+          · -- (4) none_left copied from (6) none_right from (8)
+            have none_left : (binop <$> p ⋆ q <*> some r).join = none := by
+              have some_pq : p ⋆ q = some pq := by
+                dsimp [binop]
+                rw [dif_pos ⟨pq, h_pq⟩, Option.some.injEq,
+                  ExistsUnique.choose_eq_iff ⟨pq, h_pq⟩]
+                exact h_pq.1
+              rw [some_pq]
+              dsimp only [Option.map_eq_map, Option.map_some, Option.seq_some, Option.join_some]
+              apply dite_cond_eq_false
+              simp_all only [not_exists, existsUnique_false]
+            have none_right : (binop <$> some p <*> q ⋆ r).join = none := by
+              have some_qr : q ⋆ r = some qr := by
+                dsimp [binop]
+                rw [dif_pos ⟨qr, h_qr⟩, Option.some.injEq,
+                  ExistsUnique.choose_eq_iff ⟨qr, h_qr⟩]
+                exact h_qr.1
+              rw [some_qr]
+              dsimp only [Option.map_eq_map, Option.map_some, Option.seq_some, Option.join_some]
+              apply dite_cond_eq_false
+              simp_all only [not_exists, existsUnique_false]
+            rw [none_left, none_right]
       · -- rhs = none
         have h_pq' : ∃! pq, pq =ᵢ p ⊕ᵢ q := existsUnique_of_exists_of_unique h_pq (uniqueness p q)
         obtain ⟨pq, h_pq⟩ := h_pq'
@@ -127,7 +165,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
           have none_left : (binop <$> p ⋆ q <*> some r).join = none := by
             have some_pq : p ⋆ q = some pq := by
               dsimp [binop]
-              rw [dite_cond_eq_true (eq_true ⟨pq, h_pq⟩), Option.some.injEq,
+              rw [dif_pos ⟨pq, h_pq⟩, Option.some.injEq,
                 ExistsUnique.choose_eq_iff ⟨pq, h_pq⟩]
               exact h_pq.1
             rw [some_pq]
@@ -143,8 +181,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
           rw [none_left, none_right]
     · -- lhs = none
       by_cases h_qr: ∃ qr, qr =ᵢ q ⊕ᵢ r
-      ·
-        have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
+      · have h_qr' : ∃! qr, qr =ᵢ q ⊕ᵢ r := existsUnique_of_exists_of_unique h_qr (uniqueness q r)
         obtain ⟨qr, h_qr⟩ := h_qr'
         by_cases h_p_qr: ∃ s, s =ᵢ p ⊕ᵢ qr
         · -- (7) rhs = some _     so contradiction
@@ -163,7 +200,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
           have none_right : (binop <$> some p <*> q ⋆ r).join = none := by
             have some_qr : q ⋆ r = some qr := by
               dsimp [binop]
-              rw [dite_cond_eq_true (eq_true ⟨qr, h_qr⟩), Option.some.injEq,
+              rw [dif_pos ⟨qr, h_qr⟩, Option.some.injEq,
                 ExistsUnique.choose_eq_iff ⟨qr, h_qr⟩]
               exact h_qr.1
             rw [some_qr]
