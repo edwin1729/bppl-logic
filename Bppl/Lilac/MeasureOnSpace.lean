@@ -298,8 +298,6 @@ instance (Ω : Type*) : Preorder (PSpace Ω) where
   le_trans {a b c} (h₁ h₂) := by
     aesop (add safe forward le_trans) (add safe (by rw [MeasureTheory.Measure.map_map]))
 
-abbrev PSp (Ω : Type*) := WithTop (PSpace Ω)
-
 /-- Holds if `r` is the independent product of `p` and `q` -/
 def PSpace.isIndependentProduct (r p q : PSpace Ω) :=
   r.1.ms = p.1.ms.sum q.1.ms ∧
@@ -466,7 +464,7 @@ lemma PSpace.measure_ne_top {m : PSpace Ω} {u : Set Ω} : m.1.μ u ≠ ⊤ := b
   have h₃ : m.1.μ u ≤ m.1.μ Set.univ := measure_mono h₂
   exact lt_of_le_of_lt (b := 1) (by aesop) (by aesop)
 
-theorem PSpace.uniqueness {r r' p q : PSpace Ω}
+theorem PSpace.uniqueness (p q r r' : PSpace Ω)
   (h₁ : r =ᵢ p ⊕ᵢ q) (h₂ : r' =ᵢ p ⊕ᵢ q) : r = r' := by
   apply PSpace.ext_ms (h₁.1 ▸ h₂.1 ▸ rfl)
   -- have : IsPiSystem (generator p.1 q.1) := MeasureOnSpace.isPiSystem_generator p.1 q.1
@@ -571,7 +569,7 @@ lemma empty_sigma_algebra_is_identity [Inhabited Ω] (p : MeasureOnSpace Ω)
     grind
   assumption
 
-theorem indepenendentProduct_identity [Inhabited Ω] {p : PSpace Ω}
+theorem PSpace.indepenendentProduct_identity [Inhabited Ω] {p : PSpace Ω}
   : p =ᵢ unit ⊕ᵢ p := by
   unfold isIndependentProduct
   constructor
@@ -604,7 +602,7 @@ end Identity
 
 section Commutativity
 
-theorem independentProduct_comm [Inhabited Ω] {r p q : PSpace Ω}
+theorem PSpace.independentProduct_comm [Inhabited Ω] {r p q : PSpace Ω}
   (h : r =ᵢ p ⊕ᵢ q)
   : r =ᵢ q ⊕ᵢ p := by
   constructor
@@ -630,7 +628,7 @@ section Associativity
 --   1. (b * c) and a * (b * c) are defined
 --   2. (a * b) * c = a * (b * c)
 -- The above definition suffices because we proved commutativity
-theorem independentProduct_assoc [Inhabited Ω] {pq p q s r : PSpace Ω}
+theorem PSpace.independentProduct_assoc [Inhabited Ω] {pq p q s r : PSpace Ω}
   (h_pq : pq =ᵢ p ⊕ᵢ q)
   (h_pq_r : s =ᵢ pq ⊕ᵢ r)
   : ∃ qr, qr =ᵢ q ⊕ᵢ r ∧ s =ᵢ p ⊕ᵢ qr
