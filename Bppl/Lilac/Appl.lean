@@ -164,11 +164,12 @@ notation "⟪" t "⟫" => Denotational.den t
 
 --TODO: 1) Make sure that some type has denotation `ℝ`
 -- 2) The denotations must be measurable spaces which support equality
--- 3) Make a tactic to show that products of measurable spaces which support
--- equality also support equality
+-- 2.2) Make a tactic to show that products of measurable spaces which support
+-- equality also support equality ?
+-- 3) Finite footprint
 class DenotationalMeas (Ty : Type u) extends Denotational Ty where
   instMeasurable : ∀ t, MeasurableSpace (den t)
-
+  -- exists_den_real : ∃ t, (den t) = ℝ
 
 instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
     MeasurableSpace ⟪t⟫ :=

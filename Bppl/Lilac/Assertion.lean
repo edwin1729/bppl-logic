@@ -60,6 +60,9 @@ abbrev DistRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
+instance : Inhabited HC where
+  default := fun _ ↦ 0
+
 /-- Todo add finite footprint condition -/
 abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
 
@@ -74,7 +77,7 @@ open Iris.Instances.Intuitionistic.instBIBase
 
 /-- Lilac propositions -/
 abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
-  IProp (EnvDet ds × EnvRand rs) (PSp HC)
+  IProp (EnvDet ds × EnvRand rs) (PSpace HC)
 
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
@@ -110,11 +113,11 @@ def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
 
 def own (E : ValRand ds rs A) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ Measurable[Ω.1] ((E γ).1 ∘ D.1), sorry⟩
+  ⟨fun (γ, D) Ω ↦ Measurable[Ω.ms] ((E γ).1 ∘ D.1), sorry⟩
 
 def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
-    Measurable[Ω.1] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.2 (fun ω ↦ Measure.dirac (E γ (D ω)))
+    Measurable[Ω.ms] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.μ (fun ω ↦ Measure.dirac (E γ (D ω)))
   , sorry⟩
 
 -- TODO
@@ -122,7 +125,7 @@ def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
 -- denotation is ℝ
 
 def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
-  ⟨fun (γ, D) ⟨ℱ, μ, hμ⟩ ↦
+  ⟨fun (γ, D) ⟨⟨ℱ, μ⟩, hμ⟩ ↦
     let X₁ := (E₁ γ).1 ∘ D.1
     let X₂ := (E₂ γ).1 ∘ D.1
     let F := {ω | X₁ ω = X₂ ω}
@@ -131,15 +134,18 @@ def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
     ∀ x₁ x₂ : ⟪A⟫, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
     , sorry⟩
 
+def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : PSpace Ω :=
+  ⟨⟨_, μ.1⟩, μ.2⟩
+
 -- The extension `rs' ++ rs` may not be necessary
 -- consider just taking another PSp instead of μ, if it might simplify proof later
 def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
-  ∀ Ω_fr : PSp HC, ∀ μ : ProbabilityMeasure HC,
-  Ω_fr ⋆ Ω ≤ some (PSp.mk _ μ.1 μ.2) → ∀ {rs' : List TyRand},
+  ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
+  Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List TyRand},
   ∀ D' : RV (List.TProd (⟪·⟫) (rs' ++ rs)),
-  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp HC,
-  ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSp.mk _ μ'.1 μ'.2) ∧
+  ∃ X : RV ⟪A⟫, ∃ Ω' : PSpace HC,
+  ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSpace.mk' μ) ∧
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
   Q.1 (γ, (X ; D)) Ω'

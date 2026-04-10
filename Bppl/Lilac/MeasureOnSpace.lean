@@ -289,8 +289,8 @@ instance (Ω : Type*) : Preorder (MeasureOnSpace Ω) where
   le_trans (h₁ h₂) := by
     aesop (add safe forward le_trans) (add safe (by rw [MeasureTheory.Measure.map_map]))
 
-def PSpace (Ω : Type*) :=
-  {m : MeasureOnSpace Ω // IsProbabilityMeasure m.μ}
+structure PSpace (Ω : Type*) extends MeasureOnSpace Ω where
+  is_prob : IsProbabilityMeasure μ
 
 instance (Ω : Type*) : Preorder (PSpace Ω) where
   le (ps₁ ps₂) := (ps₁.1.ms ≤ ps₂.1.ms) ∧ ps₁.1.μ = ps₂.1.μ.cast _
