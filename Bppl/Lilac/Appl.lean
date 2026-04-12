@@ -169,6 +169,7 @@ notation "⟪" t "⟫" => Denotational.den t
 -- 3) Finite footprint
 class DenotationalMeas (Ty : Type u) extends Denotational Ty where
   instMeasurable : ∀ t, MeasurableSpace (den t)
+  instMeasurableEq : ∀ t, MeasurableEq (den t)
   -- exists_den_real : ∃ t, (den t) = ℝ
 
 instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
@@ -178,6 +179,7 @@ instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (
 instance : DenotationalMeas Ty where
   den ty := ↑ty.den
   instMeasurable ty := ty.den.2
+  instMeasurableEq ty := sorry
 
 end Denotation
 

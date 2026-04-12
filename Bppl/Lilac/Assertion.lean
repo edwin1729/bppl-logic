@@ -124,14 +124,18 @@ def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
 -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
 -- denotation is ℝ
 
+notation "⟪" ty "⟫'" => DenotationalMeas.instMeasurable ty
+
+-- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
+-- very particular measurability of spaces that we require
 def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
   ⟨fun (γ, D) ⟨⟨ℱ, μ⟩, hμ⟩ ↦
     let X₁ := (E₁ γ).1 ∘ D.1
     let X₂ := (E₂ γ).1 ∘ D.1
     let F := {ω | X₁ ω = X₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
-    -- inverse of a function from a point to a set is being taken here
-    ∀ x₁ x₂ : ⟪A⟫, MeasurableSet[ℱ] (F ∪ (X₁⁻¹' {x₁}) ∪ (X₂⁻¹' {x₂}))
+    ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet[⟪A⟫'.prod ⟪A⟫'] x →
+      MeasurableSet[ℱ] (F ∪ (fun ω ↦ (X₁ ω, X₂ ω))⁻¹' x)
     , sorry⟩
 
 def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : PSpace Ω :=
@@ -169,13 +173,13 @@ delab_rule eq
 
 -- Why am I needing to use nested iprop when using this notation??
 -- My delab rules are naive, they need to use unpack?
-syntax:52 " ∀ᵣᵥ: " term:53 " , " term:53 : term
+-- syntax:52 " ∀ᵣᵥ: " term:53 " , " term:53 : term
 
-macro_rules
-  | `(iprop(∀ᵣᵥ: $A , $P)) => `(forall_rv $A $P)
+-- macro_rules
+--   | `(iprop(∀ᵣᵥ: $A , $P)) => `(forall_rv $A $P)
 
-delab_rule eq
-  | `($_ $A $P) => `(iprop(∀ᵣᵥ:$A , $P))
+-- delab_rule eq
+--   | `($_ $A $P) => `(iprop(∀ᵣᵥ:$A , $P))
 
 end LProp
 
