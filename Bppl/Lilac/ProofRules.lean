@@ -104,12 +104,70 @@ instance aseq_persisitent (E₁ E₂ : ValRand ds rs A) : Persistent iprop(E₁ 
   persistent := sorry
 
 /-- Appendix B.17 from Lilac paper -/
-lemma transfer_own (E₁ E₂ : ValRand ds rs A) : iprop(own E₁ ∧ E₁ ≗ E₂ ⊢ own E₂) := sorry
+lemma transfer_own (E₁ E₂ : ValRand ds rs A) : iprop(own E₁ ∧ E₁ ≗ E₂ ⊢ own E₂) := by
+  rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_own, h_eq⟩
+  dsimp [own] at h_own ⊢
+  dsimp [eq] at h_eq
+  obtain ⟨h_meas_F, _, h_prod⟩ := h_eq
+  let F := {ω | (E₁ γ) (D ω) = (E₂ γ) (D ω)}
+  let X₁ : HC → ⟪A⟫ := fun ω ↦ (E₁ γ) (D ω)
+  let X₂ : HC → ⟪A⟫ := fun ω ↦ (E₂ γ) (D ω)
+  -- Goal: Measurable X₂
+  change Measurable X₂
+  intro S hS
+  -- Step 1: F ∪ X₂⁻¹' S is measurable
+  have h1 : MeasurableSet (F ∪ X₂ ⁻¹' S) := by
+    have := h_prod (Set.univ ×ˢ S) (MeasurableSet.univ.prod hS)
+    convert this using 1
+    ext ω; simp [Set.mem_preimage, Set.mem_prod, fProd, F, X₂]
+  -- Step 2: Fᶜ ∩ X₂⁻¹' S is measurable
+  have h2 : MeasurableSet (Fᶜ ∩ X₂ ⁻¹' S) := by
+    have : Fᶜ ∩ X₂ ⁻¹' S = (F ∪ X₂ ⁻¹' S) \ F := by
+      ext ω; simp [Set.mem_diff, Set.mem_compl_iff, Set.mem_inter_iff]; tauto
+    rw [this]; exact h1.diff h_meas_F
+  -- Step 3: F ∩ X₂⁻¹' S = F ∩ X₁⁻¹' S is measurable
+  have h3 : MeasurableSet (F ∩ X₂ ⁻¹' S) := by
+    have hFeq : F ∩ X₂ ⁻¹' S = F ∩ X₁ ⁻¹' S := by
+      ext ω
+      simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_setOf_eq, F, X₁, X₂,
+                 Function.comp]
+      constructor
+      · rintro ⟨heq, hmem⟩; exact ⟨heq, heq ▸ hmem⟩
+      · rintro ⟨heq, hmem⟩; exact ⟨heq, heq.symm ▸ hmem⟩
+    rw [hFeq]; exact h_meas_F.inter (h_own hS)
+  -- Step 4: X₂⁻¹' S = (F ∩ X₂⁻¹' S) ∪ (Fᶜ ∩ X₂⁻¹' S)
+  have h4 : X₂ ⁻¹' S = (F ∩ X₂ ⁻¹' S) ∪ (Fᶜ ∩ X₂ ⁻¹' S) := by
+    ext ω; simp [Set.mem_union, Set.mem_inter_iff, Set.mem_compl_iff]; tauto
+  rw [h4]; exact h3.union h2
 
 /-- Appendix B.17 from Lilac paper -/
 lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
-    iprop(E₁ ∼ ν ∧ E₁ ≗ E₂ ⊢ E₂ ∼ ν)
-  := sorry
+    iprop(E₁ ∼ ν ∧ E₁ ≗ E₂ ⊢ E₂ ∼ ν) := by
+  rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_dist, h_aseq⟩
+  dsimp [LProp.dist] at h_dist ⊢
+  dsimp [LProp.eq] at h_aseq
+  obtain ⟨h_meas_X₁, h_eq_dist⟩ := h_dist
+  obtain ⟨h_meas_F, h_full_F, h_prod⟩ := h_aseq
+  constructor
+  · -- Measurability of X₂: same proof as transfer_own
+    exact (transfer_own E₁ E₂ (γ, D) ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_meas_X₁, h_meas_F, h_full_F, h_prod⟩ : (own E₂).1 (γ, D) ⟨⟨ℱ, μ⟩, is_prob⟩)
+  · -- Distribution equality: since X₁ = X₂ a.e., Measure.bind μ (dirac ∘ X₁) = Measure.bind μ (dirac ∘ X₂)
+    rw [h_eq_dist]
+    -- bind μ f = (map f μ).join, so it suffices to show map f₁ = map f₂
+    simp only [MeasureTheory.Measure.bind]
+    congr 1
+    apply MeasureTheory.Measure.map_congr
+    -- Need: (fun ω ↦ dirac (X₁ ω)) =ᵐ[μ] (fun ω ↦ dirac (X₂ ω))
+    -- Use Filter.EventuallyEq and show the set where they differ has measure 0
+    have h_ae : ∀ᵐ ω ∂μ, (E₁ γ) (D ω) = (E₂ γ) (D ω) := by
+      rw [MeasureTheory.ae_iff]
+      apply MeasureTheory.measure_mono_null
+      · intro ω hω; simp only [Set.mem_setOf_eq] at hω ⊢; exact hω
+      · -- {ω | (E₁ γ)(D ω) ≠ (E₂ γ)(D ω)} has measure 0
+        -- since its complement is F with μ F = 1
+        convert MeasureTheory.measure_compl h_meas_F _ using 1 <;> aesop
+    filter_upwards [h_ae] with ω hω
+    rw [hω]
 
 -- TODO B.18 what does `own(F[E₁], F[E₂])` mean in the paper?
 
