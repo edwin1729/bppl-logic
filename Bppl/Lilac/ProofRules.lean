@@ -23,6 +23,8 @@ open MeasurableSpace
 variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 {ds : List TyDet} {rs : List TyRand} {A : TyRand}
 
+abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
+notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
 namespace helper
 -- move to a measure theory helper file
 open MeasureTheory in
@@ -52,8 +54,6 @@ lemma full_set_measure_eq_zero_or_one {α : Type*} [MeasurableSpace α] (μ : Pr
 
 end helper
 
-abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
-notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
 /-- Appendix B.13 from Lilac paper -/
 lemma refl (E₁ : ValRand ds rs A) : iprop( ⊢ E₁ ≗ E₁) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ _
@@ -177,7 +177,7 @@ lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
 
 end Aseq
 namespace WP
-open ProbabilityTheory MeasureTheory Appl PMF NNReal
+open ProbabilityTheory MeasureTheory Appl PMF NNReal List
 -- variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 variable {ds : List Ty} {rs : List Ty} {A ty₁ ty₂ : Ty}
 noncomputable section
@@ -185,9 +185,9 @@ noncomputable section
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
 
 /-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
-def unif01_sem : HList (⟪·⟫) ds → Measure ℝ := fun _ ↦ uniformOn (Set.Icc 0 1)
+def unif01_sem : TProd (⟪·⟫) ds → Measure ℝ := fun _ ↦ uniformOn (Set.Icc 0 1)
 
-def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : HList (⟪·⟫) ds → Measure Bool :=
+def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
 
 /-- Variable at the head of the random environment list. -/

@@ -15,21 +15,10 @@ set_option autoImplicit true
 set_option relaxedAutoImplicit true
 universe u v
 -- Primitives
-inductive HList {α : Type v} (β : α → Type u) : List α → Type (max u v)
-  | nil  : HList β []
-  | cons : β i → HList β is → HList β (i::is)
-
-infix:67 " :: " => HList.cons
-
-notation "[" "]" => HList.nil
 
 inductive Member : α → List α → Type
   | head : Member a (a::as)
   | tail : Member a bs → Member a (b::bs)
-
-def HList.get : HList β is → Member i is → β i
-  | a::as, .head => a
-  | a::as, .tail h => as.get h
 
 /-- Since we don't want to use our custom HList wiht the requirement of MeasurableSpace on our types
 TProd provides a MeasurableSpace instance -/
@@ -238,7 +227,7 @@ to give an element of a measurable space -/
 
 /-- The denotations of programs are unconcerned with the deterministic context.
 So we make this helper, which simply ignores the determinisitic context. -/
-def Term.den' {ds : List Ty} (M : Appl.Term ctx ty) := fun (_ : HList (⟪·⟫) ds) ↦ M.den
+def Term.den' {ds : List Ty} (M : Appl.Term ctx ty) := fun (_ : List.TProd (⟪·⟫) ds) ↦ M.den
 
 notation " ⦃ " M " ⦄ " => Term.den' M
 
