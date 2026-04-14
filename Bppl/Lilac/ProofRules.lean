@@ -15,7 +15,7 @@ set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
 
-open Iris.BI.BIBase LProp Iris.BI Appl.Denotation
+open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List
 /- Almost Surely EQual-/
 namespace Aseq
 open MeasurableSpace
@@ -169,7 +169,34 @@ lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
     filter_upwards [h_ae] with ω hω
     rw [hω]
 
+def subst {A : TyRand} (E : ValRand ds rs A) (γ : TProd (⟪·⟫) ds)
+    : TProd (⟪·⟫) (A :: rs) -m→ TProd (⟪·⟫) (A :: rs) :=
+  ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
+  ∘ₘ ⟨Prod.snd, measurable_snd⟩
+
+def subst' {A : TyRand} (E : ValRand ds rs A) (γ : TProd (⟪·⟫) ds)
+    : TProd (⟪·⟫) (rs) -m→ TProd (⟪·⟫) (A :: rs) :=
+  ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
+
+-- abbrev measurableProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace γ₂]
+--     (f : β -m→ γ₁) (g : β -m→ γ₂) : β -m→ γ₁ × γ₂ :=
+--   ⟨fun r ↦ (f r, g r), Measurable.prod f.2 g.2⟩
+
+-- notation " ⟨ " f " , " g " ⟩ᵐ " => measurableProd f g
+
+abbrev randValProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace γ₂]
+    (f : α → β -m→ γ₁) (g : α → β -m→ γ₂) : α → β -m→ γ₁ × γ₂ :=
+  fun d ↦ ⟨fun r ↦ (f d r, g d r), Measurable.prod (f d).2 (g d).2⟩
+
+notation " ⟨ " f " , " g " ⟩ʳ " => randValProd f g
+
+abbrev drop {r : TyRand} (E : ValRand ds rs A) : ValRand ds (r :: rs) A :=
+  fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
+
 -- TODO B.18 what does `own(F[E₁], F[E₂])` mean in the paper?
+lemma congruence {B : TyRand} (F : ValRand ds (A :: rs) B) (E₁ E₂ : ValRand ds rs A) :
+    iprop(own ((⟨substValRand id (subst E₁) F, substValRand id (subst E₂) F⟩ʳ) : ValRand ds (A :: rs) (⟪B⟫ × ⟪B⟫)) ∧ drop E₁ ≗ drop E₂
+    ⊢ (substValRand id (subst E₁) F) ≗ (substValRand id (subst E₂) F)) := by sorry
 
 -- B.19, don't think this is needed
 

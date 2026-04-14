@@ -40,23 +40,49 @@ of `Meas` is also in `Set`)-/
 open MeasureTheory Appl.Denotation
 open List (TProd)
 
+namespace MeasurableFunc
+variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
+
+def comp (g : β -m→ γ) (f : α -m→ β)
+  : α -m→ γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
+
+notation g " ∘ₘ " f => comp g f
+
+def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
+  ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
+
+notation x " ; " xs => fun_prod x xs
+
+/- Note that for the deterministic env, `cons` is just pair, `(· , ·)`,
+by the definition of List.TProd. -/
+
+end MeasurableFunc
+
 /- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
 denotation must have a measurable space structure -/
 variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 
+/-- The same construction with TProd is used for both Determinisitic and Random Environments. -/
+abbrev Env [Denotational Ty] (ds : List Ty) := TProd (⟪·⟫) ds
+
 /-- Deterministic Value -/
-abbrev ValDet (ds : List TyDet) (A : TyRand) := (TProd (⟪·⟫) ds → ⟪A⟫)
+abbrev ValDet (ds : List TyDet) (A : TyRand) := (Env ds → ⟪A⟫)
 
 /-- Random Value -/
 abbrev ValRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (TProd (⟪·⟫) ds → List.TProd (⟪·⟫) rs -m→ ⟪A⟫)
+  (Env ds → List.TProd (⟪·⟫) rs -m→ ⟪A⟫)
+
+/-- add the det env as input to `S`. Unclear whether this is correct -/
+abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {A : TyRand} (s : Env ds' → Env ds)
+    (S : Env ds' → Env rs' -m→ Env rs) (E : ValRand ds rs A) : ValRand ds' rs' A :=
+  fun γ ↦ E (s γ) ∘ₘ (S γ)
 
 /-- Deterministic distribution -/
-abbrev DistDet (ds : List TyDet) (A : TyRand) := (TProd (⟪·⟫) ds → Measure ⟪A⟫)
+abbrev DistDet (ds : List TyDet) (A : TyRand) := (Env ds → Measure ⟪A⟫)
 
 /-- Random distribution -/
 abbrev DistRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (TProd (⟪·⟫) ds → List.TProd (⟪·⟫) rs -m→ Measure ⟪A⟫)
+  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure ⟪A⟫)
 
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
@@ -82,24 +108,6 @@ abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
 
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
-
-namespace MeasurableFunc
-variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-
-def comp (g : β -m→ γ) (f : α -m→ β)
-  : α -m→ γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
-
-notation g " ∘ " f => comp g f
-
-def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
-  ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
-
-notation x " ; " xs => fun_prod x xs
-
-/- Note that for the deterministic env, `cons` is just pair, `(· , ·)`,
-by the definition of List.TProd. -/
-
-end MeasurableFunc
 
 namespace LProp
 
