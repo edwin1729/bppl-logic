@@ -29,33 +29,33 @@ I feel I have gotten enough Knowledge of Lean from formalising Lilac)
 % \section{Measure spaces as a dependent type}
 % \label{paired-prob-space}
 
-\section{Parametrisation of the "store" by the "heap" in this separation logic}
-\label{dependent-store}
-The classical separation logic assertions are written like so $s, h \vDash P$, where the $s$ is a variable store and
-$h$ is a heap. In the satisfiability relation, none of $s$, $h$ or $P$ are dependent on another argument. Consider the
-probabilistic separation logic with satisfiability relation of form $\gamma, D, \mathcal{P} \vDash P$, 
-where $\gamma$ is the deterministic variable store, $D$ is the random variable store and $\mathcal{P}$ is the 
-probability space analagous to heap. I claim that $D$ is dependent on $\mathcal{P}$, and that many of the conditions in
-the satisfiability relation are actually true by construction.
+% \section{Parametrisation of the "store" by the "heap" in this separation logic}
+% \label{dependent-store}
+% The classical separation logic assertions are written like so $s, h \vDash P$, where the $s$ is a variable store and
+% $h$ is a heap. In the satisfiability relation, none of $s$, $h$ or $P$ are dependent on another argument. Consider the
+% probabilistic separation logic with satisfiability relation of form $\gamma, D, \mathcal{P} \vDash P$, 
+% where $\gamma$ is the deterministic variable store, $D$ is the random variable store and $\mathcal{P}$ is the 
+% probability space analagous to heap. I claim that $D$ is dependent on $\mathcal{P}$, and that many of the conditions in
+% the satisfiability relation are actually true by construction.
 
-This unspotted dependent typing is a consequence of how measurable functions are usually just denoted $A \overset{m}{\rightarrow} B$
-with the $\sigma$-algebra on A and B that is required being generally obvious from the context (there is usually only one).
-However in our case, we our changing the $sigma$-algebra we're working with all the time when taking independent combinations,
-in the separating conjunct.
+% This unspotted dependent typing is a consequence of how measurable functions are usually just denoted $A \overset{m}{\rightarrow} B$
+% with the $\sigma$-algebra on A and B that is required being generally obvious from the context (there is usually only one).
+% However in our case, we our changing the $sigma$-algebra we're working with all the time when taking independent combinations,
+% in the separating conjunct.
 
-The relevant measurable function here is $D$ the random variable store. Its type is
-$D : [0, 1]^{\mathbb{N}} \overset{m}{\rightarrow} \llbracket \Delta \rrbracket$, where $\llbracket \Delta \rrbracket$ is the 
-denotation of the random variable context, a list of types the random values that can occur in the separation logic proposition
-$P$. As seen in a PSL, $D$ has quite an interesting type as a measurable function which can be composed with an expression
-in a propostion, which is equivalent to substitution for the usual deterministic variables.
-Now no explicit $\sigma$-algebra is provided for the Hilbert cube, the domain of $D$ and the natural candidate for this is
-the $sigma$-algebra for the hilbert cube contained in the probability space $\mathcal{P}$. This interpretation yeilds
-some simplifications in the satisfiability relation of probability specific connectives, exemplified in the \texttt{Own}
-connective. It's semantics is:
+% The relevant measurable function here is $D$ the random variable store. Its type is
+% $D : [0, 1]^{\mathbb{N}} \overset{m}{\rightarrow} \llbracket \Delta \rrbracket$, where $\llbracket \Delta \rrbracket$ is the 
+% denotation of the random variable context, a list of types the random values that can occur in the separation logic proposition
+% $P$. As seen in a PSL, $D$ has quite an interesting type as a measurable function which can be composed with an expression
+% in a propostion, which is equivalent to substitution for the usual deterministic variables.
+% Now no explicit $\sigma$-algebra is provided for the Hilbert cube, the domain of $D$ and the natural candidate for this is
+% the $sigma$-algebra for the hilbert cube contained in the probability space $\mathcal{P}$. This interpretation yeilds
+% some simplifications in the satisfiability relation of probability specific connectives, exemplified in the \texttt{Own}
+% connective. It's semantics is:
 
-$\gamma, 𝐷, ([0, 1]^{\mathbb{N}}, F, \mu) \vDash own \, 𝐸 \quad iff \quad 𝐸 (\gamma) \circ 𝐷$ is F-measurable
-where $\mathcal{P} = ([0, 1]^{\mathbb{N}}, F, \mu)$ and $F$ is $\mathcal{P}$'s $\sigma$-algebra.
-So $𝐸 (\gamma) \circ 𝐷$ is F-measurable by construction. Ownership as measurability is a key concept of Lilac, and it neatly falls into place.
+% $\gamma, 𝐷, ([0, 1]^{\mathbb{N}}, F, \mu) \vDash own \, 𝐸 \quad iff \quad 𝐸 (\gamma) \circ 𝐷$ is F-measurable
+% where $\mathcal{P} = ([0, 1]^{\mathbb{N}}, F, \mu)$ and $F$ is $\mathcal{P}$'s $\sigma$-algebra.
+% So $𝐸 (\gamma) \circ 𝐷$ is F-measurable by construction. Ownership as measurability is a key concept of Lilac, and it neatly falls into place.
 
 \section{Pi-lambda-theorem as an induction principle}
 \label{pi-lambda}
@@ -93,6 +93,52 @@ Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it 
 For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
 measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
 
+\section{Binder Discipline}
+The choice between Dependent De Brujin Indices and Parametric Abstract Higher Order Syntax (PHOAS).
+\subsection{Dependent De Brujin Indices}
+\begin{itemize}
+\item More straightforward to the uninitiated following a little more intuitively from the paper. Important if
+we want this is to be an accessible code base for future probabilistic separation logics to follow from.
+\item Measurability of maps expressible explicitly
+\end{itemize}
+
+\subsection{PHOAS}
+\begin{itemize}
+\item Notion of substitution inbuilt
+\item Example programs written in it are naturally readable. No separate parser and translation from a normal
+lambda calculus required. Correctness of the parser doesn't need to be proven... (but further consideration on
+this point requires deciding if there will be a separate executable implementation of the APPL syntax)
+\end{itemize}
+
+\section{Equality of dependently typed records in Lean}
+
+
+\section{Choice of Kripke Resource Monoid (KRM) over Unital ordered Resource algebra (ORA) }
+ORA's are established as the standard by former Rocq-iris projects, but I couldn't see why not just directly
+use the KRM. It was conceptual simplicity traded for some possibly unweildy proofs. The unweildiness turned out to be
+restricted to a single file?
+
+\section{Deep vs shallow embedding}
+
+\section{Support for recursion over the data structure even with (shallow?/deep? see SSProve talk) embedding}
+(compare with SProp usage in Rocq for ORA? or something...)
+Even though the monotonicity property did not require induction, substitution atleast as defined in the paper requires it.
+
+The aim, is to do things as given in the paper, and then think about if substitution could be done away with? If removing
+the ability to do recursion over assertions is desirable, etc
+
+\section{Strong abstractions across the proof development}
+\subsection{The language}
+This is built on the existing abstractions. We use the typeclass \texttt{DenotationalMeas} to decouple the syntax from
+the language from the logic. The language only needs to me able to interpreted as measurable maps with a few additional
+requirements as given by \texttt{DenotationalMeas}.
+
+\subsection{Resource monoid}
+\emph{for the version of Lilac with/without conditioning}
+
+\subsection{Separate treatment of BI connectives and Probability specific connectives}
+
+\section{Metaprogramming and tactical support}
 
 % - The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
 
