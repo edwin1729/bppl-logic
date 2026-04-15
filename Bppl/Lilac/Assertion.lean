@@ -71,6 +71,19 @@ abbrev ValDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → 
 abbrev ValRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
   (Env ds → List.TProd (⟪·⟫) rs -m→ α)
 
+/-- Deterministic distribution -/
+abbrev DistDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → Measure α)
+
+/-- Random distribution -/
+abbrev DistRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
+  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure α)
+
+/- Substitutions: -/
+
+abbrev substValDet {ds ds' : List TyDet} {α : Type} [MeasurableSpace α] (s : Env ds' → Env ds)
+    (e : ValDet ds α) : ValDet ds' α :=
+  e ∘ s
+
 /-- add the det env as input to `S`. Required by the `congruence` proof rule.
 Unclear whether this cuases further complications... -/
 abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [MeasurableSpace α]
@@ -78,12 +91,14 @@ abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [Me
     : ValRand ds' rs' α :=
   fun γ ↦ E (s γ) ∘ₘ (S γ)
 
-/-- Deterministic distribution -/
-abbrev DistDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → Measure α)
+abbrev substDistDet {ds ds' : List TyDet} {α : Type} [MeasurableSpace α] (s : Env ds' → Env ds)
+    (μ : DistDet ds α) : DistDet ds' α :=
+  μ ∘ s
 
-/-- Random distribution -/
-abbrev DistRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
-  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure α)
+abbrev substDistRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [MeasurableSpace α]
+    (s : Env ds' → Env ds) (S : Env ds' → Env rs' -m→ Env rs) (M : DistRand ds rs α)
+    : DistRand ds' rs' α :=
+  fun γ ↦ M (s γ) ∘ₘ (S γ)
 
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
