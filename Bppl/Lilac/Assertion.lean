@@ -20,21 +20,20 @@ set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
 
-/- Here are we are parametric over the denotation of types in APPL.
+/-! Here are we are parametric over the denotation of types in APPL.
 To remain general, we assume there are two kinds of types in APPL,
 whose dentotation is 1) `Meas` 2) `Set`
 
 (Though in our actual definition of APPL, all types have denotation in `Meas` and every element
-of `Meas` is also in `Set`)-/
+of `Meas` is also in `Set`)
 
-/- Questions
+TODO:
+Only `own` allows its `ValRand` "output" type to be an Arbitrary measurable space. This is done
+because otherwise, in the `congruence` proof rule, we would require `DenotationalMeas` to specify
+some way of taking the product type.
 
--- Do we really need a measurable space on the domain of D and D to be measurable?
--- and why do we need finite footprint?o
-
--- Interesting that measure on the hilbert cube is not uniform, or is it?
--- for σ-algebra with finite footprint at least??
-
+But now only `own` is given this special treatment. I find it hard to determine the effects of this
+choice so I make minimal changes as per requirements in `congruence` rule.
 -/
 
 open MeasureTheory Appl.Denotation
@@ -66,23 +65,25 @@ variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas
 abbrev Env [Denotational Ty] (ds : List Ty) := TProd (⟪·⟫) ds
 
 /-- Deterministic Value -/
-abbrev ValDet (ds : List TyDet) (A : TyRand) := (Env ds → ⟪A⟫)
+abbrev ValDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → α)
 
 /-- Random Value -/
-abbrev ValRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (Env ds → List.TProd (⟪·⟫) rs -m→ ⟪A⟫)
+abbrev ValRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
+  (Env ds → List.TProd (⟪·⟫) rs -m→ α)
 
-/-- add the det env as input to `S`. Unclear whether this is correct -/
-abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {A : TyRand} (s : Env ds' → Env ds)
-    (S : Env ds' → Env rs' -m→ Env rs) (E : ValRand ds rs A) : ValRand ds' rs' A :=
+/-- add the det env as input to `S`. Required by the `congruence` proof rule.
+Unclear whether this cuases further complications... -/
+abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [MeasurableSpace α]
+    (s : Env ds' → Env ds) (S : Env ds' → Env rs' -m→ Env rs) (E : ValRand ds rs α)
+    : ValRand ds' rs' α :=
   fun γ ↦ E (s γ) ∘ₘ (S γ)
 
 /-- Deterministic distribution -/
-abbrev DistDet (ds : List TyDet) (A : TyRand) := (Env ds → Measure ⟪A⟫)
+abbrev DistDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → Measure α)
 
 /-- Random distribution -/
-abbrev DistRand (ds : List TyDet) (rs : List TyRand) (A : TyRand) :=
-  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure ⟪A⟫)
+abbrev DistRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
+  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure α)
 
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
@@ -91,7 +92,7 @@ instance : Inhabited HC where
   default := fun _ ↦ 0
 
 /-- Todo add finite footprint condition -/
-abbrev RV (A : Type) [MeasurableSpace A] := HC -m→ A
+abbrev RV (α : Type) [MeasurableSpace α] := HC -m→ α
 
 abbrev EnvDet (ds : List TyDet) := TProd (⟪·⟫) ds
 abbrev EnvRand (rs : List TyRand) := RV (List.TProd (⟪·⟫) rs)
@@ -112,7 +113,7 @@ instance : MeasurableSpace HC := inferInstance
 namespace LProp
 
 -- ds: deterministic context, rs: random variable context
-variable {ds : List TyDet} {rs : List TyRand}
+variable {ds : List TyDet} {rs : List TyRand} {A : TyRand}
 -- is it a problem that only types at the head of the list can be quantified over?
 def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦ ∀ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
@@ -123,10 +124,10 @@ def forall_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
 def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
 
-def own (E : ValRand ds rs A) : LProp ds rs :=
+def own [MeasurableSpace α] (E : ValRand ds rs α) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦ Measurable[Ω.ms] ((E γ).1 ∘ D.1), sorry⟩
 
-def dist (E : ValRand ds rs A) (μ : DistDet ds A) : LProp ds rs :=
+def dist (E : ValRand ds rs ⟪A⟫) (μ : DistDet ds ⟪A⟫) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
     Measurable[Ω.ms] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.μ (fun ω ↦ Measure.dirac (E γ (D ω)))
   , sorry⟩
@@ -139,13 +140,13 @@ notation "⟪" ty "⟫'" => DenotationalMeas.instMeasurable ty
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
-def eq (E₁ E₂ : ValRand ds rs A) : LProp ds rs :=
+def eq (E₁ E₂ : ValRand ds rs ⟪A⟫) : LProp ds rs :=
   ⟨fun (γ, D) ⟨⟨ℱ, μ⟩, hμ⟩ ↦
     let X₁ := (E₁ γ).1 ∘ D.1
     let X₂ := (E₂ γ).1 ∘ D.1
     let F := {ω | X₁ ω = X₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
-    ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet[⟪A⟫'.prod ⟪A⟫'] x →
+    ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet x →
       MeasurableSet[ℱ] (F ∪ (fun ω ↦ (X₁ ω, X₂ ω))⁻¹' x)
     , sorry⟩
 
@@ -154,7 +155,7 @@ def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : 
 
 -- The extension `rs' ++ rs` may not be necessary
 -- consider just taking another PSp instead of μ, if it might simplify proof later
-def wp (M : DistRand ds rs A) (Q : LProp ds (A :: rs)) : LProp ds rs :=
+def wp (M : DistRand ds rs ⟪A⟫) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   ⟨fun (γ, D) Ω ↦
   ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
   Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List TyRand},

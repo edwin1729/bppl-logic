@@ -10,18 +10,17 @@ import Iris.BI.Classes
 import Iris.ProofMode
 
 import Bppl.Lilac.Assertion
+import Bppl.Lilac.Appl
 
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
-
-open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List
+open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
 /- Almost Surely EQual-/
 namespace Aseq
 open MeasurableSpace
 
-variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
-{ds : List TyDet} {rs : List TyRand} {A : TyRand}
+variable {ds rs : List Ty} {A : Ty}
 
 abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
 notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
@@ -41,7 +40,6 @@ lemma aseq_measurable_alt {α β : Type*} [msα : MeasurableSpace α] [msβ : Me
       (F ∪ X₂⁻¹' ·) '' msβ.MeasurableSet' ⊆ msα.MeasurableSet',
       (Fᶜ ∩ X₁⁻¹' ·) '' msβ.MeasurableSet' ⊆ msα.MeasurableSet' ∧
       (Fᶜ ∩ X₂⁻¹' ·) '' msβ.MeasurableSet' ⊆ msα.MeasurableSet',
-
     ] := by
       tfae_have 1 → 3 := by sorry
       sorry
@@ -55,11 +53,11 @@ lemma full_set_measure_eq_zero_or_one {α : Type*} [MeasurableSpace α] (μ : Pr
 end helper
 
 /-- Appendix B.13 from Lilac paper -/
-lemma refl (E₁ : ValRand ds rs A) : iprop( ⊢ E₁ ≗ E₁) := by
+lemma refl (E₁ : ValRand ds rs ⟪A⟫) : iprop( ⊢ E₁ ≗ E₁) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ _
   simp [eq]
 /-- Appendix B.13 from Lilac paper -/
-lemma symm (E₁ E₂ : ValRand ds rs A) : iprop(E₁ ≗ E₂ ⊢ E₂ ≗ E₁) := by
+lemma symm (E₁ E₂ : ValRand ds rs ⟪A⟫) : iprop(E₁ ≗ E₂ ⊢ E₂ ≗ E₁) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ eq_l
   dsimp [eq] at ⊢ eq_l
   obtain ⟨h₁, h₂, h_meas_union⟩ := eq_l
@@ -79,7 +77,7 @@ lemma symm (E₁ E₂ : ValRand ds rs A) : iprop(E₁ ≗ E₂ ⊢ E₂ ≗ E₁
       exact h_meas_union_swap
 
 /-- Appendix B.13 from Lilac paper -/
-lemma trans (E₁ E₂ E₃ : ValRand ds rs A) : iprop(E₁ ≗ E₂ ∧ E₂ ≗ E₃ ⊢ E₁ ≗ E₃) := by
+lemma trans (E₁ E₂ E₃ : ValRand ds rs ⟪A⟫) : iprop(E₁ ≗ E₂ ∧ E₂ ≗ E₃ ⊢ E₁ ≗ E₃) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨⟨meas_F₁₂, full_F₁₂, hF₁₂⟩, ⟨meas_F₂₃, full_F₂₃, hF₂₃⟩⟩
   let X₁ := (E₁ γ) ∘ D
   let X₂ := (E₂ γ) ∘ D
@@ -93,18 +91,18 @@ lemma trans (E₁ E₂ E₃ : ValRand ds rs A) : iprop(E₁ ≗ E₂ ∧ E₂ �
   exact ⟨meas_F₁₃, full_F₁₃, hF₁₃⟩
 
 -- Appendix B.15 from Lilac paper
-lemma and_aseq_iff_sep_aseq (P : LProp ds rs) (E₁ E₂ : ValRand ds rs A) :
+lemma and_aseq_iff_sep_aseq (P : LProp ds rs) (E₁ E₂ : ValRand ds rs ⟪A⟫) :
     iprop(P ∧ (E₁ ≗ E₂) ⊣⊢ P ∗ (E₁ ≗ E₂)) :=
   sorry
 
 -- Maybe the definition of persistently could be changed inspired by the requirements of
 -- this proof obligation
 /-- Appendix B.16 from Lilac paper -/
-instance aseq_persisitent (E₁ E₂ : ValRand ds rs A) : Persistent iprop(E₁ ≗ E₂) where
+instance aseq_persisitent (E₁ E₂ : ValRand ds rs ⟪A⟫) : Persistent iprop(E₁ ≗ E₂) where
   persistent := sorry
 
 /-- Appendix B.17 from Lilac paper -/
-lemma transfer_own (E₁ E₂ : ValRand ds rs A) : iprop(own E₁ ∧ E₁ ≗ E₂ ⊢ own E₂) := by
+lemma transfer_own (E₁ E₂ : ValRand ds rs ⟪A⟫) : iprop(own E₁ ∧ E₁ ≗ E₂ ⊢ own E₂) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_own, h_eq⟩
   dsimp [own] at h_own ⊢
   dsimp [eq] at h_eq
@@ -141,7 +139,7 @@ lemma transfer_own (E₁ E₂ : ValRand ds rs A) : iprop(own E₁ ∧ E₁ ≗ E
   rw [h4]; exact h3.union h2
 
 /-- Appendix B.17 from Lilac paper -/
-lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
+lemma transfer_dist (E₁ E₂ : ValRand ds rs ⟪A⟫) (ν : DistDet ds ⟪A⟫) :
     iprop(E₁ ∼ ν ∧ E₁ ≗ E₂ ⊢ E₂ ∼ ν) := by
   rintro ⟨γ, D⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_dist, h_aseq⟩
   dsimp [LProp.dist] at h_dist ⊢
@@ -169,12 +167,12 @@ lemma transfer_dist (E₁ E₂ : ValRand ds rs A) (ν : DistDet ds A) :
     filter_upwards [h_ae] with ω hω
     rw [hω]
 
-def subst {A : TyRand} (E : ValRand ds rs A) (γ : TProd (⟪·⟫) ds)
+def subst (E : ValRand ds rs ⟪A⟫) (γ : TProd (⟪·⟫) ds)
     : TProd (⟪·⟫) (A :: rs) -m→ TProd (⟪·⟫) (A :: rs) :=
   ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
   ∘ₘ ⟨Prod.snd, measurable_snd⟩
 
-def subst' {A : TyRand} (E : ValRand ds rs A) (γ : TProd (⟪·⟫) ds)
+def subst' {A : Ty} (E : ValRand ds rs ⟪A⟫) (γ : TProd (⟪·⟫) ds)
     : TProd (⟪·⟫) (rs) -m→ TProd (⟪·⟫) (A :: rs) :=
   ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
 
@@ -190,13 +188,29 @@ abbrev randValProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace
 
 notation " ⟨ " f " , " g " ⟩ʳ " => randValProd f g
 
-abbrev drop {r : TyRand} (E : ValRand ds rs A) : ValRand ds (r :: rs) A :=
+abbrev drop {r : Ty} (E : ValRand ds rs ⟪A⟫) : ValRand ds (r :: rs) ⟪A⟫ :=
   fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
 
--- TODO B.18 what does `own(F[E₁], F[E₂])` mean in the paper?
-lemma congruence {B : TyRand} (F : ValRand ds (A :: rs) B) (E₁ E₂ : ValRand ds rs A) :
-    iprop(own ((⟨substValRand id (subst E₁) F, substValRand id (subst E₂) F⟩ʳ) : ValRand ds (A :: rs) (⟪B⟫ × ⟪B⟫)) ∧ drop E₁ ≗ drop E₂
-    ⊢ (substValRand id (subst E₁) F) ≗ (substValRand id (subst E₂) F)) := by sorry
+notation F "[ " E " ] " => substValRand id (subst E) F
+
+
+#check MeasurableFunc.fun_prod
+/-- Appendix B.17 from Lilac paper
+clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
+both the function `F[E₁]` and `F[E₂]`. -/
+lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRand ds rs ⟪A⟫) :
+    iprop(own ⟨F[E₁], F[E₂]⟩ʳ ∧ drop E₁ ≗ drop E₂ ⊢ F[E₁] ≗ F[E₂]) := by
+  rintro ⟨γ, XD⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_own, h_eq⟩
+  let X₁ := (drop E₁ γ) ∘ XD
+  let X₂ := (drop E₂ γ) ∘ XD
+  have foo : F γ ∘ (X₁, XD) = (substValRand id (subst E₁) F) γ ∘ XD :=
+  have F₁₂ := {ω | }
+  have meas_F₁₃ : MeasurableSet F₁₃ := by sorry
+  have full_F₁₃ : μ F₁₃ = 1 := by sorry
+  have hF₁₃ : ∀ (x : Set (⟪A⟫ × ⟪A⟫)), MeasurableSet x → MeasurableSet (F₁₃ ∪ ⟨X₁, X₃⟩ᶠ⁻¹' x) := by
+    sorry
+  exact ⟨meas_F₁₃, full_F₁₃, hF₁₃⟩
+  sorry
 
 -- B.19, don't think this is needed
 
@@ -205,7 +219,6 @@ lemma congruence {B : TyRand} (F : ValRand ds (A :: rs) B) (E₁ E₂ : ValRand 
 end Aseq
 namespace WP
 open ProbabilityTheory MeasureTheory Appl PMF NNReal List
--- variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 variable {ds : List Ty} {rs : List Ty} {A ty₁ ty₂ : Ty}
 noncomputable section
 
