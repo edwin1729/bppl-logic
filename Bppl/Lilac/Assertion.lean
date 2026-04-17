@@ -39,6 +39,8 @@ choice so I make minimal changes as per requirements in `congruence` rule.
 open MeasureTheory Appl.Denotation
 open List (TProd)
 
+abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
+notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
 namespace MeasurableFunc
 variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
 
@@ -103,17 +105,16 @@ abbrev substDistRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [M
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
+abbrev borel_ms_HC : MeasurableSpace HC := MeasurableSpace.pi
+
 instance : Inhabited HC where
   default := fun _ ↦ 0
 
 /-- Todo add finite footprint condition -/
-abbrev RV (α : Type) [MeasurableSpace α] := HC -m→ α
+abbrev RV (α : Type) [MeasurableSpace α] := @MeasurableFun HC α MeasurableSpace.pi _
 
 abbrev EnvDet (ds : List TyDet) := TProd (⟪·⟫) ds
-abbrev EnvRand (rs : List TyRand) := RV (List.TProd (⟪·⟫) rs)
-
--- abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
---   EnvDet ds → EnvRand rs → PSp HC → Prop
+abbrev EnvRand (rs : List TyRand) := RV (TProd (⟪·⟫) rs)
 
 open Iris.Instances.Intuitionistic
 open Iris.Instances.Intuitionistic.instBIBase
@@ -161,6 +162,7 @@ def eq (E₁ E₂ : ValRand ds rs ⟪A⟫) : LProp ds rs :=
     let X₂ := (E₂ γ).1 ∘ D.1
     let F := {ω | X₁ ω = X₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
+    -- (F ∪ ⟨X₁, X₂⟩ᶠ⁻¹' ·) '' (⟪A⟫ᵐ.prod ⟪A⟫ᵐ).MeasurableSet' ⊆ ℱ.MeasurableSet'
     ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet x →
       MeasurableSet[ℱ] (F ∪ (fun ω ↦ (X₁ ω, X₂ ω))⁻¹' x)
     , sorry⟩

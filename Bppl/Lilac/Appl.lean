@@ -149,7 +149,6 @@ namespace Denotation
 class Denotational (Ty : Type u) where
   den : Ty → Type
 
-notation "⟪" t "⟫" => Denotational.den t
 
 --TODO: 1) Make sure that some type has denotation `ℝ`
 -- 2) The denotations must be measurable spaces which support equality
@@ -160,6 +159,10 @@ class DenotationalMeas (Ty : Type u) extends Denotational Ty where
   instMeasurable : ∀ t, MeasurableSpace (den t)
   instMeasurableEq : ∀ t, MeasurableEq (den t)
   -- exists_den_real : ∃ t, (den t) = ℝ
+
+notation "⟪" t "⟫" => Denotational.den t
+notation "⟪" t "⟫ᵐ" => DenotationalMeas.instMeasurable t
+notation "⟪" t "⟫ᵐᵉ" => DenotationalMeas.instMeasurableEq t
 
 instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
     MeasurableSpace ⟪t⟫ :=

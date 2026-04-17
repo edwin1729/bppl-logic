@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+
 import Iris.BI.BIBase
 import Iris.BI
 import Iris.BI.Classes
@@ -22,16 +23,20 @@ open MeasurableSpace
 
 variable {ds rs : List Ty} {A : Ty}
 
-abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
-notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
 namespace helper
 -- move to a measure theory helper file
 open MeasureTheory in
 /-- An equivalent way of stating the measurability condition of `≗`.  We require `MeasureableEq`
 spaces just to satisfy this lemma, which is then required to prove transitivity of `≗`.
-Appendix B.12 from Lilac paper -/
-lemma aseq_measurable_alt {α β : Type*} [msα : MeasurableSpace α] [msβ : MeasurableSpace β]
-      [MeasurableEq β] {F : Set α} (hF : MeasurableSet F) (X₁ X₂ : α → β)
+Appendix B.12 from Lilac paper
+Make the `MeasurableSpace` parameters explicit since `msα` needs to be explicit.
+This is because `α=HC` in our use case and we generally have two
+measurable spaces 1) given by the probability space and 2) the finest one, `MeasurableSpace.pi`.
+Here `msα` is option 1). And option 2) would be used in `X₁` and `X₂`, but we don't require
+the measurability of these two maps so we just recieve the underlying parameters as functions here
+(hence no mention of option 2). -/
+lemma aseq_measurable_alt {α β : Type*} (msα : MeasurableSpace α) (msβ : MeasurableSpace β)
+      (meβ : MeasurableEq β) {F : Set α} (hF : MeasurableSet F) (X₁ X₂ : α → β)
     : List.TFAE [
       ∀ x : Set (β × β), MeasurableSet[msβ.prod msβ] x → MeasurableSet (F ∪ ⟨X₁, X₂⟩ᶠ⁻¹' x),
       -- ∀ x : Set (β × β), MeasurableSet[msβ.prod msβ] x → MeasurableSet (Fᶜ ∩ ⟨X₁, X₂⟩ᶠ⁻¹' x),
@@ -193,24 +198,52 @@ abbrev drop {r : Ty} (E : ValRand ds rs ⟪A⟫) : ValRand ds (r :: rs) ⟪A⟫ 
 
 notation F "[ " E " ] " => substValRand id (subst E) F
 
-
-#check MeasurableFunc.fun_prod
 /-- Appendix B.17 from Lilac paper
 clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
 both the function `F[E₁]` and `F[E₂]`. -/
 lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRand ds rs ⟪A⟫) :
     iprop(own ⟨F[E₁], F[E₂]⟩ʳ ∧ drop E₁ ≗ drop E₂ ⊢ F[E₁] ≗ F[E₂]) := by
-  rintro ⟨γ, XD⟩ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_own, h_eq⟩
-  let X₁ := (drop E₁ γ) ∘ XD
-  let X₂ := (drop E₂ γ) ∘ XD
-  have foo : F γ ∘ (X₁, XD) = (substValRand id (subst E₁) F) γ ∘ XD :=
-  have F₁₂ := {ω | }
-  have meas_F₁₃ : MeasurableSet F₁₃ := by sorry
-  have full_F₁₃ : μ F₁₃ = 1 := by sorry
-  have hF₁₃ : ∀ (x : Set (⟪A⟫ × ⟪A⟫)), MeasurableSet x → MeasurableSet (F₁₃ ∪ ⟨X₁, X₃⟩ᶠ⁻¹' x) := by
+  rintro ⟨γ, XD⟩ ⟨Ω, is_prob⟩ ⟨h_own, ⟨meas_E₁₂, full_E₁₂, hE₁₂⟩⟩
+  let E₁₂ := {ω | (↑(drop E₁ γ) ∘ ↑XD) ω = (↑(drop E₂ γ) ∘ ↑XD) ω}
+  let X₁ : RV ⟪A⟫ := (drop E₁) γ ∘ₘ XD
+  let X₂ : RV ⟪A⟫ := (drop E₂) γ ∘ₘ XD
+  have alt_hE₁₂ := (helper.aseq_measurable_alt Ω.ms ⟪A⟫ᵐ ⟪A⟫ᵐᵉ meas_E₁₂ X₁ X₂).out 0 1
+  apply alt_hE₁₂.1 at hE₁₂
+  let X₂D : EnvRand (A :: rs):= (subst E₂ γ) ∘ₘ XD
+  let X₁D : EnvRand (A :: rs):= (subst E₁ γ) ∘ₘ XD
+  -- let D :  EnvRand rs := ⟨fun ω ↦ (XD ω).2, by measurability⟩
+  -- let X₁D : EnvRand (A :: rs) := ⟨fun ω ↦ (X₁ ω, D ω), Measurable.prod X₁.2 D.2⟩
+  -- have foo : F γ ∘ (X₁, D) = (substValRand id (subst E₁) F) γ ∘ XD :=
+  let FE₁ := (substValRand id (subst E₁) F)
+  let FE₂ := (substValRand id (subst E₂) F)
+  let F₁ := (↑(FE₁ γ) ∘ ↑XD)
+  let F₂ := (↑(FE₂ γ) ∘ ↑XD)
+  -- The simplified version by applying `substValRand` def and reducing
+  let F₁' := (↑(F γ) ∘ ↑X₁D)
+  let F₂' := (↑(F γ) ∘ ↑X₂D)
+  -- Extract below two into a substitution lemma. follows directly from def of substValRand
+  have subst_lemma₁ : (↑(FE₁ γ) ∘ ↑XD) = F₁' := sorry
+  have subst_lemma₂ : (↑(FE₂ γ) ∘ ↑XD) = F₂' := sorry
+  let F₁₂ := {ω | F₁ ω = F₂ ω}
+  dsimp [own] at h_own
+  have meas_F₁₂ : @MeasurableSet _ Ω.ms F₁₂ := by
+    -- follows directly from defs
+    have : F₁₂ = ⟨F₁, F₂⟩ᶠ⁻¹' (Set.diagonal ⟪B⟫) := by sorry
+    -- since the diagonal is a measurable set and ⟨F₁, F₂⟩ᶠ is measurable function (meas_),
+    -- we know that the pre-image is also a measurable set
     sorry
-  exact ⟨meas_F₁₃, full_F₁₃, hF₁₃⟩
-  sorry
+  have full_F₁₂ : Ω.μ F₁₂ = 1 := by
+    -- since E₁₂ ⊆ F₁₂ and . This will require the FE₁ and FE₂ style definition
+    -- to become apparent
+    sorry
+  -- F₁₂ contains the entire pullback σ-algebra (F₁, F₂)⁻¹ (B ⊗ B), and so contains F₁₂ ∪
+  -- (F₁, F₂)⁻¹ (B ⊗ B) too.
+  have hF₁₂ : ∀ (x : Set (⟪B⟫ × ⟪B⟫)), MeasurableSet x → @MeasurableSet _ Ω.ms (F₁₂ ∪ ⟨F₁, F₂⟩ᶠ⁻¹' x) := by
+    sorry
+  exact ⟨meas_F₁₂, full_F₁₂, hF₁₂⟩
+
+
+
 
 -- B.19, don't think this is needed
 
@@ -231,7 +264,7 @@ def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool 
   fun _ ↦ (bernoulli p hp).toMeasure
 
 /-- Variable at the head of the random environment list. -/
-def fst_rand : ValRand ds (A::rs) A :=
+def fst_rand : ValRand ds (A::rs) ⟪A⟫ :=
   fun _d_env ↦ ⟨fun r_env ↦ r_env.get .head , List.TProd.measurable_get .head⟩
 
 lemma wp_unif (Q : LProp ds (Ty.real :: rs)) :
