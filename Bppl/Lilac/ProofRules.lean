@@ -211,9 +211,6 @@ lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRan
   apply alt_hE₁₂.1 at hE₁₂
   let X₂D : EnvRand (A :: rs):= (subst E₂ γ) ∘ₘ XD
   let X₁D : EnvRand (A :: rs):= (subst E₁ γ) ∘ₘ XD
-  -- let D :  EnvRand rs := ⟨fun ω ↦ (XD ω).2, by measurability⟩
-  -- let X₁D : EnvRand (A :: rs) := ⟨fun ω ↦ (X₁ ω, D ω), Measurable.prod X₁.2 D.2⟩
-  -- have foo : F γ ∘ (X₁, D) = (substValRand id (subst E₁) F) γ ∘ XD :=
   let FE₁ := (substValRand id (subst E₁) F)
   let FE₂ := (substValRand id (subst E₂) F)
   let F₁ := (↑(FE₁ γ) ∘ ↑XD)
@@ -221,25 +218,33 @@ lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRan
   -- The simplified version by applying `substValRand` def and reducing
   let F₁' := (↑(F γ) ∘ ↑X₁D)
   let F₂' := (↑(F γ) ∘ ↑X₂D)
-  -- Extract below two into a substitution lemma. follows directly from def of substValRand
-  have subst_lemma₁ : (↑(FE₁ γ) ∘ ↑XD) = F₁' := sorry
-  have subst_lemma₂ : (↑(FE₂ γ) ∘ ↑XD) = F₂' := sorry
+  have subst_lemma₁ : (↑(FE₁ γ) ∘ ↑XD) = F₁' := rfl
+  have subst_lemma₂ : (↑(FE₂ γ) ∘ ↑XD) = F₂' := rfl
   let F₁₂ := {ω | F₁ ω = F₂ ω}
   dsimp [own] at h_own
   have meas_F₁₂ : @MeasurableSet _ Ω.ms F₁₂ := by
-    -- follows directly from defs
-    have : F₁₂ = ⟨F₁, F₂⟩ᶠ⁻¹' (Set.diagonal ⟪B⟫) := by sorry
-    -- since the diagonal is a measurable set and ⟨F₁, F₂⟩ᶠ is measurable function (meas_),
-    -- we know that the pre-image is also a measurable set
-    sorry
+    have hdiag : F₁₂ = ⟨F₁, F₂⟩ᶠ⁻¹' (Set.diagonal ⟪B⟫) := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_diagonal_iff, fProd]
+      rfl
+    rw [hdiag]
+    exact h_own (@measurableSet_diagonal _ ⟪B⟫ᵐ ⟪B⟫ᵐᵉ)
   have full_F₁₂ : Ω.μ F₁₂ = 1 := by
-    -- since E₁₂ ⊆ F₁₂ and . This will require the FE₁ and FE₂ style definition
-    -- to become apparent
-    sorry
+    -- E₁₂ ⊆ F₁₂: if E₁ and E₂ agree on ω, then F applied to both also agrees
+    have h_sub : E₁₂ ⊆ F₁₂ := by
+      intro ω hω
+      have : (subst E₁ γ).1 (XD.1 ω) = (subst E₂ γ).1 (XD.1 ω) := by
+        dsimp [subst, MeasurableFunc.comp]
+        exact congr_arg₂ Prod.mk hω rfl
+      exact congrArg (F γ).1 this
+    exact le_antisymm (MeasureTheory.prob_le_one)
+      (full_E₁₂ ▸ MeasureTheory.measure_mono h_sub)
   -- F₁₂ contains the entire pullback σ-algebra (F₁, F₂)⁻¹ (B ⊗ B), and so contains F₁₂ ∪
   -- (F₁, F₂)⁻¹ (B ⊗ B) too.
-  have hF₁₂ : ∀ (x : Set (⟪B⟫ × ⟪B⟫)), MeasurableSet x → @MeasurableSet _ Ω.ms (F₁₂ ∪ ⟨F₁, F₂⟩ᶠ⁻¹' x) := by
-    sorry
+  have hF₁₂ : ∀ (x : Set (⟪B⟫ × ⟪B⟫)), MeasurableSet x →
+      @MeasurableSet _ Ω.ms (F₁₂ ∪ ⟨F₁, F₂⟩ᶠ⁻¹' x) := by
+    intro x hx
+    exact meas_F₁₂.union (h_own hx)
   exact ⟨meas_F₁₂, full_F₁₂, hF₁₂⟩
 
 
