@@ -16,10 +16,9 @@ import Bppl.Lilac.Appl
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
-open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
 /- Almost Surely EQual-/
 namespace Aseq
-open MeasurableSpace
+open MeasurableSpace Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
 
 variable {ds rs : List Ty} {A : Ty}
 
@@ -193,16 +192,20 @@ abbrev randValProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace
 
 notation " ⟨ " f " , " g " ⟩ʳ " => randValProd f g
 
+instance {α : Type*} [MeasurableSpace α] {r : Ty} : Coe (ValRand ds rs α) (ValRand ds (r :: rs) α) where
+  coe E := fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
+
 abbrev drop {r : Ty} (E : ValRand ds rs ⟪A⟫) : ValRand ds (r :: rs) ⟪A⟫ :=
   fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
 
-notation F "[ " E " ] " => substValRand id (subst E) F
+/-- E substitutes the rv at the head of the randEnv list (generally denoted as `D`) -/
+notation F "[ " E " /_] " => substValRand id (subst E) F
 
 /-- Appendix B.17 from Lilac paper
 clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
 both the function `F[E₁]` and `F[E₂]`. -/
 lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRand ds rs ⟪A⟫) :
-    iprop(own ⟨F[E₁], F[E₂]⟩ʳ ∧ drop E₁ ≗ drop E₂ ⊢ F[E₁] ≗ F[E₂]) := by
+    iprop(own ⟨F[E₁/_], F[E₂/_]⟩ʳ ∧ drop E₁ ≗ drop E₂ ⊢ F[E₁/_] ≗ F[E₂/_]) := by
   rintro ⟨γ, XD⟩ ⟨Ω, is_prob⟩ ⟨h_own, ⟨meas_E₁₂, full_E₁₂, hE₁₂⟩⟩
   let E₁₂ := {ω | (↑(drop E₁ γ) ∘ ↑XD) ω = (↑(drop E₂ γ) ∘ ↑XD) ω}
   let X₁ : RV ⟪A⟫ := (drop E₁) γ ∘ₘ XD
@@ -211,15 +214,11 @@ lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRan
   apply alt_hE₁₂.1 at hE₁₂
   let X₂D : EnvRand (A :: rs):= (subst E₂ γ) ∘ₘ XD
   let X₁D : EnvRand (A :: rs):= (subst E₁ γ) ∘ₘ XD
-  let FE₁ := (substValRand id (subst E₁) F)
-  let FE₂ := (substValRand id (subst E₂) F)
-  let F₁ := (↑(FE₁ γ) ∘ ↑XD)
-  let F₂ := (↑(FE₂ γ) ∘ ↑XD)
+  let F₁ := (F[E₁/_]) γ ∘ₘ XD
+  let F₂ := (F[E₂/_]) γ ∘ₘ XD
   -- The simplified version by applying `substValRand` def and reducing
-  let F₁' := (↑(F γ) ∘ ↑X₁D)
-  let F₂' := (↑(F γ) ∘ ↑X₂D)
-  have subst_lemma₁ : (↑(FE₁ γ) ∘ ↑XD) = F₁' := rfl
-  have subst_lemma₂ : (↑(FE₂ γ) ∘ ↑XD) = F₂' := rfl
+  have subst_lemma₁ : F₁ = F γ ∘ₘ X₁D := rfl
+  have subst_lemma₂ : F₂ = F γ ∘ₘ X₂D := rfl
   let F₁₂ := {ω | F₁ ω = F₂ ω}
   dsimp [own] at h_own
   have meas_F₁₂ : @MeasurableSet _ Ω.ms F₁₂ := by
@@ -247,20 +246,77 @@ lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRan
     exact meas_F₁₂.union (h_own hx)
   exact ⟨meas_F₁₂, full_F₁₂, hF₁₂⟩
 
-
-
-
 -- B.19, don't think this is needed
-
--- Appendix B.22 from Lilac paper
 
 end Aseq
 namespace WP
-open ProbabilityTheory MeasureTheory Appl PMF NNReal List
-variable {ds : List Ty} {rs : List Ty} {A ty₁ ty₂ : Ty}
+open ProbabilityTheory Appl PMF NNReal List
+open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
+-- importing all of MeasureTheory imports an operator ∗ conflicting with the separating conjunct
+open MeasureTheory (Measure)
+variable {ds : List Ty} {rs : List Ty} {r r' : Ty} {A B ty₁ ty₂ : Ty}
 noncomputable section
 
+/-- used in statement of `wp_frame` -/
+instance : Coe (LProp ds rs) (LProp ds (r :: rs)) where
+  coe P := ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨Prod.snd, measurable_snd⟩ ∘ₘ D) Ω, sorry⟩
+
+abbrev drop (P : LProp ds rs) : LProp ds (r :: rs) :=
+  -- trivial sorry. show monotonicity by extra variable unused.
+  ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨Prod.snd, measurable_snd⟩ ∘ₘ D) Ω, sorry⟩
+
+variable {α β γ : Type*} {_ : MeasurableSpace α} {_ : MeasurableSpace β} {_ : MeasurableSpace γ} in
+lemma measurable_dropSnd : Measurable (fun (x, _y, z) => (x,z) : α × (β × γ) → α × γ) :=
+  by measurability
+  -- Measurable.prod measurable_fst (measurable_snd.comp measurable.snd)
+
+/-- Used in `wp_bind`. Required since the nesting of `wp`s adds variables to the head of the rand
+env.  So if we want to ignore the topmost variable in a do block, that actually requires ignoring
+an inner variable in the randenv list. -/
+abbrev dropSnd (P : LProp ds (r :: rs)) : LProp ds (r :: r' :: rs) :=
+  -- show monotonicity by extra variable unused. aesop? works but needs golfing
+  ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨_, measurable_dropSnd⟩ ∘ₘ D) Ω, sorry⟩
+
+/-- A bulding block for subst which "cons"es on the rv obtained from the program `ret M`. -/
+def subst' (M : TProd (⟪·⟫) (rs) -m→ ⟪A⟫)
+    : TProd (⟪·⟫) (rs) -m→ TProd (⟪·⟫) (A :: rs) :=
+  ⟨fun r_env ↦ (M r_env, r_env), Measurable.prod M.2 (measurable_id)⟩
+
+-- def subst'' (M : Term rs A) : TProd (⟪·⟫) (A :: rs) -m→ TProd (⟪·⟫) (A :: rs)
+--   := (subst' M.den) ∘ₘ ⟨Prod.snd, measurable_snd⟩
+
+def subst (P : LProp ds (A::rs)) (M : Term rs A)
+    : LProp ds (rs) :=
+  ⟨fun (γ, D) Ω ↦ P.1 (γ, (subst' M.den) ∘ₘ D) Ω, sorry⟩
+
+/-- M substitutes the rv at the head of the randEnv list (generally denoted as `D`).
+used in the rule `wp_ret`. -/
+notation Q "[ " M " /_] " => subst Q M
+
+-- Appendix B.20
+lemma wp_cons {P Q : LProp ds (A :: rs)} {M : Term rs A.G} (Q_of_P : iprop(P ⊢ Q)) :
+    iprop(wp ⦃M⦄ P ⊢ wp ⦃M⦄ Q) := by
+  sorry
+
+/-- Notice the requirement for a second `iprop` quotation. This is because of the devious
+coercion of F which ignores the extra random variable introduced into the environment by `wp`.
+Make the coercion explicit by using `drop` instead. -/
+lemma wp_frame {F : LProp ds rs} {P Q : LProp ds (A :: rs)} {M : Term rs A.G} :
+    iprop(F ∗ (wp ⦃M⦄ Q) ⊢ wp ⦃M⦄ iprop(F ∗ Q)) :=
+  sorry
+
+lemma wp_disj {P Q : LProp ds (A :: rs)} {M : Term rs A.G} :
+    iprop((wp ⦃M⦄ P) ∨ (wp ⦃M⦄ Q) ⊢ wp ⦃M⦄ iprop(P ∨ Q)) := sorry
+
+-- Appendix B.22 from Lilac paper
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
+
+lemma wp_ret (Q : LProp ds (A::rs)) (M : Term rs A) : iprop((Q[M/_]) ⊢ wp ⦃Term.ret M⦄ Q) := by
+  sorry
+
+lemma wp_bind (Q : LProp ds (B::rs)) (M : Term rs A.G) (N : Term (A::rs) B.G) :
+    wp ⦃M⦄ (wp ⦃N⦄ (dropSnd Q)) ⊢ wp ⦃M.bind N⦄ Q :=
+  sorry
 
 /-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
 def unif01_sem : TProd (⟪·⟫) ds → Measure ℝ := fun _ ↦ uniformOn (Set.Icc 0 1)

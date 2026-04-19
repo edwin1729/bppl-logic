@@ -70,7 +70,7 @@ abbrev Env [Denotational Ty] (ds : List Ty) := TProd (⟪·⟫) ds
 abbrev ValDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → α)
 
 /-- Random Value -/
-abbrev ValRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
+abbrev ValRand (ds : List TyDet) (rs : List TyRand) (α : Type*) [MeasurableSpace α] :=
   (Env ds → List.TProd (⟪·⟫) rs -m→ α)
 
 /-- Deterministic distribution -/
@@ -184,13 +184,15 @@ def wp (M : DistRand ds rs ⟪A⟫) (Q : LProp ds (A :: rs)) : LProp ds rs :=
   Q.1 (γ, (X ; D)) Ω'
   , sorry⟩
 
+open Iris.BI
+
 syntax:52 term:53 " ∼ " term:53 : term
 
 macro_rules
   | `(iprop($rv ∼ $dist)) => `(dist $rv $dist)
 
 delab_rule dist
-  | `($_ $rv $dist) => `(iprop($rv ∼ $dist))
+  | `($_ $rv $dist) => do ``(iprop($(← unpackIprop rv) ∼ iprop($(← unpackIprop dist))))
 
 syntax:54 term:53 " ≗ " term:53 : term
 
@@ -198,7 +200,7 @@ macro_rules
   | `(iprop($E₁ ≗ $E₂)) => `(eq $E₁ $E₂)
 
 delab_rule eq
-  | `($_ $E₁ $E₂) => `(iprop($E₁ ≗ $E₂))
+  | `($_ $E₁ $E₂) => do ``(iprop($(← unpackIprop E₁) ≗ $(← unpackIprop E₂)))
 
 -- Why am I needing to use nested iprop when using this notation??
 -- My delab rules are naive, they need to use unpack?

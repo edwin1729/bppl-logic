@@ -8,5 +8,34 @@ extensive support for tactic-based weakest-precondition style reasoning about pr
 The correctness of some algorithms for probabilistic inference is given by convergence of such a sequence.
 So add a connective to Lilac for reasoning about infinite loops and re-establish the soundness of the logic.
 
+``The search for well-speciﬁed probabilistic models—models that correctly describe the pro-
+cesses that produce data—is one of the enduring ideals of the statistical sciences. Yet, in
+only the simplest of settings are we able to achieve this goal'' - Papamakarios et al
+
+``Although our tactics perform symbolic execution in small steps, one can
+easily deﬁne a tactic that performs symbolic execution repeatedly. However,
+in concurrent separation logic, small step symbolic execution is often needed
+so as to be able to open invariants around atomic expressions''
+ - Krebbers et al. 2017b https://iris-project.org/pdfs/2017-popl-proofmode-final.pdf
+
+ so it makes sense for be to automatically apply wp_let, wp_ret and wp_unif and wp_ber
+ immediately. However is it not possible for this to get stuck if we are not dealing
+ with unif and ber alone (eg. complicate (det/rand)val coming from the meta logic??)
+
+Shall I talk about logic programming via type classes? Probably briefly should do. To
+illustrate why and how certain type classes were implemented for certain propositions.
+Especially interesting is this line [Krebbers et al. 2017b] 
+``However, since we use a shallow embedding
+to represent the propositions of our object logic, propositions are
+semantic objects, so we cannot just write a Coq function to perform this traversal. Instead, we use logic programming using type classes
+to perform such manipulations on the meta level''
+
+This work is a good example exhibiting an easy to use separation logic proofmode, without
+the complexity of step-indexing (as in most iris projects). This is because our language is first-order
+and does not support recursion and yet has an orthogonal axis of intricacy which makes it interesting.
+As such it makes a good case study for the application of modern proofmode construction
+techniques decoupled from the step-indexed world of Iris in which practically every other
+significant program logic lives.
+
 Expressive tactic-based reasoning about programs is developed through Lean meta-programming. 
 \end{itemize}
