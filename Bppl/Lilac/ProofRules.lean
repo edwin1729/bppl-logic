@@ -342,29 +342,3 @@ lemma wp_flip (p : ℝ≥0) (hp : p ≤ 1) (Q : LProp ds (Ty.bool :: rs)) :
 
 end
 end WP
-
-namespace TypeClasses
-
-open Iris.ProofMode LProp Appl Iris.BI.BIBase
-
-variable {ds rs : List Ty} {r : Ty}
--- ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω
-
-abbrev substRandVar (P : LProp ds (A::rs)) (X : RV ⟪A⟫) : LProp ds (rs) :=
-  ⟨fun (γ, D) Ω ↦ P.1 (γ, X ; D) Ω, sorry⟩
-
-instance {P : LProp ds (r::rs)}
-    : FromForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substRandVar P X) where
-  from_forall := by
-    rintro ⟨γ, D⟩ Ω P' X
-    dsimp [Iris.BI.forall, sForall] at P'
-    exact P' (substRandVar P X) ⟨X, rfl⟩
-
-instance {P : LProp ds (r::rs)}
-    : IntoForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substRandVar P X) where
-  into_forall := by
-    rintro ⟨γ, D⟩ Ω P' P'' ⟨X, hX⟩
-    subst hX
-    simp only [P' X]
-
-end TypeClasses

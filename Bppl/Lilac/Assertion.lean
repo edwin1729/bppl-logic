@@ -11,6 +11,7 @@ import Iris.BI.BIBase
 import Iris.BI
 import Iris.Algebra.OFE
 import Iris.Std.Equivalence
+import Iris.ProofMode
 
 -- import Bppl.Lilac.KRM
 import Bppl.Lilac.Appl
@@ -217,3 +218,67 @@ end LProp
 /- Satisfaction relation: `(γ, D, Ω)⊨ P` means `P` holds under deterministic env `γ`,
     random env `D`, and resource `Ω` -/
 -- notation:50 "(" γ ", " D ", " Ω ")⊨ " P => Assertion.denote P γ D Ω
+
+namespace Substitution
+
+open Iris.ProofMode LProp Appl Iris.BI.BIBase
+
+variable {ds rs rs' : List Ty} {A A' r : Ty}
+-- ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω
+
+abbrev substLProp (P : LProp ds (A::rs)) (X : RV ⟪A⟫) : LProp ds (rs) :=
+  ⟨fun (γ, D) Ω ↦ P.1 (γ, X ; D) Ω, sorry⟩
+
+/- There is a `def` of the same name in ProofRules.lean, which is used to define the congruence
+lemma. There I incorrectly do a `drop` of a rv as well, so these definitions are different and that
+definition is incorrect. Rectify that and the congruence lemma later. -/
+-- abbrev substValRand (X : RV ⟪A⟫) (E : ValRand ds (A::rs) ⟪A'⟫) : ValRand ds rs ⟪A'⟫ :=
+--   fun γ ↦ ⟨fun D ↦ (E γ (⟨X, D⟩ᶠ)), Measurable.prod (E γ).2 (measurable_id)⟩
+  --∘ₘ ⟨Prod.snd, measurable_snd⟩
+
+instance {P : LProp ds (r::rs)}
+    : FromForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
+  from_forall := by
+    rintro ⟨γ, D⟩ Ω P' X
+    dsimp [Iris.BI.forall, sForall] at P'
+    exact P' (substLProp P X) ⟨X, rfl⟩
+
+instance {P : LProp ds (r::rs)}
+    : IntoForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
+  into_forall := by
+    rintro ⟨γ, D⟩ Ω P' P'' ⟨X, hX⟩
+    subst hX
+    simp only [P' X]
+
+/- Since LProp couldn't be made an inductive structure, (due to a combination of iris-lean's forall
+type) and lean's strict positivity in inductive types), we cannot prove the substituion lemma
+through induction.
+Note that the job of the "substitution lemma" is just to push cast-like functions such as
+`substRandVar` into the `LProp` expression and all the way to the leaves.
+Instead here we establish this same lemma through typeclasses and typeclass based proof search
+(this technique is heavily exploited by Iris). Here's what's happening:
+The "constructors" of `LProp` are just defs in Lean, and morally these still form a tree (though
+there is no associated induction hypothesis). We write a substitution sub-lemma for each node of the
+tree, and typeclass-based proof search will dynamically chain together the sublemmas from a node all
+the way to the leaves to construct the substitution lemma for a given `Lprop` dynamically!
+-/
+
+class SubstRandProp (X : RV ⟪A⟫) (P : LProp ds (A::rs)) (Q : LProp ds rs) where
+  subst_eq : substLProp P X = Q
+
+instance (X : RV ⟪A⟫) (P Q : LProp ds (A::rs)) [SubstRandProp X P (substLProp P X)] [SubstRandProp X Q (substLProp P X)]
+    : SubstRandProp X (iprop(P -∗ Q)) (iprop((substLProp P X) -∗ (substLProp Q X))) where
+  subst_eq := rfl
+
+/-- Leaf node of the substitution lemma. It seems like nothing can be done here due to `X : RV ⟪A⟫`
+requiring an input from `HC` but E doesn't take that as input. -/
+instance (E : ValRand ds (A::rs) ⟪A'⟫) (μ : DistDet ds ⟪A'⟫)
+    : SubstRandProp X (LProp.dist E μ) (substLProp (LProp.dist E μ) X) where
+  subst_eq := rfl
+
+-- instance (X : RV ⟪A⟫) (P Q : LProp ds (A::rs)) [SubstRandProp X P (substLProp P X)] [SubstRandProp X Q (substLProp P X)]
+
+-- def dist (E : ValRand ds rs ⟪A⟫) (μ : DistDet ds ⟪A⟫) : LProp ds rs :=
+
+
+end Substitution

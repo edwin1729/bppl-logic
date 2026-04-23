@@ -12,9 +12,9 @@ import Iris.ProofMode
 
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
+set_option linter.style.lambdaSyntax false
 
-open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP TypeClasses
-
+open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP Substitution
 /-! The examples in this file need a a lot of revision (and metaprogramming) to
 make an ergonomic experience -/
 
@@ -25,7 +25,7 @@ abbrev unif2 : Term [] (Ty.prod .real .real).G :=
   ret (pair (var (tail head)) (var head))
 ))
 
-def unif1 : Term [] Ty.real.G :=
+abbrev unif1 : Term [] Ty.real.G :=
   unif01.bind (
   ret (var head)
 )
@@ -40,16 +40,38 @@ instance : Preorder ⟪Ty.real⟫ := sorry
 lemma unif1_prop
     : ⊢ (@wp Ty _ _ _ _ _ _ (fun _ ↦ unif1.den) iprop((fun _d_env ↦ ⟨fun r_env ↦ r_env.get head , List.TProd.measurable_get head⟩) ∼ (fun _ ↦ uniformOn (Set.Icc (0 : ℝ) (1: ℝ)))) : LProp [] []) := sorry
 
-abbrev post : @LProp Ty Ty _ _ [] [] :=
+abbrev post1 : @LProp Ty Ty _ _ [] [] := wp ⦃unif1⦄ iprop((λ _ ↦ measurableFun_fst) ∼ WP.unif01_sem)
+
+
+theorem unif1_spec : iprop(⊢ post1) := by
+  iapply wp_bind
+  iapply wp_unif
+  iintro %x
+  -- rw [SubstRandProp.subst_eq]
+  change ⊢
+    substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x -∗
+      substLProp (wp ⦃ (var head).ret ⦄
+        (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ iprop(unif01_sem)))) x
+  iintro H
+
+  change (substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x)
+    ⊢ wp ⦃ (var head).ret ⦄ (substLProp (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ unif01_sem)) x)
+
+abbrev post2 : @LProp Ty Ty _ _ [] [] :=
   wp ⦃unif2⦄ (LProp.dist (fun _ ↦ measurableFun_fst ∘ₘ measurableFun_fst) WP.unif01_sem)
 
-theorem unif2_spec : iprop(⊢ post) := by
-  rw [post]
+theorem unif2_spec : iprop(⊢ post2) := by
+  rw [post2]
   iintro
   iapply wp_bind
   iapply wp_unif
   iintro %x
+  change ⊢
+    substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x -∗
+      substLProp (wp ⦃ unif01.bind ((var head.tail).pair (var head)).ret ⦄
+        (dropSnd iprop((fun x ↦ measurableFun_fst ∘ₘ measurableFun_fst) ∼ iprop(unif01_sem)))) x
+  iintro H
 
-  dsimp [substRandVar]
+  -- rw [SubstRandProp.subst_eq]
 
   sorry
