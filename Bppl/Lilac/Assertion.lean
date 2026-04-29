@@ -64,45 +64,6 @@ end MeasurableFunc
 denotation must have a measurable space structure -/
 variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 
-/-- The same construction with TProd is used for both Determinisitic and Random Environments. -/
-abbrev Env [Denotational Ty] (ds : List Ty) := TProd (⟪·⟫) ds
-
-/-- Deterministic Value -/
-abbrev ValDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → α)
-
-/-- Random Value -/
-abbrev ValRand (ds : List TyDet) (rs : List TyRand) (α : Type*) [MeasurableSpace α] :=
-  (Env ds → List.TProd (⟪·⟫) rs -m→ α)
-
-/-- Deterministic distribution -/
-abbrev DistDet (ds : List TyDet) (α : Type) [MeasurableSpace α] := (Env ds → Measure α)
-
-/-- Random distribution -/
-abbrev DistRand (ds : List TyDet) (rs : List TyRand) (α : Type) [MeasurableSpace α] :=
-  (Env ds → List.TProd (⟪·⟫) rs -m→ Measure α)
-
-/- Substitutions: -/
-
-abbrev substValDet {ds ds' : List TyDet} {α : Type} [MeasurableSpace α] (s : Env ds' → Env ds)
-    (e : ValDet ds α) : ValDet ds' α :=
-  e ∘ s
-
-/-- add the det env as input to `S`. Required by the `congruence` proof rule.
-Unclear whether this cuases further complications... -/
-abbrev substValRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [MeasurableSpace α]
-    (s : Env ds' → Env ds) (S : Env ds' → Env rs' -m→ Env rs) (E : ValRand ds rs α)
-    : ValRand ds' rs' α :=
-  fun γ ↦ E (s γ) ∘ₘ (S γ)
-
-abbrev substDistDet {ds ds' : List TyDet} {α : Type} [MeasurableSpace α] (s : Env ds' → Env ds)
-    (μ : DistDet ds α) : DistDet ds' α :=
-  μ ∘ s
-
-abbrev substDistRand {ds ds' : List TyDet} {rs rs' : List TyRand} {α : Type} [MeasurableSpace α]
-    (s : Env ds' → Env ds) (S : Env ds' → Env rs' -m→ Env rs) (M : DistRand ds rs α)
-    : DistRand ds' rs' α :=
-  fun γ ↦ M (s γ) ∘ₘ (S γ)
-
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
@@ -114,15 +75,11 @@ instance : Inhabited HC where
 /-- Todo add finite footprint condition -/
 abbrev RV (α : Type) [MeasurableSpace α] := @MeasurableFun HC α MeasurableSpace.pi _
 
-abbrev EnvDet (ds : List TyDet) := TProd (⟪·⟫) ds
-abbrev EnvRand (rs : List TyRand) := RV (TProd (⟪·⟫) rs)
-
 open Iris.Instances.Intuitionistic
 open Iris.Instances.Intuitionistic.instBIBase
 
 /-- Lilac propositions -/
-abbrev LProp (ds : List TyDet) (rs : List TyRand) :=
-  IProp (EnvDet ds × EnvRand rs) (PSpace HC)
+abbrev LProp := IProp (PSpace HC)
 
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
@@ -132,22 +89,20 @@ namespace LProp
 -- ds: deterministic context, rs: random variable context
 variable {ds : List TyDet} {rs : List TyRand} {A : TyRand}
 -- is it a problem that only types at the head of the list can be quantified over?
-def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∀ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
-def «exists» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∃ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
-def forall_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
-def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
+-- def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
+--   ⟨fun (γ, D) Ω ↦ ∀ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
+-- def «exists» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
+--   ⟨fun (γ, D) Ω ↦ ∃ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
+-- def forall_rv (r : TyRand) (P : LProp) : LProp ds rs :=
+--   ⟨fun (γ, D) Ω ↦ ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
+-- def exists_rv (r : TyRand) (P : LProp ds (r :: rs)) : LProp ds rs :=
+--   ⟨fun (γ, D) Ω ↦ ∃ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω, sorry⟩
 
-def own [MeasurableSpace α] (E : ValRand ds rs α) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦ Measurable[Ω.ms] ((E γ).1 ∘ D.1), sorry⟩
+def own [MeasurableSpace α] (E : RV α) : LProp :=
+  ⟨fun Ω ↦ Measurable[Ω.ms] E, sorry⟩
 
-def dist (E : ValRand ds rs ⟪A⟫) (μ : DistDet ds ⟪A⟫) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦
-    Measurable[Ω.ms] ((E γ).1 ∘ D.1) ∧ μ γ = .bind Ω.μ (fun ω ↦ Measure.dirac (E γ (D ω)))
-  , sorry⟩
+def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
+  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = Measure.bind Ω.μ (fun ω ↦ Measure.dirac (E ω)) , sorry⟩
 
 -- TODO
 -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
@@ -157,15 +112,13 @@ notation "⟪" ty "⟫'" => DenotationalMeas.instMeasurable ty
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
-def eq (E₁ E₂ : ValRand ds rs ⟪A⟫) : LProp ds rs :=
-  ⟨fun (γ, D) ⟨⟨ℱ, μ⟩, hμ⟩ ↦
-    let X₁ := (E₁ γ).1 ∘ D.1
-    let X₂ := (E₂ γ).1 ∘ D.1
-    let F := {ω | X₁ ω = X₂ ω}
+def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
+  ⟨fun ⟨⟨ℱ, μ⟩, hμ⟩ ↦
+    let F := {ω | E₁ ω = E₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
     -- (F ∪ ⟨X₁, X₂⟩ᶠ⁻¹' ·) '' (⟪A⟫ᵐ.prod ⟪A⟫ᵐ).MeasurableSet' ⊆ ℱ.MeasurableSet'
     ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet x →
-      MeasurableSet[ℱ] (F ∪ (fun ω ↦ (X₁ ω, X₂ ω))⁻¹' x)
+      MeasurableSet[ℱ] (F ∪ (fun ω ↦ (E₁ ω, E₂ ω))⁻¹' x)
     , sorry⟩
 
 def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : PSpace Ω :=
@@ -173,16 +126,16 @@ def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : 
 
 -- The extension `rs' ++ rs` may not be necessary
 -- consider just taking another PSp instead of μ, if it might simplify proof later
-def wp (M : DistRand ds rs ⟪A⟫) (Q : LProp ds (A :: rs)) : LProp ds rs :=
-  ⟨fun (γ, D) Ω ↦
+def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
+  ⟨fun Ω ↦
   ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
   Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List TyRand},
-  ∀ D' : RV (List.TProd (⟪·⟫) (rs' ++ rs)),
+  ∀ D' : RV (List.TProd (⟪·⟫) rs'),
   ∃ X : RV ⟪A⟫, ∃ Ω' : PSpace HC,
   ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSpace.mk' μ) ∧
-  (Measure.bind μ.1 (fun ω ↦ Measure.bind (M γ (D ω)) (fun v ↦ Measure.dirac (D' ω, D ω, v)))) =
-    (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, D ω, X ω))) ∧
-  Q.1 (γ, (X ; D)) Ω'
+  (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac (D' ω, v)))) =
+    (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, X ω))) ∧
+  (Q X).1 Ω'
   , sorry⟩
 
 open Iris.BI
@@ -226,8 +179,8 @@ open Iris.ProofMode LProp Appl Iris.BI.BIBase
 variable {ds rs rs' : List Ty} {A A' r : Ty}
 -- ∀ X : RV ⟪r⟫, P.1 (γ, (X ; D)) Ω
 
-abbrev substLProp (P : LProp ds (A::rs)) (X : RV ⟪A⟫) : LProp ds (rs) :=
-  ⟨fun (γ, D) Ω ↦ P.1 (γ, X ; D) Ω, sorry⟩
+-- abbrev substLProp (P : LProp ds (A::rs)) (X : RV ⟪A⟫) : LProp ds (rs) :=
+--   ⟨fun (γ, D) Ω ↦ P.1 (γ, X ; D) Ω, sorry⟩
 
 /- There is a `def` of the same name in ProofRules.lean, which is used to define the congruence
 lemma. There I incorrectly do a `drop` of a rv as well, so these definitions are different and that
@@ -236,19 +189,19 @@ definition is incorrect. Rectify that and the congruence lemma later. -/
 --   fun γ ↦ ⟨fun D ↦ (E γ (⟨X, D⟩ᶠ)), Measurable.prod (E γ).2 (measurable_id)⟩
   --∘ₘ ⟨Prod.snd, measurable_snd⟩
 
-instance {P : LProp ds (r::rs)}
-    : FromForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
-  from_forall := by
-    rintro ⟨γ, D⟩ Ω P' X
-    dsimp [Iris.BI.forall, sForall] at P'
-    exact P' (substLProp P X) ⟨X, rfl⟩
+-- instance {P : LProp ds (r::rs)}
+--     : FromForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
+--   from_forall := by
+--     rintro ⟨γ, D⟩ Ω P' X
+--     dsimp [Iris.BI.forall, sForall] at P'
+--     exact P' (substLProp P X) ⟨X, rfl⟩
 
-instance {P : LProp ds (r::rs)}
-    : IntoForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
-  into_forall := by
-    rintro ⟨γ, D⟩ Ω P' P'' ⟨X, hX⟩
-    subst hX
-    simp only [P' X]
+-- instance {P : LProp ds (r::rs)}
+--     : IntoForall (forall_rv r P) (fun X : RV ⟪r⟫ ↦ substLProp P X) where
+--   into_forall := by
+--     rintro ⟨γ, D⟩ Ω P' P'' ⟨X, hX⟩
+--     subst hX
+--     simp only [P' X]
 
 /- Since LProp couldn't be made an inductive structure, (due to a combination of iris-lean's forall
 type) and lean's strict positivity in inductive types), we cannot prove the substituion lemma
@@ -263,18 +216,18 @@ tree, and typeclass-based proof search will dynamically chain together the suble
 the way to the leaves to construct the substitution lemma for a given `Lprop` dynamically!
 -/
 
-class SubstRandProp (X : RV ⟪A⟫) (P : LProp ds (A::rs)) (Q : LProp ds rs) where
-  subst_eq : substLProp P X = Q
+-- class SubstRandProp (X : RV ⟪A⟫) (P : LProp ds (A::rs)) (Q : LProp ds rs) where
+--   subst_eq : substLProp P X = Q
 
-instance (X : RV ⟪A⟫) (P Q : LProp ds (A::rs)) [SubstRandProp X P (substLProp P X)] [SubstRandProp X Q (substLProp P X)]
-    : SubstRandProp X (iprop(P -∗ Q)) (iprop((substLProp P X) -∗ (substLProp Q X))) where
-  subst_eq := rfl
+-- instance (X : RV ⟪A⟫) (P Q : LProp ds (A::rs)) [SubstRandProp X P (substLProp P X)] [SubstRandProp X Q (substLProp P X)]
+--     : SubstRandProp X (iprop(P -∗ Q)) (iprop((substLProp P X) -∗ (substLProp Q X))) where
+--   subst_eq := rfl
 
-/-- Leaf node of the substitution lemma. It seems like nothing can be done here due to `X : RV ⟪A⟫`
-requiring an input from `HC` but E doesn't take that as input. -/
-instance (E : ValRand ds (A::rs) ⟪A'⟫) (μ : DistDet ds ⟪A'⟫)
-    : SubstRandProp X (LProp.dist E μ) (substLProp (LProp.dist E μ) X) where
-  subst_eq := rfl
+-- /-- Leaf node of the substitution lemma. It seems like nothing can be done here due to `X : RV ⟪A⟫`
+-- requiring an input from `HC` but E doesn't take that as input. -/
+-- instance (E : ValRand ds (A::rs) ⟪A'⟫) (μ : DistDet ds ⟪A'⟫)
+--     : SubstRandProp X (LProp.dist E μ) (substLProp (LProp.dist E μ) X) where
+--   subst_eq := rfl
 
 -- instance (X : RV ⟪A⟫) (P Q : LProp ds (A::rs)) [SubstRandProp X P (substLProp P X)] [SubstRandProp X Q (substLProp P X)]
 

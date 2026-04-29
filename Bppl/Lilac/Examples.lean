@@ -54,8 +54,9 @@ theorem unif1_spec : iprop(⊢ post1) := by
         (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ iprop(unif01_sem)))) x
   iintro H
 
-  change (substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x)
-    ⊢ wp ⦃ (var head).ret ⦄ (substLProp (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ unif01_sem)) x)
+  -- change (substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x)
+  --   ⊢ wp ⦃ (var head).ret ⦄ (substLProp (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ unif01_sem)) x)
+  sorry
 
 abbrev post2 : @LProp Ty Ty _ _ [] [] :=
   wp ⦃unif2⦄ (LProp.dist (fun _ ↦ measurableFun_fst ∘ₘ measurableFun_fst) WP.unif01_sem)
