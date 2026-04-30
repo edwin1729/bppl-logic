@@ -44,13 +44,13 @@ variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [Measurabl
 instance instCoeMeasurableFun : CoeFun (α -m→ β) (fun _ => α → β) where
   coe f := f.val
 
-def measurableFun_fst : (α × β) -m→ α := ⟨_ , measurable_fst⟩
+abbrev measurableFun_fst : (α × β) -m→ α := ⟨_ , measurable_fst⟩
 
-def measurableFun_snd : (α × β) -m→ β := ⟨_ , measurable_snd⟩
+abbrev measurableFun_snd : (α × β) -m→ β := ⟨_ , measurable_snd⟩
 
-def MeasurableFun.fst (f : α -m→ β × γ) : α -m→ β := ⟨_ , Measurable.fst f.2⟩
+abbrev MeasurableFun.fst (f : α -m→ β × γ) : α -m→ β := ⟨_ , Measurable.fst f.2⟩
 
-def MeasurableFun.snd (f : α -m→ β × γ) : α -m→ γ := ⟨_ , Measurable.snd f.2⟩
+abbrev MeasurableFun.snd (f : α -m→ β × γ) : α -m→ γ := ⟨_ , Measurable.snd f.2⟩
 
 -- TODO: The below two don't actually work, because of clash with indexing notation.
 open MeasureTheory in

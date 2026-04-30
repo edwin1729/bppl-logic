@@ -305,12 +305,12 @@ lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
 
 lemma wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term rs A) :
-    iprop((Q (M.den ∘ₘ D)) ⊢ wp ((Term.ret M).den ∘ₘ D) Q) := by
+    iprop((Q (M.den ∘ₚ D)) ⊢ wp ((Term.ret M).den ∘ₚ D) Q) := by
   sorry
 
 lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
       (M : Term rs A.G) (N : Term (A::rs) B.G) :
-    wp (M.den ∘ₘ D) (λ X ↦ (wp (N.den ∘ₘ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₘ D) Q :=
+    wp (M.den ∘ₚ D) (λ X ↦ (wp (N.den ∘ₚ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₚ D) Q :=
   sorry
 
 /-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
@@ -329,7 +329,7 @@ def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool 
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     iprop(
       ∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
-     ⊢ wp ((@Term.unif01 rs).den ∘ₘ D) Q :=
+     ⊢ wp ((@Term.unif01 rs).den ∘ₚ D) Q :=
   sorry
 
 -- lemma wp_flip (p : ℝ≥0) (hp : p ≤ 1) (Q : LProp ds (Ty.bool :: rs)) :

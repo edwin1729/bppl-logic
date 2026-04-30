@@ -48,7 +48,7 @@ variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [Measurabl
 def comp (g : β -m→ γ) (f : α -m→ β)
   : α -m→ γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
 
-notation g " ∘ₘ " f => comp g f
+notation g " ∘ₚ " f => comp g f
 
 def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
   ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
