@@ -44,7 +44,7 @@ abbrev foo {x : Option α} (h : x.isSome) := x.get h
 
 prefix:max "↓" => foo
 
-theorem Krm.ge_mul_mono' {α : Type*} [k: Krm α] (x x' y y' : α) :
+theorem Krm.le_mul_mono' {α : Type*} [k : Krm α] (x x' y y' : α) :
     (∀ p' : α, x ≤ x' → y ≤ y' →
     (some p' = x' ⋆ y') → ∃ p, (some p = x ⋆ y) ∧ p ≤ p')
     ↔

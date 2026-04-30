@@ -249,53 +249,23 @@ open MeasureTheory (Measure)
 variable {ds : List Ty} {rs : List Ty} {r r' : Ty} {A B ty₁ ty₂ : Ty}
 noncomputable section
 
--- /-- used in statement of `wp_frame` -/
--- instance : Coe (LProp ds rs) (LProp ds (r :: rs)) where
---   coe P := ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨Prod.snd, measurable_snd⟩ ∘ₘ D) Ω, sorry⟩
-
--- abbrev drop (P : LProp ds rs) : LProp ds (r :: rs) :=
---   -- trivial sorry. show monotonicity by extra variable unused.
---   ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨Prod.snd, measurable_snd⟩ ∘ₘ D) Ω, sorry⟩
-
--- variable {α β γ : Type*} {_ : MeasurableSpace α} {_ : MeasurableSpace β} {_ : MeasurableSpace γ} in
--- lemma measurable_dropSnd : Measurable (fun (x, _y, z) => (x,z) : α × (β × γ) → α × γ) :=
---   by measurability
---   -- Measurable.prod measurable_fst (measurable_snd.comp measurable.snd)
-
--- /-- Used in `wp_bind`. Required since the nesting of `wp`s adds variables to the head of the rand
--- env.  So if we want to ignore the topmost variable in a do block, that actually requires ignoring
--- an inner variable in the randenv list. -/
--- abbrev dropSnd (P : LProp ds (r :: rs)) : LProp ds (r :: r' :: rs) :=
---   -- show monotonicity by extra variable unused. aesop? works but needs golfing
---   ⟨fun (γ, D) Ω ↦ P.1 (γ, ⟨_, measurable_dropSnd⟩ ∘ₘ D) Ω, sorry⟩
-
--- /-- A bulding block for subst which "cons"es on the rv obtained from the program `ret M`. -/
--- def subst' (M : TProd (⟪·⟫) (rs) -m→ ⟪A⟫)
---     : TProd (⟪·⟫) (rs) -m→ TProd (⟪·⟫) (A :: rs) :=
---   ⟨fun r_env ↦ (M r_env, r_env), Measurable.prod M.2 (measurable_id)⟩
-
--- -- def subst'' (M : Term rs A) : TProd (⟪·⟫) (A :: rs) -m→ TProd (⟪·⟫) (A :: rs)
--- --   := (subst' M.den) ∘ₘ ⟨Prod.snd, measurable_snd⟩
-
--- def subst (P : LProp ds (A::rs)) (M : Term rs A)
---     : LProp ds (rs) :=
---   ⟨fun (γ, D) Ω ↦ P.1 (γ, (subst' M.den) ∘ₘ D) Ω, sorry⟩
-
--- /-- M substitutes the rv at the head of the randEnv list (generally denoted as `D`).
--- used in the rule `wp_ret`. -/
--- notation Q "[ " M " /_] " => subst Q M
-
 -- Appendix B.20
 -- it is unclear how to write down Q_of_P? Is it better to use -∗ ?
 lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)}
     (Q_of_P : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
+  intro Ω wp_l Ω_fr μ hΩ
   sorry
 
-/-- Notice the requirement for a second `iprop` quotation. This is because of the devious
-coercion of F which ignores the extra random variable introduced into the environment by `wp`.
-Make the coercion explicit by using `drop` instead. -/
 lemma wp_frame {F : LProp} {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
-    iprop(F ∗ (wp M Q) ⊢ wp M (λ X ↦ iprop(F ∗ Q X))) :=
+    iprop(F ∗ (wp M Q) ⊢ wp M (λ X ↦ iprop(F ∗ Q X))) := by
+  rintro Ω ⟨Ω_F, Ω_M, hΩ_F_M, _,  hF, h_M⟩ Ω_fr μ hΩ
+  -- using `le_mul_mono` establish `Ω_fr ∗ (Ω_F ∗ Ω_M)` exists from `Ω_fr ∗ Ω ≤ .mk μ` and `(Ω_F ∗ Ω_M) ≤ Ω`
+  have Ω_fr ⋆ (Ω_F ⋆ Ω_M)
+  -- using `assoc` (specifically the helper `exists_left`) establish `(Ω_fr ∗ Ω_F)` exists
+  have := sorry
+  -- feed `(Ω_fr ∗ Ω_F)` as the Ω_fr for `h_M`. Next supply proof using `assoc` that `Ω_fr ∗ (Ω_F ∗ Ω_M)`
+  have := h_M
+
   sorry
 
 lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
@@ -318,10 +288,6 @@ def unif01_sem : Measure ⟪Ty.real⟫ := uniformOn (Set.Icc 0 1)
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
-
--- /-- Variable at the head of the random environment list. -/
--- def fst_rand : ValRand ds (A::rs) ⟪A⟫ :=
---   fun _d_env ↦ ⟨fun r_env ↦ r_env.get .head , List.TProd.measurable_get .head⟩
 
 -- D is a dummy and is only used to impart an unused context to Term.unif01
 -- Need to make sure this boilerplate doesn't bother the user
