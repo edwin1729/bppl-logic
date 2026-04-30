@@ -37,7 +37,7 @@ But now only `own` is given this special treatment. I find it hard to determine 
 choice so I make minimal changes as per requirements in `congruence` rule.
 -/
 
-open MeasureTheory Appl.Denotation
+open MeasureTheory Appl
 open List (TProd)
 
 abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
@@ -59,10 +59,6 @@ notation x " ; " xs => fun_prod x xs
 by the definition of List.TProd. -/
 
 end MeasurableFunc
-
-/- `TyRand` and `TyDet` need to have a denotation function. Additionally `TyRand`'s
-denotation must have a measurable space structure -/
-variable {TyDet TyRand : Type} [td : Denotational TyDet] [tdm : DenotationalMeas TyRand]
 
 -- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
@@ -87,7 +83,8 @@ instance : MeasurableSpace HC := inferInstance
 namespace LProp
 
 -- ds: deterministic context, rs: random variable context
-variable {ds : List TyDet} {rs : List TyRand} {A : TyRand}
+variable {ds : List Ty} {rs : List Ty} {A : Ty}
+
 -- is it a problem that only types at the head of the list can be quantified over?
 -- def «forall» (d : TyDet) (P : LProp (d :: ds) rs) : LProp ds rs :=
 --   ⟨fun (γ, D) Ω ↦ ∀ x : ⟪d⟫, P.1 ((x, γ), D) Ω, sorry⟩
@@ -108,7 +105,6 @@ def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
 -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
 -- denotation is ℝ
 
-notation "⟪" ty "⟫'" => DenotationalMeas.instMeasurable ty
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
@@ -129,7 +125,7 @@ def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : 
 def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
   ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
-  Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List TyRand},
+  Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List Ty},
   ∀ D' : RV (List.TProd (⟪·⟫) rs'),
   ∃ X : RV ⟪A⟫, ∃ Ω' : PSpace HC,
   ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSpace.mk' μ) ∧

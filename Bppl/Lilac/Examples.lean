@@ -37,41 +37,36 @@ instance : Preorder ⟪Ty.real⟫ := sorry
 -- inferred that we want to use `Ty` for both `TyDet` and `TyRand`. Can just hardcode that buttt...
 -- This is indicative of a problem with deterministic environments.
 -- When do we ever use them? Can it be removed?
-lemma unif1_prop
-    : ⊢ (@wp Ty _ _ _ _ _ _ (fun _ ↦ unif1.den) iprop((fun _d_env ↦ ⟨fun r_env ↦ r_env.get head , List.TProd.measurable_get head⟩) ∼ (fun _ ↦ uniformOn (Set.Icc (0 : ℝ) (1: ℝ)))) : LProp [] []) := sorry
+-- lemma unif1_prop
+--     : ⊢ (@wp Ty _ _ _ _ _ _ (fun _ ↦ unif1.den) iprop((fun _d_env ↦ ⟨fun r_env ↦ r_env.get head , List.TProd.measurable_get head⟩) ∼ (fun _ ↦ uniformOn (Set.Icc (0 : ℝ) (1: ℝ)))) : LProp [] []) := sorry
 
-abbrev post1 : @LProp Ty Ty _ _ [] [] := wp ⦃unif1⦄ iprop((λ _ ↦ measurableFun_fst) ∼ WP.unif01_sem)
+abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨λ _ ↦ PUnit.unit, measurable_const⟩
 
+abbrev post1 : LProp := wp (unif1.den ∘ₘ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X WP.unif01_sem)
+
+lemma bar {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ₘ (X ; nil)) = X := by rfl
 
 theorem unif1_spec : iprop(⊢ post1) := by
   iapply wp_bind
   iapply wp_unif
-  iintro %x
-  -- rw [SubstRandProp.subst_eq]
-  change ⊢
-    substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x -∗
-      substLProp (wp ⦃ (var head).ret ⦄
-        (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ iprop(unif01_sem)))) x
+  iintro %X
   iintro H
+  iapply wp_ret
+  rw [bar]
+  iexact H
 
-  -- change (substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x)
-  --   ⊢ wp ⦃ (var head).ret ⦄ (substLProp (dropSnd iprop((fun x ↦ measurableFun_fst) ∼ unif01_sem)) x)
-  sorry
+-- abbrev post2 : LProp := wp (unif2.den ∘ₘ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X.ₘ1 WP.unif01_sem)
+-- abbrev post2 : @LProp Ty Ty _ _ [] [] :=
+--   wp ⦃unif2⦄ (LProp.dist (fun _ ↦ measurableFun_fst ∘ₘ measurableFun_fst) WP.unif01_sem)
 
-abbrev post2 : @LProp Ty Ty _ _ [] [] :=
-  wp ⦃unif2⦄ (LProp.dist (fun _ ↦ measurableFun_fst ∘ₘ measurableFun_fst) WP.unif01_sem)
-
-theorem unif2_spec : iprop(⊢ post2) := by
-  rw [post2]
+theorem unif2_spec : iprop(⊢ post1) := by
+  rw [post1]
   iintro
   iapply wp_bind
   iapply wp_unif
-  iintro %x
-  change ⊢
-    substLProp iprop(fst_rand ∼ iprop(unif01_sem)) x -∗
-      substLProp (wp ⦃ unif01.bind ((var head.tail).pair (var head)).ret ⦄
-        (dropSnd iprop((fun x ↦ measurableFun_fst ∘ₘ measurableFun_fst) ∼ iprop(unif01_sem)))) x
+  iintro %X
   iintro H
+  -- iapply wp_bind
 
   -- rw [SubstRandProp.subst_eq]
 

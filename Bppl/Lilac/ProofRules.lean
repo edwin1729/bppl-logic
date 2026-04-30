@@ -19,7 +19,7 @@ set_option relaxedAutoImplicit true
 
 /- Almost Surely EQual-/
 namespace Aseq
-open MeasurableSpace Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
+open MeasurableSpace Iris.BI.BIBase LProp Iris.BI Appl List Appl
 
 variable {ds rs : List Ty} {A : Ty}
 
@@ -243,7 +243,7 @@ notation " ⟨ " f " , " g " ⟩ʳ " => randValProd f g
 end Aseq
 namespace WP
 open ProbabilityTheory Appl PMF NNReal List
-open Iris.BI.BIBase LProp Iris.BI Appl.Denotation List Appl
+open Iris.BI.BIBase LProp Iris.BI Appl List Appl
 -- importing all of MeasureTheory imports an operator ∗ conflicting with the separating conjunct
 open MeasureTheory (Measure)
 variable {ds : List Ty} {rs : List Ty} {r r' : Ty} {A B ty₁ ty₂ : Ty}
@@ -314,7 +314,7 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
   sorry
 
 /-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
-def unif01_sem : Measure ⟪Ty.real⟫ := sorry --fun _ ↦ uniformOn (Set.Icc 0 1)
+def unif01_sem : Measure ⟪Ty.real⟫ := uniformOn (Set.Icc 0 1)
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
@@ -328,7 +328,7 @@ def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool 
 -- TODO `⟪Ty.real⟫` not definitionally equal to `ℝ` because `Ty.den : MeasCat`
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     iprop(
-      ∀ (X : RV ⟪Ty.real⟫), iprop(fst_rand ∼ unif01_sem -∗ Q X))
+      ∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
      ⊢ wp ((@Term.unif01 rs).den ∘ₘ D) Q :=
   sorry
 

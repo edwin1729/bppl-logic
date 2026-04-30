@@ -157,35 +157,29 @@ lemma foop : Measurable (foo) := by
   | le => ⟨fun p ↦ p.1 ≤ p.2, sorry⟩
   | eq => ⟨fun p ↦ p.1 = p.2, sorry⟩
 
-namespace Denotation
-class Denotational (Ty : Type u) where
-  den : Ty → Type
-
 
 --TODO: 1) Make sure that some type has denotation `ℝ`
 -- 2) The denotations must be measurable spaces which support equality
 -- 2.2) Make a tactic to show that products of measurable spaces which support
 -- equality also support equality ?
 -- 3) Finite footprint
-class DenotationalMeas (Ty : Type u) extends Denotational Ty where
-  instMeasurable : ∀ t, MeasurableSpace (den t)
-  instMeasurableEq : ∀ t, MeasurableEq (den t)
+-- class DenotationalMeas (Ty : Type u) extends Denotational Ty where
+--   instMeasurable : ∀ t, MeasurableSpace (den t)
+--   instMeasurableEq : ∀ t, MeasurableEq (den t)
   -- exists_den_real : ∃ t, (den t) = ℝ
 
-notation "⟪" t "⟫" => Denotational.den t
-notation "⟪" t "⟫ᵐ" => DenotationalMeas.instMeasurable t
-notation "⟪" t "⟫ᵐᵉ" => DenotationalMeas.instMeasurableEq t
+notation "⟪" t "⟫" => Ty.den t
+notation "⟪" t "⟫ᵐ" => MeasCat.str (Ty.den t)
+-- notation "⟪" t "⟫ᵐᵉ" => DenotationalMeas.instMeasurableEq t
 
-instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
-    MeasurableSpace ⟪t⟫ :=
-  d.instMeasurable t
+-- instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
+--     MeasurableSpace ⟪t⟫ :=
+--   d.instMeasurable t
 
-instance : DenotationalMeas Ty where
-  den ty := ↑ty.den
-  instMeasurable ty := ty.den.2
-  instMeasurableEq ty := sorry
-
-end Denotation
+-- instance : DenotationalMeas Ty where
+--   den ty := ↑ty.den
+--   instMeasurable ty := ty.den.2
+--   instMeasurableEq ty := sorry
 
 instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with
@@ -240,11 +234,11 @@ to give an element of a measurable space -/
       Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
     ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
-/-- The denotations of programs are unconcerned with the deterministic context.
-So we make this helper, which simply ignores the determinisitic context. -/
-def Term.den' {ds : List Ty} (M : Appl.Term ctx ty) := fun (_ : List.TProd (⟪·⟫) ds) ↦ M.den
+-- /-- The denotations of programs are unconcerned with the deterministic context.
+-- So we make this helper, which simply ignores the determinisitic context. -/
+-- def Term.den' {ds : List Ty} (M : Appl.Term ctx ty) := fun (_ : List.TProd (⟪·⟫) ds) ↦ M.den
 
-notation " ⦃ " M " ⦄ " => Term.den' M
+-- notation " ⦃ " M " ⦄ " => Term.den' M
 
 end
 end Appl
