@@ -264,7 +264,11 @@ lemma wp_frame {F : LProp} {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫
   -- using `assoc` (specifically the helper `exists_left`) establish `(Ω_fr ∗ Ω_F)` exists
   have := sorry
   -- feed `(Ω_fr ∗ Ω_F)` as the Ω_fr for `h_M`. Next supply proof using `assoc` that `Ω_fr ∗ (Ω_F ∗ Ω_M)`
-  have := h_M
+  have := h_M -- two arguments here
+  -- by applying the h_M above we easily reach our goal as required. We now get the `X : RV _` and an
+  -- `Ω'` and `μ'` such that the `measure bind` based thing in the `wp` def and the post condition hold.
+  -- The measure bind thing is the same on both sides. On the left handside wp we just additionally need to
+  -- show that for all X, F also holds.
 
   sorry
 

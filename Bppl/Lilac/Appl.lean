@@ -157,7 +157,6 @@ lemma foop : Measurable (foo) := by
   | le => ⟨fun p ↦ p.1 ≤ p.2, sorry⟩
   | eq => ⟨fun p ↦ p.1 = p.2, sorry⟩
 
-
 --TODO: 1) Make sure that some type has denotation `ℝ`
 -- 2) The denotations must be measurable spaces which support equality
 -- 2.2) Make a tactic to show that products of measurable spaces which support
