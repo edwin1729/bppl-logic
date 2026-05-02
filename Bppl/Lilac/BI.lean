@@ -38,12 +38,6 @@ it needs to be expressed as a tuple. -/
 abbrev IProp (Resource : Type*) [Krm Resource]
   := {sem : Resource → Prop // ∀ σ₁ σ₂, σ₁ ≤ σ₂ → sem σ₁ → sem σ₂}
 
-prefix:max "✓'" => Option.isSome
-
-abbrev foo {x : Option α} (h : x.isSome) := x.get h
-
-prefix:max "↓" => foo
-
 theorem Krm.le_mul_mono' {α : Type*} [k : Krm α] (x x' y y' : α) :
     (∀ p' : α, x ≤ x' → y ≤ y' →
     (some p' = x' ⋆ y') → ∃ p, (some p = x ⋆ y) ∧ p ≤ p')
@@ -58,7 +52,6 @@ theorem Krm.le_mul_mono' {α : Type*} [k : Krm α] (x x' y y' : α) :
     trans p
     ·
       apply le_of_eq
-      rw [foo]
       -- nth_rewrite 1 [← hp]
 
       -- exact (Option.get_some p (hp ▸ Option.isSome_some))

@@ -59,11 +59,11 @@ end helper
 
 /-- Appendix B.13 from Lilac paper -/
 lemma refl (E₁ : RV ⟪A⟫) : iprop( ⊢ E₁ ≗ E₁) := by
-  rintro ⟨⟨ℱ, μ⟩, is_prob⟩ _
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, _⟩ _
   simp [eq]
 /-- Appendix B.13 from Lilac paper -/
 lemma symm (E₁ E₂ : RV ⟪A⟫) : iprop(E₁ ≗ E₂ ⊢ E₂ ≗ E₁) := by
-  rintro ⟨⟨ℱ, μ⟩, is_prob⟩ eq_l
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, _⟩ eq_l
   dsimp [eq] at ⊢ eq_l
   obtain ⟨h₁, h₂, h_meas_union⟩ := eq_l
   have symm_full_set : {ω | E₁ ω = E₂ ω} = {ω | E₂ ω = E₁ ω} :=
@@ -82,7 +82,7 @@ lemma symm (E₁ E₂ : RV ⟪A⟫) : iprop(E₁ ≗ E₂ ⊢ E₂ ≗ E₁) := 
 
 /-- Appendix B.13 from Lilac paper -/
 lemma trans (E₁ E₂ E₃ : RV ⟪A⟫) : iprop(E₁ ≗ E₂ ∧ E₂ ≗ E₃ ⊢ E₁ ≗ E₃) := by
-  rintro ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨⟨meas_F₁₂, full_F₁₂, hF₁₂⟩, ⟨meas_F₂₃, full_F₂₃, hF₂₃⟩⟩
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, _⟩ ⟨⟨meas_F₁₂, full_F₁₂, hF₁₂⟩, ⟨meas_F₂₃, full_F₂₃, hF₂₃⟩⟩
   let F₁₃ := {ω | E₁ ω = E₃ ω}
 
   have meas_F₁₃ : MeasurableSet F₁₃ := by sorry
@@ -104,7 +104,7 @@ instance aseq_persisitent (E₁ E₂ : RV ⟪A⟫) : Persistent iprop(E₁ ≗ E
 
 /-- Appendix B.17 from Lilac paper -/
 lemma transfer_own (E₁ E₂ : RV ⟪A⟫) : iprop(own E₁ ∧ E₁ ≗ E₂ ⊢ own E₂) := by
-  rintro ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_own, h_eq⟩
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, _⟩ ⟨h_own, h_eq⟩
   dsimp [own] at h_own ⊢
   dsimp [eq] at h_eq
   obtain ⟨h_meas_F, _, h_prod⟩ := h_eq
@@ -137,14 +137,15 @@ lemma transfer_own (E₁ E₂ : RV ⟪A⟫) : iprop(own E₁ ∧ E₁ ≗ E₂ �
 /-- Appendix B.17 from Lilac paper -/
 lemma transfer_dist (E₁ E₂ : RV ⟪A⟫) (ν : MeasureTheory.Measure ⟪A⟫) :
     iprop(E₁ ∼ ν ∧ E₁ ≗ E₂ ⊢ E₂ ∼ ν) := by
-  rintro ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_dist, h_aseq⟩
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, ff⟩ ⟨h_dist, h_aseq⟩
   dsimp [LProp.dist] at h_dist ⊢
   dsimp [LProp.eq] at h_aseq
   obtain ⟨h_meas_X₁, h_eq_dist⟩ := h_dist
   obtain ⟨h_meas_F, h_full_F, h_prod⟩ := h_aseq
   constructor
   · -- Measurability of X₂: same proof as transfer_own
-    exact (transfer_own E₁ E₂ ⟨⟨ℱ, μ⟩, is_prob⟩ ⟨h_meas_X₁, h_meas_F, h_full_F, h_prod⟩ : (own E₂).1 ⟨⟨ℱ, μ⟩, is_prob⟩)
+    exact (transfer_own E₁ E₂ ⟨⟨⟨ℱ, μ⟩, is_prob⟩, ff⟩ ⟨h_meas_X₁, h_meas_F, h_full_F, h_prod⟩ :
+      (own E₂).1 ⟨⟨⟨ℱ, μ⟩, is_prob⟩, _⟩)
   · -- Distribution equality: since X₁ = X₂ a.e., Measure.bind μ (dirac ∘ X₁) = Measure.bind μ (dirac ∘ X₂)
     rw [h_eq_dist]
     -- bind μ f = (map f μ).join, so it suffices to show map f₁ = map f₂
@@ -293,14 +294,90 @@ def unif01_sem : Measure ⟪Ty.real⟫ := uniformOn (Set.Icc 0 1)
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
 
+
+lemma wp_meas {A : Ty} (Q : RV ⟪A⟫ → LProp) (μ : Measure ⟪A⟫) :
+    iprop(∀ (X : RV ⟪A⟫), iprop(X ∼ μ -∗ Q X))
+    ⊢ wp ⟨fun _ ↦ μ, measurable_const⟩ Q := by
+  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, n, ff⟩ lhs Ω_fr Ω_pre μ hΩ_pre
+  -- let X : RV ⟪A⟫ := ⟨fun ω ↦ ω n, sorry⟩
+  sorry
+
+
+open unitInterval
+
+-- maybe make this an explicit construction (It is too convoluted).
+-- I doubt we actually need the whole
+-- MeasurableEquiv thing. Sometimes maybe just one-sided measurable function is enough
+noncomputable def HC.consMeasEquiv :
+    HC ≃ᵐ I × HC :=
+  (HC.splitMeasEquiv 1).trans
+    ((MeasurableEquiv.funUnique (Fin 1) I).prodCongr (MeasurableEquiv.refl HC))
+
+noncomputable def HC.triSplitMeasEquiv (n : ℕ) :
+    HC ≃ᵐ (Fin n → I) × I × HC := sorry
+
+
 -- D is a dummy and is only used to impart an unused context to Term.unif01
 -- Need to make sure this boilerplate doesn't bother the user
 -- TODO `⟪Ty.real⟫` not definitionally equal to `ℝ` because `Ty.den : MeasCat`
+open MeasureTheory in
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
-    iprop(
-      ∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
-     ⊢ wp ((@Term.unif01 rs).den ∘ₚ D) Q :=
-  sorry
+    iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
+    ⊢ wp ((@Term.unif01 rs).den ∘ₚ D) Q := by
+  rintro Ω lhs Ω_fr Ω_pre μ hΩ_pre
+  let ⟨n, Ω_ff⟩ := Ω.finite_footprint
+  let X : RV ⟪Ty.real⟫ := ⟨fun ω ↦ ω n, by fun_prop⟩
+  let μ_n : ProbabilityMeasure (Fin n → I) :=
+    μ.map (measurable_fst.comp (HC.splitMeasEquiv n).measurable).aemeasurable
+  -- The lebesgue measure over HC which is actually a probability measure
+  let leb : ProbabilityMeasure HC :=
+    ⟨Measure.infinitePiNat (fun _ => (volume: Measure I)), inferInstance⟩
+  let μ'' : ProbabilityMeasure ((Fin n → I) × HC) := μ_n.prod leb
+  let μ' : ProbabilityMeasure HC :=
+    (μ_n.prod leb).map (HC.splitMeasEquiv n).symm.measurable.aemeasurable
+  let bot_ms_n : MeasurableSpace (Fin n → I) := ⊥
+  let bot_ms_ℕ : MeasurableSpace HC := ⊥
+  let borel_ms_I : MeasurableSpace I := inferInstance
+  let ms_G : MeasurableSpace HC := (bot_ms_n.prod (borel_ms_I.prod bot_ms_ℕ)).map
+    (HC.triSplitMeasEquiv n).symm -- Here we need `triSplit...` to take the Measurable
+    -- space (md_G) as an argument and use MeasurableSpace.map or comap
+  -- let ms_G' : MeasurableSpace HC := ms_G.comap (fun h =>
+  --   let p := HC.splitMeasEquiv n h
+  --   let q := HC.consMeasEquiv p.2
+  --   (p.1, q.1, q.2))
+  have ff_ms_G : FiniteFootprint ms_G := ⟨n + 1, sorry⟩
+  -- fun F hF => by
+  --   obtain ⟨G, hG, rfl⟩ := hF
+  --   -- G is measurable in ⊥.prod (borel.prod ⊥); its measurable sets are univ × T × univ
+  --   obtain ⟨T, hT, rfl⟩ : ∃ T : Set I, MeasurableSet T ∧
+  --       G = Set.univ ×ˢ (T ×ˢ Set.univ) := by
+  --     sorry
+  --   -- Witness: F' = {fs | fs ⟨n, _⟩ ∈ T}; both sides equal {h | h n ∈ T}
+  --   exact ⟨(· ⟨n, Nat.lt_succ_self n⟩) ⁻¹' T, by
+  --     ext h; simp [HC.consMeasEquiv, HC.splitMeasEquiv, finSumNatEquiv]⟩⟩
+  let Ω_n : PSp := ⟨(@PSpace.mk' _ borel_ms_HC μ).trim (sorry : ms_G ≤ borel_ms_HC), ff_ms_G⟩
+
+  have Ω_post : ✓'(↓Ω_pre ⋆ Ω_n) := by
+    simp only [PcmBase.binop, Option.get_dite, Option.isSome_dite]
+    use (@PSpace.mk' _ borel_ms_HC μ).trim (sorry : ((↓Ω_pre).ms.sum ms_G) ≤ borel_ms_HC)
+    constructor
+    ·
+
+      sorry
+    · -- one of the uniqueness results, like PSpace.unique
+      sorry
+  -- this is a straightforward application of associativity
+  have Ω' : ✓'(Ω ⋆ Ω_n) := sorry
+  have Ω'_rev : ✓'(Ω_n ⋆ Ω) := sorry --inline to use site, just comm lemma on Ω'
+  have Ω_post' : ✓'(Ω_fr ⋆ ↓Ω') := sorry -- another associativity applicaion
+  use X, ↓Ω', Ω_post', μ'
+  constructor
+  · sorry
+  · constructor
+    · sorry
+    · dsimp [BIBase.forall, BIBase.sForall] at lhs
+      have foo := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩ Ω_n Ω'_rev
+      sorry
 
 -- lemma wp_flip (p : ℝ≥0) (hp : p ≤ 1) (Q : LProp ds (Ty.bool :: rs)) :
 --     forall_rv Ty.bool iprop(fst_rand ∼ (ber_sem p hp) -∗ Q) ⊢ wp ⦃Term.flip p hp⦄ Q :=

@@ -5,7 +5,9 @@ Authors: Edwin Fernando
 -/
 
 import Mathlib.Data.PFun
+import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.MeasureTheory.MeasurableSpace.Defs
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 import Mathlib.MeasureTheory.Measure.Dirac
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
@@ -16,7 +18,6 @@ import Bppl.Lilac.MeasureOnSpace
 /- Instantiating the Kripke Resource Monoid according to  Lilac -/
 
 open MeasureTheory MeasurableSpace
-section KRM
 -- set_option quotPrecheck false
 /-- Partial Commutative Monoid -/
 class PcmBase (α : Type*) extends One α where
@@ -35,13 +36,14 @@ class Krm (α : Type*) extends Pcm α, Preorder α where
     x ≤ x' → y ≤ y' →
     (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
 
+namespace PSpace
 open Classical PcmBase PSpace
 variable {α : Type*} [Inhabited α]
 noncomputable instance instPcmBase : PcmBase (PSpace α) where
   binop p q := if h: ∃! r, r =ᵢ p ⊕ᵢ q then some h.choose else none
 
 @[grind =]
-lemma PSpace.one_mul (p : PSpace α) : binop 1 p = p := by
+lemma one_mul (p : PSpace α) : binop 1 p = p := by
   change (if h: ∃! r, r =ᵢ unit ⊕ᵢ p then some h.choose else none) = some p
   have comb : ∃! r, r =ᵢ unit ⊕ᵢ p := existsUnique_of_exists_of_unique
       ⟨p, indepenendentProduct_identity⟩ (uniqueness unit p)
@@ -51,7 +53,7 @@ lemma PSpace.one_mul (p : PSpace α) : binop 1 p = p := by
   exact indepenendentProduct_identity
 
 @[grind =]
-lemma PSpace.comm (p q : PSpace α) : binop p q = binop q p := by
+lemma comm (p q : PSpace α) : binop p q = binop q p := by
   by_cases h₁: ∃ r, r =ᵢ p ⊕ᵢ q
   · by_cases h₂: ∃ r, r =ᵢ q ⊕ᵢ p
     · -- The nontrivial case where both the independent product exists
@@ -82,7 +84,7 @@ lemma PSpace.comm (p q : PSpace α) : binop p q = binop q p := by
         simp_all only [not_exists, existsUnique_false]
       rw [h_none₁, h_none₂]
 
-lemma PSpace.assoc (p q r : PSpace α) :
+lemma assoc (p q r : PSpace α) :
     (binop <$> (binop p q) <*> (some r)).join = (binop <$> (some p) <*> (binop q r)).join := by
   by_cases h_pq: ∃ pq, pq =ᵢ p ⊕ᵢ q
   · by_cases h_qr: ∃ qr, qr =ᵢ q ⊕ᵢ r
@@ -225,19 +227,19 @@ lemma PSpace.assoc (p q r : PSpace α) :
       rw [none_left, none_right]
 
 @[grind]
-lemma PSpace.exists_right (p q r : PSpace α) :
+lemma exists_right (p q r : PSpace α) :
     (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
   rw [PSpace.assoc]
   intro a
   simp_all only [binop, Option.map_eq_map, Option.map_some, Option.isSome_dite]
   sorry
 
-lemma PSpace.exists_left (p q r : PSpace α) :
+lemma exists_left (p q r : PSpace α) :
     (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
   rw [← PSpace.assoc]
   sorry
 
-def PSpace.le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
+def le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
     (ex_ge_mul : x' ⋆ y' = some p') : ∃ p, (x ⋆ y = some p) ∧ p ≤ p' := by
   sorry
 
@@ -249,4 +251,56 @@ noncomputable instance instPcm : Pcm (PSpace α) where
 noncomputable instance instKrm : Krm (PSpace α) where
   le_mul_mono := PSpace.le_mul_mono
 
-end KRM
+end PSpace
+
+-- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
+abbrev HC := ℕ → Set.Icc (0:ℝ) 1
+
+instance : Inhabited HC where
+  default := fun _ ↦ 0
+
+abbrev borel_ms_HC : MeasurableSpace HC := MeasurableSpace.pi
+
+/-- Splitting at first n coordinates of `HC` (Hilbert Cube) is isomorphic to `HC`. -/
+noncomputable def HC.splitMeasEquiv (n : ℕ) :
+    HC ≃ᵐ (Fin n → Set.Icc (0:ℝ) 1) × HC :=
+  (MeasurableEquiv.piCongrLeft (fun _ => Set.Icc (0:ℝ) 1) (finSumNatEquiv n)).symm |>.trans
+  (MeasurableEquiv.sumPiEquivProdPi (fun _ => Set.Icc (0:ℝ) 1))
+
+/-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
+In the rest of the coordinates, its the `univ` set. -/
+def FiniteFootprint (ms : MeasurableSpace HC) : Prop :=
+  ∃ n : ℕ, ∀ F : Set HC, MeasurableSet[ms] F →
+    ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
+      F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
+
+structure PSp extends (PSpace HC) where
+  finite_footprint : FiniteFootprint ms
+
+namespace PSp
+open Classical
+
+prefix:max "✓'" => Option.isSome
+
+abbrev coerceOption {α : Type*} {x : Option α} (h : x.isSome) := x.get h
+
+prefix:max "↓" => coerceOption
+
+noncomputable instance : One PSp where
+  one := ⟨PSpace.unit, sorry⟩
+
+noncomputable instance instPcmBase : PcmBase (PSp) where
+  binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then some ⟨h.choose, sorry⟩ else none
+
+noncomputable instance instPcm : Pcm PSp where
+  one_mul := sorry
+  comm := sorry
+  assoc := sorry
+
+noncomputable instance instKrm : Krm PSp where
+  le := sorry
+  le_refl := sorry
+  le_trans := sorry
+  le_mul_mono := sorry
+
+end PSp

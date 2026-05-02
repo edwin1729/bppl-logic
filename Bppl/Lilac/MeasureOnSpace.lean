@@ -479,7 +479,7 @@ lemma Measure.trim_preserves_prob
 
 @[simp]
 def PSpace.trim
-  {p : PSpace Ω} {f : MeasurableSpace Ω} {h : f ≤ p.1.ms}
+  {p : PSpace Ω} {f : MeasurableSpace Ω} (h : f ≤ p.1.ms)
   : PSpace Ω := ⟨p.1.trim h, by
   simp only [MeasureOnSpace.trim]
   constructor

@@ -44,14 +44,6 @@ notation x " ; " xs => fun_prod x xs
 
 end MeasurableFunc
 
--- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
-abbrev HC := ℕ → Set.Icc (0:ℝ) 1
-
-abbrev borel_ms_HC : MeasurableSpace HC := MeasurableSpace.pi
-
-instance : Inhabited HC where
-  default := fun _ ↦ 0
-
 /-- Todo add finite footprint condition -/
 abbrev RV (α : Type) [MeasurableSpace α] := @MeasurableFun HC α MeasurableSpace.pi _
 
@@ -59,7 +51,7 @@ open Iris.Instances.Intuitionistic
 open Iris.Instances.Intuitionistic.instBIBase
 
 /-- Lilac propositions -/
-abbrev LProp := IProp (PSpace HC)
+abbrev LProp := IProp PSp
 
 -- Using `MeasurableSpace.pi`
 instance : MeasurableSpace HC := inferInstance
@@ -83,7 +75,7 @@ def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
 def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
-  ⟨fun ⟨⟨ℱ, μ⟩, hμ⟩ ↦
+  ⟨fun ⟨⟨⟨ℱ, μ⟩, hμ⟩, _⟩ ↦
     let F := {ω | E₁ ω = E₂ ω}
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
     -- (F ∪ ⟨X₁, X₂⟩ᶠ⁻¹' ·) '' (⟪A⟫ᵐ.prod ⟪A⟫ᵐ).MeasurableSet' ⊆ ℱ.MeasurableSet'
@@ -110,10 +102,10 @@ def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : 
 
 def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
-  ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
-  Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) →
-  ∃ X : RV ⟪A⟫, ∃ Ω' : PSpace HC,
-  ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSpace.mk' μ) ∧
+  ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : ProbabilityMeasure HC,
+    (↓Ω_pre).1 ≤ PSpace.mk' μ →
+  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : ProbabilityMeasure HC,
+    (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac v))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧
   (Q X).1 Ω'
