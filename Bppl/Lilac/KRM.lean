@@ -226,18 +226,6 @@ lemma assoc (p q r : PSpace α) :
         rfl
       rw [none_left, none_right]
 
-@[grind]
-lemma exists_right (p q r : PSpace α) :
-    (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
-  rw [PSpace.assoc]
-  intro a
-  simp_all only [binop, Option.map_eq_map, Option.map_some, Option.isSome_dite]
-  sorry
-
-lemma exists_left (p q r : PSpace α) :
-    (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
-  rw [← PSpace.assoc]
-  sorry
 
 def le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
     (ex_ge_mul : x' ⋆ y' = some p') : ∃ p, (x ⋆ y = some p) ∧ p ≤ p' := by
@@ -274,8 +262,10 @@ def FiniteFootprint (ms : MeasurableSpace HC) : Prop :=
     ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
       F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
 
-structure PSp extends (PSpace HC) where
-  finite_footprint : FiniteFootprint ms
+-- structure PSp extends (PSpace HC) where
+--   finite_footprint : FiniteFootprint ms
+
+abbrev PSp := {p : PSpace HC // FiniteFootprint p.ms}
 
 namespace PSp
 open Classical
@@ -286,21 +276,37 @@ abbrev coerceOption {α : Type*} {x : Option α} (h : x.isSome) := x.get h
 
 prefix:max "↓" => coerceOption
 
+lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : FiniteFootprint ms₁)
+    (hms₂ : FiniteFootprint ms₂) : FiniteFootprint (ms₁.sum ms₂) := by
+  obtain ⟨n₁, ff₁⟩ := hms₁
+  obtain ⟨n₂, ff₂⟩ := hms₂
+  use max n₁ n₂
+  intro F hF
+  sorry
+
 noncomputable instance : One PSp where
   one := ⟨PSpace.unit, sorry⟩
 
 noncomputable instance instPcmBase : PcmBase (PSp) where
   binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then some ⟨h.choose, sorry⟩ else none
 
-noncomputable instance instPcm : Pcm PSp where
-  one_mul := sorry
-  comm := sorry
-  assoc := sorry
+def closed_subtype_Krm (α : Type*) [Krm α] (P : α → Prop) [PcmBase {α // P α}]
+    (closed : ∀ x y : {α // P α}, ✓'(x ⋆ y) ↔ ✓'(x.1 ⋆ y.1)) : Krm {α // P α} := sorry
 
-noncomputable instance instKrm : Krm PSp where
-  le := sorry
-  le_refl := sorry
-  le_trans := sorry
-  le_mul_mono := sorry
+noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) (λ p ↦ FiniteFootprint p.ms) sorry
 
 end PSp
+
+namespace Krm_helper
+variable {α : Type*} [Krm α]
+open PcmBase
+@[grind]
+lemma exists_right (p q r : α) :
+    (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
+  sorry
+
+lemma exists_left (p q r : α) :
+    (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
+  sorry
+
+end Krm_helper

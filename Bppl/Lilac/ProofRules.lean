@@ -261,9 +261,9 @@ lemma wp_frame {F : LProp} {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫
     iprop(F ∗ (wp M Q) ⊢ wp M (λ X ↦ iprop(F ∗ Q X))) := by
   rintro Ω ⟨Ω_F, Ω_M, hΩ_F_M, _,  hF, h_M⟩ Ω_fr μ hΩ
   -- using `le_mul_mono` establish `Ω_fr ∗ (Ω_F ∗ Ω_M)` exists from `Ω_fr ∗ Ω ≤ .mk μ` and `(Ω_F ∗ Ω_M) ≤ Ω`
-  have Ω_fr ⋆ (Ω_F ⋆ Ω_M)
+  -- have Ω_fr ⋆ (Ω_F ⋆ Ω_M)
   -- using `assoc` (specifically the helper `exists_left`) establish `(Ω_fr ∗ Ω_F)` exists
-  have := sorry
+  -- have := sorry
   -- feed `(Ω_fr ∗ Ω_F)` as the Ω_fr for `h_M`. Next supply proof using `assoc` that `Ω_fr ∗ (Ω_F ∗ Ω_M)`
   have := h_M -- two arguments here
   -- by applying the h_M above we easily reach our goal as required. We now get the `X : RV _` and an
@@ -338,8 +338,9 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
   let bot_ms_n : MeasurableSpace (Fin n → I) := ⊥
   let bot_ms_ℕ : MeasurableSpace HC := ⊥
   let borel_ms_I : MeasurableSpace I := inferInstance
-  let ms_G : MeasurableSpace HC := (bot_ms_n.prod (borel_ms_I.prod bot_ms_ℕ)).map
-    (HC.triSplitMeasEquiv n).symm -- Here we need `triSplit...` to take the Measurable
+  let ms_G : MeasurableSpace HC := sorry
+    -- (bot_ms_n.prod (borel_ms_I.prod bot_ms_ℕ)).map
+    -- (HC.triSplitMeasEquiv n).symm -- Here we need `triSplit...` to take the Measurable
     -- space (md_G) as an argument and use MeasurableSpace.map or comap
   -- let ms_G' : MeasurableSpace HC := ms_G.comap (fun h =>
   --   let p := HC.splitMeasEquiv n h
