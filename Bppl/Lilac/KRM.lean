@@ -32,6 +32,7 @@ class Pcm (α : Type*) extends PcmBase α where
     (binop <$> (binop a b) <*> (some c)).join = (binop <$> (some a) <*> (binop b c)).join
 
 class Krm (α : Type*) extends Pcm α, Preorder α where
+  one_le : ∀ (a : α), 1 ≤ a
   le_mul_mono : ∀ x x' y y' p' : α,
     x ≤ x' → y ≤ y' →
     (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
@@ -237,6 +238,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
   assoc := PSpace.assoc
 
 noncomputable instance instKrm : Krm (PSpace α) where
+  one_le := sorry
   le_mul_mono := PSpace.le_mul_mono
 
 end PSpace
@@ -290,10 +292,13 @@ noncomputable instance : One PSp where
 noncomputable instance instPcmBase : PcmBase (PSp) where
   binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then some ⟨h.choose, sorry⟩ else none
 
-def closed_subtype_Krm (α : Type*) [Krm α] (P : α → Prop) [PcmBase {α // P α}]
-    (closed : ∀ x y : {α // P α}, ✓'(x ⋆ y) ↔ ✓'(x.1 ⋆ y.1)) : Krm {α // P α} := sorry
+def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
+    (closed : ∀ x y : β, ✓'(x ⋆ y) ↔ ✓'((f x) ⋆ (f y))) : Krm β := sorry
 
-noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) (λ p ↦ FiniteFootprint p.ms) sorry
+-- def closed_subtype_Krm (α : Type*) [Krm α] (P : α → Prop) [PcmBase {α // P α}]
+--     (closed : ∀ x y : {α // P α}, ✓'(x ⋆ y) ↔ ✓'(x.1 ⋆ y.1)) : Krm {α // P α} := sorry
+
+noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1) sorry
 
 end PSp
 
