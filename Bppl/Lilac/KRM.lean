@@ -293,12 +293,12 @@ noncomputable instance instPcmBase : PcmBase (PSp) where
   binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then some ⟨h.choose, sorry⟩ else none
 
 def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
-    (closed : ∀ x y : β, ✓'(x ⋆ y) ↔ ✓'((f x) ⋆ (f y))) : Krm β := sorry
+    (one : f 1 = 1) (indep_prod : ∀ x y : β, ✓'(x ⋆ y) ↔ ✓'((f x) ⋆ (f y))) : Krm β := sorry
 
 -- def closed_subtype_Krm (α : Type*) [Krm α] (P : α → Prop) [PcmBase {α // P α}]
 --     (closed : ∀ x y : {α // P α}, ✓'(x ⋆ y) ↔ ✓'(x.1 ⋆ y.1)) : Krm {α // P α} := sorry
 
-noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1) sorry
+noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1) sorry sorry
 
 end PSp
 
