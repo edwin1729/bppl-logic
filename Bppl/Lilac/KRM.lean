@@ -4,15 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 
-import Mathlib.Data.PFun
-import Mathlib.Logic.Equiv.Fin.Basic
-import Mathlib.MeasureTheory.MeasurableSpace.Defs
-import Mathlib.MeasureTheory.MeasurableSpace.Embedding
-import Mathlib.MeasureTheory.Measure.Dirac
-import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
-import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
-
+import Mathlib
 import Bppl.Lilac.MeasureOnSpace
 
 /- Instantiating the Kripke Resource Monoid according to  Lilac -/
@@ -227,10 +219,51 @@ lemma assoc (p q r : PSpace α) :
         rfl
       rw [none_left, none_right]
 
+/-
+Extract independent product condition from a successful `binop` call.
+-/
+lemma isIndependentProduct_of_binop_eq_some {p q r : PSpace α}
+    (h : @PcmBase.binop _ instPcmBase p q = some r) : r =ᵢ p ⊕ᵢ q := by
+  contrapose! h;
+  unfold instPcmBase;
+  grind +splitImp
+
+/-
+Construct a successful `binop` result from an independent product proof.
+-/
+lemma binop_eq_some_of_isIndependentProduct {p q r : PSpace α}
+    (h : r =ᵢ p ⊕ᵢ q) : @PcmBase.binop _ instPcmBase p q = some r := by
+  unfold instPcmBase;
+  have h_unique : ∃! r, r =ᵢ p ⊕ᵢ q := by
+    have := @PSpace.uniqueness α;
+    exact ⟨ r, h, fun r' hr' => this _ _ _ _ hr' h ⟩;
+  grind
+
+/-
+If `p' =ᵢ x' ⊕ᵢ y'`, `x ≤ x'`, `y ≤ y'`, then the trim of `p'` to `x.ms.sum y.ms`
+    is an independent product of `x` and `y`.
+-/
+lemma trim_isIndependentProduct {x x' y y' p' : PSpace α}
+    (x_le : x ≤ x') (y_le : y ≤ y') (h_p' : p' =ᵢ x' ⊕ᵢ y')
+    (h_ms : x.1.ms.sum y.1.ms ≤ p'.1.ms) :
+    (p'.trim h_ms) =ᵢ x ⊕ᵢ y := by
+  constructor;
+  · rfl;
+  · intro E hE F hF;
+    convert h_p'.2 E ( x_le.1 _ hE ) F ( y_le.1 _ hF ) using 1;
+    · convert MeasureOnSpace.trim_eq h_ms _;
+      exact?;
+    · rw [ MeasureOnSpace.le_preserves_measure x_le hE, MeasureOnSpace.le_preserves_measure y_le hF ]
 
 def le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
     (ex_ge_mul : x' ⋆ y' = some p') : ∃ p, (x ⋆ y = some p) ∧ p ≤ p' := by
-  sorry
+  have h_p' : p' =ᵢ x' ⊕ᵢ y' := isIndependentProduct_of_binop_eq_some ex_ge_mul
+  have h_ms : x.1.ms.sum y.1.ms ≤ p'.1.ms := by
+    rw [h_p'.1]
+    exact MeasurableSpace.sum_mono_both x_le.1 y_le.1
+  let p := p'.trim h_ms
+  have h_p : p =ᵢ x ⊕ᵢ y := trim_isIndependentProduct x_le y_le h_p' h_ms
+  exact ⟨p, binop_eq_some_of_isIndependentProduct h_p, PSpace.trim_le h_ms⟩
 
 noncomputable instance instPcm : Pcm (PSpace α) where
   one_mul := PSpace.one_mul
@@ -238,7 +271,7 @@ noncomputable instance instPcm : Pcm (PSpace α) where
   assoc := PSpace.assoc
 
 noncomputable instance instKrm : Krm (PSpace α) where
-  one_le := sorry
+  one_le a := PSpace.le_of_isIndependentProduct_left PSpace.indepenendentProduct_identity
   le_mul_mono := PSpace.le_mul_mono
 
 end PSpace
@@ -264,10 +297,8 @@ def FiniteFootprint (ms : MeasurableSpace HC) : Prop :=
     ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
       F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
 
--- structure PSp extends (PSpace HC) where
---   finite_footprint : FiniteFootprint ms
-
-abbrev PSp := {p : PSpace HC // FiniteFootprint p.ms}
+structure PSp extends (PSpace HC) where
+  finite_footprint : FiniteFootprint ms
 
 namespace PSp
 open Classical
@@ -284,34 +315,122 @@ lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : FiniteFoo
   obtain ⟨n₂, ff₂⟩ := hms₂
   use max n₁ n₂
   intro F hF
-  sorry
+  induction' hF with F hF ih₁ ih₂ ih₃;
+  · cases' hF with hF hF;
+    · obtain ⟨ F', hF' ⟩ := ff₁ F hF;
+      use (fun f => f ∘ Fin.castLE (by
+      exact le_max_left _ _)) ⁻¹' F'
+      generalize_proofs at *;
+      congr! 1;
+    · obtain ⟨ F', hF' ⟩ := ff₂ F hF;
+      use (fun x => x ∘ Fin.castLE (by
+      exact le_max_right _ _)) ⁻¹' F'
+      generalize_proofs at *;
+      convert hF' using 1;
+  · exact ⟨ ∅, by simp +decide ⟩;
+  · obtain ⟨ F', hF' ⟩ := ih₃; use F'ᶜ; simp +decide [ hF', Set.preimage_compl ] ;
+    ext; simp [Set.mem_compl_iff, Set.mem_preimage];
+  · choose! F' hF' using ‹∀ n, ∃ F', _›;
+    use ⋃ n, F' n; ext; simp +decide [ hF' ] ;
+
+/-
+The unit PSpace has finite footprint (trivial σ-algebra depends on 0 coordinates).
+-/
+lemma ff_unit : FiniteFootprint (PSpace.unit (Ω := HC)).ms := by
+  use 0; simp +decide [ PSpace.unit ] ; (
+  intro F hF; use if F = Set.univ then Set.univ else ∅; split_ifs <;> simp_all +decide [ Set.ext_iff ] ;
+  rw [ MeasurableSpace.measurableSet_bot_iff ] at hF ; aesop);
 
 noncomputable instance : One PSp where
-  one := ⟨PSpace.unit, sorry⟩
+  one := ⟨PSpace.unit, ff_unit⟩
+
+/-- If `r =ᵢ p ⊕ᵢ q` and both `p` and `q` have finite footprint, then `r` does too. -/
+lemma ff_of_isIndependentProduct {p q r : PSpace HC}
+    (h : r =ᵢ p ⊕ᵢ q) (hp : FiniteFootprint p.ms) (hq : FiniteFootprint q.ms) :
+    FiniteFootprint r.ms := by
+  rw [h.1]
+  exact ff_closed_under_sum p.ms q.ms hp hq
 
 noncomputable instance instPcmBase : PcmBase (PSp) where
-  binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then some ⟨h.choose, sorry⟩ else none
+  binop p q := if h: ∃! r, r =ᵢ p.1 ⊕ᵢ q.1 then
+    some ⟨h.choose, ff_of_isIndependentProduct h.choose_spec.1 p.2 q.2⟩
+  else none
 
+/-
+The original `closed_subtype_Krm` signature requires additional hypotheses
+    (injectivity and value-level preservation of binop) to be provable.
+    We provide a corrected version with the necessary hypotheses.
+-/
 def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
-    (one : f 1 = 1) (indep_prod : ∀ x y : β, ✓'(x ⋆ y) ↔ ✓'((f x) ⋆ (f y))) : Krm β := sorry
+    (f_inj : Function.Injective f)
+    (f_one : f 1 = 1)
+    (f_binop : ∀ x y : β, (x ⋆ y).map f = (f x) ⋆ (f y)) : Krm β where
+  one_mul a := by
+    have h1 : ((1 : β) ⋆ a).map f = some (f a) := by
+      rw [f_binop, f_one, Pcm.one_mul]
+    cases hab : (1 : β) ⋆ a with
+    | none => simp [hab] at h1
+    | some b =>
+      simp [hab] at h1
+      congr; exact f_inj h1
+  comm a b := Option.map_injective f_inj (by rw [f_binop, f_binop, Pcm.comm])
+  assoc a b c := by
+    cases' ‹PcmBase β› with binop;
+    cases' ‹Krm α› with binop;
+    rename_i h₁ h₂ h₃ h₄;
+    have := @binop.assoc;
+    convert Option.map_injective f_inj _ using 1;
+    convert this ( f a ) ( f b ) ( f c ) using 1;
+    · cases h : h₁ a b <;> simp +decide [ ← f_binop, h ];
+      rfl;
+    · cases h : h₁ b c <;> simp +decide [ ← f_binop, h ];
+      simp +decide [ h, Option.map ];
+      rfl
+  le x y := f x ≤ f y
+  le_refl x := le_refl (f x)
+  le_trans := fun {_ _ _} h₁ h₂ => @le_trans α _ _ _ _ h₁ h₂
+  one_le a := f_one ▸ Krm.one_le (f a)
+  le_mul_mono x x' y y' p' hx hy hp := by
+    have := ‹Krm α›.le_mul_mono ( f x ) ( f x' ) ( f y ) ( f y' ) ( f p' ) hx hy ( by
+      rw [ ← f_binop, hp, Option.map_some ] );
+    -- Since $f$ is injective, we can conclude that $x \star y = some p$.
+    have h_binop_eq : Option.map f (‹PcmBase β›.binop x y) = some this.choose := by
+      exact this.choose_spec.1 ▸ f_binop x y ▸ rfl;
+    rw [ Option.map_eq_some_iff ] at h_binop_eq;
+    exact ⟨ h_binop_eq.choose, h_binop_eq.choose_spec.1, h_binop_eq.choose_spec.2.symm ▸ this.choose_spec.2 ⟩
 
--- def closed_subtype_Krm (α : Type*) [Krm α] (P : α → Prop) [PcmBase {α // P α}]
---     (closed : ∀ x y : {α // P α}, ✓'(x ⋆ y) ↔ ✓'(x.1 ⋆ y.1)) : Krm {α // P α} := sorry
+/-- The map `PSp → PSpace HC` given by `Subtype.val` preserves the unit. -/
+lemma psp_val_one : (1 : PSp).1 = (1 : PSpace HC) := rfl
 
-noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1) sorry sorry
+/-
+The map `PSp → PSpace HC` given by `Subtype.val` preserves `binop` values.
+-/
+lemma psp_val_binop (x y : PSp) : (x ⋆ y).map (·.1) = (x.1 ⋆ y.1) := by
+  rw [instPcmBase, PSpace.instPcmBase]
+  grind
+
+noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
+  (by rintro ⟨a, ha⟩  ⟨b, hb⟩ c; simpa only [mk.injEq])
+  rfl
+  psp_val_binop
 
 end PSp
 
 namespace Krm_helper
 variable {α : Type*} [Krm α]
 open PcmBase
+
 @[grind]
 lemma exists_right (p q r : α) :
     (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
-  sorry
+  cases hq : ‹Krm α›.binop q r <;> simp_all +decide;
+  have := ‹Krm α›.assoc p q r; aesop;
 
 lemma exists_left (p q r : α) :
     (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
-  sorry
+  rename_i K;
+  have := K.assoc p q r;
+  cases h : K.binop p q <;> simp_all +decide;
+  exact this.symm
 
 end Krm_helper

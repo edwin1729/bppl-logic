@@ -238,6 +238,16 @@ lemma MeasurableSpace.sum_functorial {m m₁ m₂ : MeasurableSpace Ω}
   · aesop
   · aesop
 
+lemma MeasurableSpace.sum_functorial_right {m m₁ m₂ : MeasurableSpace Ω}
+  (h : m₁ ≤ m₂)
+  : m.sum m₁ ≤ m.sum m₂ := by
+  rw [sum_comm m m₁, sum_comm m m₂]
+  exact sum_functorial h
+
+lemma MeasurableSpace.sum_mono_both {m₁ m₂ n₁ n₂ : MeasurableSpace Ω}
+  (h₁ : m₁ ≤ m₂) (h₂ : n₁ ≤ n₂) : m₁.sum n₁ ≤ m₂.sum n₂ :=
+  le_trans (sum_functorial h₁) (sum_functorial_right h₂)
+
 end Sum
 
 /- We define `(𝓕, μ) ≤ (𝓖, ν)` if `𝓕 ⊆ 𝓖` and `μ` is the restriction of `ν` to `𝓕` -/
@@ -488,6 +498,18 @@ def PSpace.trim
     aesop
   aesop
 ⟩
+
+/-
+Trimming a PSpace to a coarser σ-algebra yields a smaller PSpace
+-/
+lemma PSpace.trim_le {p : PSpace Ω} {f : MeasurableSpace Ω} (h : f ≤ p.1.ms) :
+    p.trim h ≤ p := by
+  cases p;
+  rename_i p hp;
+  refine' ⟨ h, _ ⟩;
+  convert Measure.ext _;
+  simp +decide [ MeasureOnSpace.trim, MeasureTheory.Measure.trim ];
+  grind +suggestions
 
 end Trim
 
