@@ -401,15 +401,10 @@ instance [Inhabited Ω] : One (MeasureOnSpace Ω) where
 
 instance [Inhabited Ω] : PartialOrder (MeasureOnSpace Ω) where
   le_antisymm m₁ m₂ h₁ h₂ := by
-    have h : m₁.ms = m₂.ms := by
-      ext u; constructor
-      · have := h₁.1 u; aesop
-      · have := h₂.1 u; aesop
-    ext u
-    · aesop
-    · apply MeasureOnSpace.le_preserves_measure
-      · aesop
-      · aesop
+    have h : m₁.ms = m₂.ms := le_antisymm h₁.1 h₂.1
+    apply MeasureOnSpace.ext_ms h
+    intro u hu
+    exact MeasureOnSpace.le_preserves_measure h₁ hu
 
 instance (Ω : Type*) [Inhabited Ω] : PartialOrder (PSpace Ω) where
   le_antisymm := by
@@ -449,13 +444,18 @@ theorem PSpace.uniqueness (p q r r' : PSpace Ω)
   · intro t ht
     obtain ⟨u, v, rfl, hu, hv⟩ := exists_inter_measurableSet_of_mem_generator ht
     grind
-  · aesop (add simp MeasureTheory.measure_compl) (add safe cases PSpace)
+  · intro t ht ih
+    have hms : r.1.ms = r'.1.ms := h₁.1.trans h₂.1.symm
+    rw [measure_compl ht r.measure_ne_top, r.2.measure_univ,
+        measure_compl (hms ▸ ht) r'.measure_ne_top, r'.2.measure_univ, ih]
   · intro us disjoint hus prf
+    have hms : r.1.ms = r'.1.ms := h₁.1.trans h₂.1.symm
     have h_sum1 : r.1.μ (⋃ i, us i) = ∑' i, r.1.μ (us i) :=
       @Measure.m_iUnion (α := Ω) (f := us) r.1.ms r.1.μ hus disjoint
-    have : r'.1.μ (⋃ i, us i) = ∑' i, r'.1.μ (us i) :=
-      @Measure.m_iUnion (α := Ω) (f := us) r'.1.ms r'.1.μ (by aesop) disjoint
-    aesop
+    have h_sum2 : r'.1.μ (⋃ i, us i) = ∑' i, r'.1.μ (us i) :=
+      @Measure.m_iUnion (α := Ω) (f := us) r'.1.ms r'.1.μ (hms ▸ hus) disjoint
+    simp only [h_sum1, h_sum2]
+    congr 1; ext i; exact prf i
   · aesop (add simp MeasureOnSpace.generateFrom_generator_eq_sum)
 
 end Uniqueness
@@ -475,8 +475,7 @@ lemma MeasureOnSpace.trim_eq
   {u : Set Ω} (hu : MeasurableSet[f] u)
   : (p.trim h).μ u = p.μ u := by
   simp only [trim]
-  unfold Measure.trim
-  aesop
+  exact trim_measurableSet_eq h hu
 
 lemma Measure.trim_preserves_prob
   (f g : MeasurableSpace Ω)
@@ -484,32 +483,19 @@ lemma Measure.trim_preserves_prob
   (hf : f ≤ g) (hp : IsProbabilityMeasure μ)
   : IsProbabilityMeasure (μ.trim hf) := by
   constructor
-  unfold Measure.trim
-  aesop
+  rw [trim_measurableSet_eq hf MeasurableSet.univ]
+  exact hp.measure_univ
 
 @[simp]
 def PSpace.trim
   {p : PSpace Ω} {f : MeasurableSpace Ω} (h : f ≤ p.1.ms)
-  : PSpace Ω := ⟨p.1.trim h, by
-  simp only [MeasureOnSpace.trim]
-  constructor
-  have : (p.1.trim h).μ Set.univ = 1 := by
-    have := @Measure.trim_preserves_prob Ω f p.1.ms p.1.μ h p.2
-    aesop
-  aesop
-⟩
+  : PSpace Ω := ⟨p.1.trim h, Measure.trim_preserves_prob f p.1.ms h p.2⟩
 
 /-
 Trimming a PSpace to a coarser σ-algebra yields a smaller PSpace
 -/
 lemma PSpace.trim_le {p : PSpace Ω} {f : MeasurableSpace Ω} (h : f ≤ p.1.ms) :
-    p.trim h ≤ p := by
-  cases p;
-  rename_i p hp;
-  refine' ⟨ h, _ ⟩;
-  convert Measure.ext _;
-  simp +decide [ MeasureOnSpace.trim, MeasureTheory.Measure.trim ];
-  grind +suggestions
+    p.trim h ≤ p := ⟨h, trim_eq_map h⟩
 
 end Trim
 
