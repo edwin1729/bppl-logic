@@ -287,15 +287,168 @@ abbrev borel_ms_HC : MeasurableSpace HC := MeasurableSpace.pi
 /-- Splitting at first n coordinates of `HC` (Hilbert Cube) is isomorphic to `HC`. -/
 noncomputable def HC.splitMeasEquiv (n : ℕ) :
     HC ≃ᵐ (Fin n → Set.Icc (0:ℝ) 1) × HC :=
-  (MeasurableEquiv.piCongrLeft (fun _ => Set.Icc (0:ℝ) 1) (finSumNatEquiv n)).symm |>.trans
+  (MeasurableEquiv.piCongrLeft (fun _ => Set.Icc (0:ℝ) 1) (finSumNatEquiv n)).symm.trans
   (MeasurableEquiv.sumPiEquivProdPi (fun _ => Set.Icc (0:ℝ) 1))
 
+namespace Hilbert
+-- equivalence of generated-σ-algebras
+
+
+
+
+-- open unitInterval
+
+abbrev I := Set.Icc (0:ℝ) 1
+
+
+-- notation
+--     (@Prod.instMeasurableSpace I HC inferInstance ⊥)
+open MeasurableSpace
+
+-- Question 1 :
+-- Product of two arbitrary measurable spaces
+variable {α β : Type*} {msα₁ msα₂ : MeasurableSpace α} {msβ₁ msβ₂ : MeasurableSpace β}
+
+-- lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) : (MeasurableSpace.prod msα₁ msβ₂) ⊔ (MeasurableSpace.prod msα₂ msβ₁) ≤ MeasurableSpace.prod msα₂ msβ₂ := by
+--   unfold MeasurableSpace.prod
+--   apply sup_le
+--   · exact sup_le_sup_right (MeasurableSpace.comap_mono le_α) _
+--   · exact sup_le_sup_left (MeasurableSpace.comap_mono le_β) _
+
+lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) :
+    (MeasurableSpace.prod msα₁ msβ₂) ⊔ (MeasurableSpace.prod msα₂ msβ₁) =
+    MeasurableSpace.prod msα₂ msβ₂ := by
+  unfold MeasurableSpace.prod
+  rw [sup_sup_sup_comm,
+      sup_eq_right.mpr (MeasurableSpace.comap_mono le_α),
+      sup_eq_left.mpr (MeasurableSpace.comap_mono le_β)]
+
+notation:25 α " ≃ᵐ[ " msα " , " msβ  " ] " β => @MeasurableEquiv α β msα msβ
+
+-- scoped[HilbertCube] infixr:25 " ×ₘ " => MeasurableSpace.prod
+infixr:60 " ×ₘ " => MeasurableSpace.prod
+
+noncomputable def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ → I) :=
+  (MeasurableEquiv.piCongrLeft (fun _ => I) (finSumNatEquiv n)).symm.trans
+  (MeasurableEquiv.sumPiEquivProdPi (fun _ => I))
+
+abbrev unSplitBi {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
+  ms.comap (splitBi n)
+
+noncomputable def splitOne : (ℕ → I) ≃ᵐ I × (ℕ → I) :=
+  (MeasurableEquiv.piCongrLeft (fun _ => I)
+    (Equiv.natEquivNatSumPUnit.trans (Equiv.sumComm ℕ Unit))).trans
+  ((MeasurableEquiv.sumPiEquivProdPi (fun _ => I)).trans
+  ((MeasurableEquiv.funUnique Unit I).prodCongr (MeasurableEquiv.refl _)))
+
+abbrev unSplitOne (ms : MeasurableSpace (I × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
+  ms.comap splitOne
+
+noncomputable def splitTri (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × I × (ℕ → I) :=
+  (splitBi n).trans ((MeasurableEquiv.refl _).prodCongr splitOne)
+
+abbrev unSplitTri {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × I × (ℕ → I)))
+    : MeasurableSpace (ℕ → I) :=
+  ms.comap (splitTri n)
+
+
+-- noncomputable def split (n : ℕ) (ms₂ : MeasurableSpace ((Fin n → I) × (ℕ → I))) :
+--     (ℕ → I) ≃ᵐ[ms₂.comap (splitEquiv n), ms₂] ((Fin n → I) × (ℕ → I)) where
+--   toEquiv := (splitEquiv n).toEquiv
+--   measurable_toFun := comap_measurable _
+--   measurable_invFun := Measurable.of_comap_le (by
+--     rw [comap_comp, show (splitEquiv n : (ℕ → I) → _) ∘ (splitEquiv n).symm = id from
+--       funext (splitEquiv n).apply_symm_apply, comap_id])
+
+-- standard borel measurable spaces
+abbrev Inf_borel : MeasurableSpace (ℕ → I) := inferInstance
+abbrev N_borel (N : ℕ) : MeasurableSpace (Fin N → I) := inferInstance
+-- the measurabe space with only univ and empty
+abbrev Inf_nil : MeasurableSpace (ℕ → I) := ⊥
+abbrev N_nil (N : ℕ) : MeasurableSpace (Fin N → I) := ⊥
+abbrev I_nil : MeasurableSpace I := ⊥
+abbrev I_borel : MeasurableSpace I := inferInstance
+
+def N_borel_Inf_nil (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  (MeasurableSpace.prod (N_borel N) Inf_nil).comap (splitBi N)
+
+def N_nil_Inf_borel (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  (MeasurableSpace.prod (N_nil N) Inf_borel).comap (splitBi N)
+
+def N_nil_Inf_nil (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  (MeasurableSpace.prod (N_nil N) ⊥).comap (splitBi N)
+
+lemma commute_over_equiv (N : ℕ) : (N_nil_Inf_borel N) ⊔ (N_borel_Inf_nil N) = Inf_borel := by
+  unfold N_nil_Inf_borel N_borel_Inf_nil
+  rw [← comap_sup]
+  have h : (N_nil N).prod Inf_borel ⊔ (N_borel N).prod Inf_nil =
+      (N_borel N).prod Inf_borel := commute bot_le bot_le
+  rw [h]
+  exact (splitBi N).measurableEmbedding.comap_eq
+
+
+lemma commute_over_equiv2 (N : ℕ) : (N_nil_Inf_nil N) ⊔ (N_borel_Inf_nil N) = (N_borel_Inf_nil N) := by
+  unfold N_nil_Inf_nil N_borel_Inf_nil
+  rw [← comap_sup]
+  have h : (N_nil N).prod ⊥ ⊔ (N_borel N).prod Inf_nil =
+      (N_borel N).prod Inf_nil := commute bot_le le_rfl
+  rw [h]
+
+-- now we look at some lemmas of the shape we want. Specifically
+-- (borel, nil, nil) ⊔ (nil, borel, nil) = (borel, borel, nil)
+
+def N_nil_I_borel (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil).comap (splitTri N)
+
+def N_borel_I_nil (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  ((N_borel N) ×ₘ I_nil ×ₘ Inf_nil).comap (splitTri N)
+
+def N_borel_I_borel (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  ((N_borel N) ×ₘ I_borel ×ₘ Inf_nil).comap (splitTri N)
+
+
+abbrev N_subbor (N : ℕ) : MeasurableSpace (Fin N → I) := sorry
+
+def N_subbor_I_nil (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  ((N_subbor N) ×ₘ I_nil ×ₘ Inf_nil).comap (splitTri N)
+
+def N_subbor_I_borel (N : ℕ) : MeasurableSpace (ℕ → I) :=
+  ((N_subbor N) ×ₘ I_borel ×ₘ Inf_nil).comap (splitTri N)
+
+lemma commute_over_equiv3 (N : ℕ) : (N_nil_I_borel N) ⊔ (N_borel_I_nil N) = (N_borel_I_borel N) := by
+  unfold N_nil_I_borel N_borel_I_nil N_borel_I_borel
+  have le_β : I_nil ×ₘ Inf_nil ≤ I_borel ×ₘ Inf_nil := sup_le_sup_right (comap_mono bot_le) _
+  rw [← comap_sup, commute bot_le le_β]
+
+lemma commute_over_equiv3₂ {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil) = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by
+  have le_β : I_nil ×ₘ Inf_nil ≤ I_borel ×ₘ Inf_nil := sup_le_sup_right (comap_mono bot_le) _
+  rw [← comap_sup, commute bot_le le_β]
+
+lemma eq_N_ms {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitBi (N_ms ×ₘ Inf_nil) = unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil) := by
+  simp only [prod, comap_bot, bot_le, sup_of_le_left, comap_comp, le_refl]
+  congr 1
+
+lemma commute_over_equiv4 (N : ℕ) : (N_nil_I_borel N) ⊔ (N_borel_Inf_nil N) = (N_borel_I_borel N) := by
+  have h : N_borel_Inf_nil N = N_borel_I_nil N := by exact eq_N_ms (N_borel N)
+  rw [h]
+  exact commute_over_equiv3₂ (N_borel N)
+-- it looks like Mathlib has a pain point with being explicitly parametric over the measurable space.
+-- what we will do for this instead is to deal with this by hoping that any one point the inferred
+-- type is unambiguous? Lets see....
+
+end Hilbert
+
+open Hilbert in
+open unitInterval in
 /-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
 In the rest of the coordinates, its the `univ` set. -/
 def FiniteFootprint (ms : MeasurableSpace HC) : Prop :=
-  ∃ n : ℕ, ∀ F : Set HC, MeasurableSet[ms] F →
-    ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
-      F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
+  ∃ n : ℕ, ∃ ms' : MeasurableSpace (Fin n → I), ms = (ms' ×ₘ Inf_nil).comap (splitBi n)
+  -- ∀ F : Set HC, MeasurableSet[ms] F →
+  --   ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
+  --     F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
 
 structure PSp extends (PSpace HC) where
   finite_footprint : FiniteFootprint ms
