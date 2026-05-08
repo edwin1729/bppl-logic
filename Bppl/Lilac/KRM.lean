@@ -283,23 +283,7 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 instance : Inhabited HC where
   default := fun _ ↦ 0
 
-abbrev Inf_borel : MeasurableSpace HC := MeasurableSpace.pi
-
-/-- Splitting at first n coordinates of `HC` (Hilbert Cube) is isomorphic to `HC`. -/
-noncomputable def HC.splitMeasEquiv (n : ℕ) :
-    HC ≃ᵐ (Fin n → Set.Icc (0:ℝ) 1) × HC :=
-  (MeasurableEquiv.piCongrLeft (fun _ => Set.Icc (0:ℝ) 1) (finSumNatEquiv n)).symm.trans
-  (MeasurableEquiv.sumPiEquivProdPi (fun _ => Set.Icc (0:ℝ) 1))
-
-open HC in
-open unitInterval in
-/-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
-In the rest of the coordinates, its the `univ` set. -/
-def FiniteFootprint (ms : MeasurableSpace HC) : Prop :=
-  ∃ n : ℕ, ∃ ms' : MeasurableSpace (Fin n → I), ms = (ms' ×ₘ Inf_nil).comap (splitBi n)
-  -- ∀ F : Set HC, MeasurableSet[ms] F →
-  --   ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
-  --     F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
+open HC
 
 structure PSp extends (PSpace HC) where
   finite_footprint : FiniteFootprint ms

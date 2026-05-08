@@ -62,6 +62,14 @@ abbrev N_nil (N : ℕ) : MeasurableSpace (Fin N → I) := ⊥
 abbrev I_nil : MeasurableSpace I := ⊥
 abbrev I_borel : MeasurableSpace I := inferInstance
 
+/-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
+In the rest of the coordinates, its the `univ` set. -/
+def FiniteFootprint (ms : MeasurableSpace (ℕ → I)) : Prop :=
+  ∃ n : ℕ, ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ Inf_nil)
+  -- ∀ F : Set HC, MeasurableSet[ms] F →
+  --   ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
+  --     F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
+
 -- now we look at some lemmas of the shape we want. Specifically
 -- (borel, nil, nil) ⊔ (nil, borel, nil) = (borel, borel, nil)
 
@@ -83,6 +91,27 @@ lemma commute_over_equiv4 {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
 -- it looks like Mathlib has a pain point with being explicitly parametric over the measurable space.
 -- what we will do for this instead is to deal with this by hoping that any one point the inferred
 -- type is unambiguous? Lets see....
+abbrev N_nil_I_borel (N : ℕ) := unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil)
+abbrev N_borel_I_borel (N : ℕ) := unSplitTri ((N_borel N) ×ₘ I_borel ×ₘ Inf_nil)
+
+lemma ff_N_nil_I_borel {N : ℕ} : FiniteFootprint (N_nil_I_borel N) := sorry
+lemma ff_N_borel_I_borel {N : ℕ} : FiniteFootprint (N_borel_I_borel N) := sorry
+
+lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by sorry
+lemma N_borel_I_borel_le_Inf_borel (N : ℕ) : N_borel_I_borel N ≤ Inf_borel := by sorry
 
 end
+
+/-- The first component of `splitBi n ω` at index `i : Fin n` equals `ω ↑i`. -/
+@[simp]
+lemma splitBi_fst_apply (n : ℕ) (ω : ℕ → I) (i : Fin n) : (splitBi n ω).1 i = ω i := rfl
+
+-- /-- A `unSplitBi` space at `n` coordinates embeds into one at `n_max ≥ n` coordinates
+-- by precomposing with the restriction `Fin.castLE h`. -/
+-- lemma unSplitBi_mono {n n_max : ℕ} (h : n ≤ n_max) (ms' : MeasurableSpace (Fin n → I)) :
+--     unSplitBi (ms' ×ₘ Inf_nil) = @unSplitBi n_max (ms'.comap (· ∘ Fin.castLE h) ×ₘ Inf_nil) := by
+--   simp only [unSplitBi, Inf_nil, MeasurableSpace.prod, MeasurableSpace.comap_bot, sup_bot_eq]
+--   rw [← MeasurableSpace.comap_comp, ← MeasurableSpace.comap_comp, ← MeasurableSpace.comap_comp]
+--   congr 1; funext ω i; simp [Function.comp]
+
 end HC
