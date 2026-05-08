@@ -100,6 +100,15 @@ lemma ff_N_borel_I_borel {N : ℕ} : FiniteFootprint (N_borel_I_borel N) := sorr
 lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by sorry
 lemma N_borel_I_borel_le_Inf_borel (N : ℕ) : N_borel_I_borel N ≤ Inf_borel := by sorry
 
+/-- `FiniteFootprint` for an arbitrary sub-σ-algebra on the first `N` coordinates
+combined with `I_borel` on coordinate `N`. -/
+lemma ff_unSplitTri_I_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
+    FiniteFootprint (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) := sorry
+/-- The combined σ-algebra on first `N` coords + Borel on coord `N` is ≤ `Inf_borel`. -/
+lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
+    unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := sorry
+
+
 end
 
 /-- The first component of `splitBi n ω` at index `i : Fin n` equals `ω ↑i`. -/

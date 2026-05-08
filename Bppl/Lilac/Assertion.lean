@@ -99,12 +99,12 @@ def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : 
 --     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, X ω))) ∧
 --   (Q X).1 Ω'
 --   , sorry⟩
-
+open HC in
 def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
-  ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : ProbabilityMeasure HC,
+  ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_pre).1 ≤ PSpace.mk' μ →
-  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : ProbabilityMeasure HC,
+  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac v))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧

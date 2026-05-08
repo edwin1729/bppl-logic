@@ -343,6 +343,18 @@ def PSpace.mk'' {Ω : Type*} {ms ms' : MeasurableSpace Ω} (μ : @ProbabilityMea
     (ms'_le_ms : ms' ≤ ms) : PSpace Ω :=
   ⟨⟨ms' , μ.1.trim ms'_le_ms⟩, sorry ⟩
 
+/-- `MeasurableSpace.sum` (from MeasureOnSpace.lean) equals `⊔` (the lattice sup). -/
+private lemma sum_eq_sup {Ω : Type*} (m₁ m₂ : MeasurableSpace Ω) :
+    MeasurableSpace.sum m₁ m₂ = m₁ ⊔ m₂ := by
+  apply le_antisymm
+  · apply MeasurableSpace.generateFrom_le
+    rintro s (h | h)
+    · exact @le_sup_left _ _ m₁ m₂ s h
+    · exact @le_sup_right _ _ m₁ m₂ s h
+  · apply sup_le <;> intro s hs <;>
+    exact MeasurableSpace.measurableSet_generateFrom
+      (by first | left; exact hs | right; exact hs)
+
 -- Appendix B.21 from Lilac paper — "Uniform" proof rule.
 open HC in
 open MeasureTheory in
@@ -350,7 +362,8 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
     ⊢ wp ((@Term.unif01 rs).den ∘ₚ D) Q := by
   rintro Ω lhs Ω_fr Ω_pre μ hΩ_pre
-  obtain ⟨n, ff_pre⟩ := (↓Ω_pre).finite_footprint -- Ω_pre_N_ms, ff_Ω_pre_N_ms
+  -- Extract the finite footprint: n is the number of coordinates used
+  obtain ⟨n, ff_pre⟩ := (↓Ω_pre).finite_footprint
   -- Ω.ms ≤ ↓Ω_pre.ms (since Ω is a component of the independent product)
   have hΩ_le_pre : Ω.ms ≤ (↓Ω_pre).ms := by
     set x := (Ω_fr ⋆ Ω).get Ω_pre
@@ -360,39 +373,55 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
       rw [hsome] at this; simpa using this.symm
     exact (PSpace.le_of_isIndependentProduct_right
       (PSpace.isIndependentProduct_of_binop_eq_some hval)).1
-  -- k works as a footprint for Ω too
-  -- have hΩ_fp : ∀ F, @MeasurableSet HC Ω.ms F →
-  --     ∃ F', F = HC.splitMeasEquiv k ⁻¹' (F' ×ˢ Set.univ) :=
-  --   fun F hF => ff_pre F (hΩ_le_pre F hF)
   let X : RV ⟪Ty.real⟫ := ⟨fun ω ↦ ω n, by fun_prop⟩
   -- Step 2: Constructions that need default MeasurableSpace (before ms_k shadows it)
   let leb : @ProbabilityMeasure HC Inf_borel :=
     ⟨Measure.infinitePiNat (fun _ => (volume : Measure I)), inferInstance⟩
   let μ_k : ProbabilityMeasure (Fin n → I) :=
     μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable
-  let μ' : ProbabilityMeasure HC :=
+  let μ' : @ProbabilityMeasure HC Inf_borel :=
     (μ_k.prod leb).map (HC.splitBi n).symm.measurable.aemeasurable
   let Ω_n : PSp := ⟨PSpace.mk'' leb (N_nil_I_borel_le_Inf_borel n), ff_N_nil_I_borel⟩
-  let Ω_pre_Ω_n : PSp := ⟨PSpace.mk'' μ' (N_borel_I_borel_le_Inf_borel n), ff_N_borel_I_borel⟩
-  have hΩ_pre_Ω_n : ✓'(↓Ω_pre ⋆ Ω_n) := by
-    simp only [PcmBase.binop, Option.get_dite, Option.isSome_dite]
-    use Ω_pre_Ω_n.1
-    simp only
-    constructor
-    · unfold PSpace.isIndependentProduct
-      constructor
-      · apply HC.commute
-        simp [Ω_pre_Ω_n, PSpace.mk'']
-        sorry
-      · intro E hE F hF
-        simp
-
-        sorry
-    · sorry
+  -- Now extract ms_pre (after μ_k/μ' definitions to avoid instance shadowing)
+  obtain ⟨ms_pre, h_ms_pre⟩ := ff_pre
+  -- The combined σ-algebra: ms_pre on first n coords, I_borel on coord n
+  let ms_combined := unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
+  -- σ-algebra equality: the sum of the two sub-σ-algebras equals the combined one
+  -- Uses: .sum = ⊔ (sum_eq_sup), commutativity of ⊔, and commute_over_equiv4
+  have h_sum_eq : (↓Ω_pre).1.ms.sum Ω_n.1.ms = ms_combined := by
+    show (↓Ω_pre).ms.sum Ω_n.ms = ms_combined
+    rw [h_ms_pre, sum_eq_sup, sup_comm]
+    exact commute_over_equiv4 ms_pre
+  -- Construct the PSpace witness for the independent product
+  let r_pspace : PSpace HC :=
+    PSpace.mk'' μ' (unSplitTri_I_borel_le_Inf_borel ms_pre)
+  -- r_pspace.ms equals the required sum (by construction and h_sum_eq)
+  have h_r_ms : r_pspace.ms = (↓Ω_pre).1.ms.sum Ω_n.1.ms :=
+    h_sum_eq.symm
+  -- The measure product condition: under μ', sets from disjoint coordinates
+  -- factor as a product. This is the key measure-theoretic fact:
+  -- μ' = (μ_k × leb) ∘ (splitBi n)⁻¹ is a product measure, and sets measurable
+  -- wrt ↓Ω_pre (first n coords) are independent from sets measurable wrt Ω_n (coord n).
+  have h_measure_product :
+      ∀ E (_ : MeasurableSet[(↓Ω_pre).1.ms] E)
+        F (_ : MeasurableSet[Ω_n.1.ms] F),
+        r_pspace.μ (E ∩ F) = (↓Ω_pre).1.μ E * Ω_n.1.μ F := by
+    sorry
+  -- Assemble the independent product proof
+  have h_indep : r_pspace =ᵢ (↓Ω_pre).1 ⊕ᵢ Ω_n.1 :=
+    ⟨h_r_ms, h_measure_product⟩
+  -- Show the PSp PCM operation is defined (∃! r, r =ᵢ p ⊕ᵢ q)
+  -- We use PSpace.binop_eq_some_of_isIndependentProduct at the PSpace level,
+  -- then lift to PSp via psp_val_binop.
+  have h_pspace_binop : (↓Ω_pre).1 ⋆ Ω_n.1 = some r_pspace :=
+    PSpace.binop_eq_some_of_isIndependentProduct h_indep
+  have Ω_post : ✓'(↓Ω_pre ⋆ Ω_n) := by
+    have h_map := PSp.psp_val_binop (↓Ω_pre) Ω_n
+    rw [h_pspace_binop] at h_map
+    cases h : (↓Ω_pre) ⋆ Ω_n with
+    | some _ => rfl
+    | none => simp [h] at h_map
   sorry
-  -- have hfr_Ω' : ✓'(Ω_fr ⋆ ↓hΩ_Ωk) :=
-  --   (PSp.assoc_option Ω_fr Ω Ω_n Ω_pre hΩ_Ωk) ▸ hpre_Ωk
-  -- use X, ↓hΩ_Ωk, hfr_Ω', μ'
   -- refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
   -- case Ω_post_le =>
 
