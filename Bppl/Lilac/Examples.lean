@@ -14,11 +14,10 @@ set_option autoImplicit true
 set_option relaxedAutoImplicit true
 set_option linter.style.lambdaSyntax false
 
-open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP Substitution
-
+open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP
 /-! There is still the unsolved problem of the programs being expressed via de brujin indices.
 Maybe we can just have string based mapping somehow. -/
-
+noncomputable section
 -- Maybe use parametric abstract higher order syntax instead to make
 abbrev unif1 : Term [] Ty.real.G :=
   unif01.bind (
@@ -30,6 +29,11 @@ abbrev unif2 : Term [] (Ty.prod .real .real).G :=
   unif01.bind (
   ret (pair (var (tail head)) (var head))
 ))
+
+abbrev half : Term [Ty.real] Ty.real.G :=
+  unif01.bind (
+    ret (.arith .mul (var (tail head)) (var head))
+  )
 
 
 abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨λ _ ↦ PUnit.unit, measurable_const⟩

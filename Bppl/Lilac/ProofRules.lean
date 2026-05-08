@@ -164,80 +164,51 @@ lemma transfer_dist (E₁ E₂ : RV ⟪A⟫) (ν : MeasureTheory.Measure ⟪A⟫
     filter_upwards [h_ae] with ω hω
     rw [hω]
 
--- def subst (E : ValRand ds rs ⟪A⟫) (γ : TProd (⟪·⟫) ds)
---     : TProd (⟪·⟫) (A :: rs) -m→ TProd (⟪·⟫) (A :: rs) :=
---   ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
---   ∘ₘ ⟨Prod.snd, measurable_snd⟩
+/-- Appendix B.17 from Lilac paper
+clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
+both the function `F[E₁]` and `F[E₂]`. -/
+lemma congruence {B : Ty} (F : RV ⟪A⟫ → RV ⟪B⟫) (E₁ E₂ : RV ⟪A⟫) :
+    iprop(own ⟨F E₁, F E₂⟩ʳ ∧ E₁ ≗ E₂ ⊢ F E₁ ≗ F E₂) := by
 
--- def subst' {A : Ty} (E : ValRand ds rs ⟪A⟫) (γ : TProd (⟪·⟫) ds)
---     : TProd (⟪·⟫) (rs) -m→ TProd (⟪·⟫) (A :: rs) :=
---   ⟨fun r_env ↦ (E γ r_env, r_env), Measurable.prod (E γ).2 (measurable_id)⟩
+  rintro Ω ⟨h_own, ⟨meas_E₁₂, full_E₁₂, hE₁₂⟩⟩
 
--- abbrev measurableProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace γ₂]
---     (f : β -m→ γ₁) (g : β -m→ γ₂) : β -m→ γ₁ × γ₂ :=
---   ⟨fun r ↦ (f r, g r), Measurable.prod f.2 g.2⟩
+  let E₁₂ := {ω | E₁ ω = E₂ ω}
+  have alt_hE₁₂ := (helper.aseq_measurable_alt Ω.ms ⟪A⟫ᵐ ⟪A⟫ᵐᵉ meas_E₁₂ E₁ E₂).out 0 1
+  apply alt_hE₁₂.1 at hE₁₂
+  let F₁₂ := {ω | F E₁ ω = F E₂ ω}
+  dsimp [own] at h_own
+  have meas_F₁₂ : @MeasurableSet _ Ω.ms F₁₂ := by
+    have hdiag : F₁₂ = ⟨F E₁, F E₂⟩ᶠ⁻¹' (Set.diagonal ⟪B⟫) := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_diagonal_iff, fProd]
+      rfl
+    rw [hdiag]
+    exact h_own (@measurableSet_diagonal _ ⟪B⟫ᵐ ⟪B⟫ᵐᵉ)
+  have full_F₁₂ : Ω.μ F₁₂ = 1 := by
+    -- E₁₂ ⊆ F₁₂: if E₁ and E₂ agree on ω, then F applied to both also agrees
+    have h_sub : E₁₂ ⊆ F₁₂ := by
 
--- notation " ⟨ " f " , " g " ⟩ᵐ " => measurableProd f g
+      intro ω hω
+      change E₁ ω = E₂ ω at hω
+      change F E₁ ω = F E₂ ω
 
-abbrev randValProd [MeasurableSpace β] [MeasurableSpace γ₁] [MeasurableSpace γ₂]
-    (f : α → β -m→ γ₁) (g : α → β -m→ γ₂) : α → β -m→ γ₁ × γ₂ :=
-  fun d ↦ ⟨fun r ↦ (f d r, g d r), Measurable.prod (f d).2 (g d).2⟩
-
-notation " ⟨ " f " , " g " ⟩ʳ " => randValProd f g
-
--- instance {α : Type*} [MeasurableSpace α] {r : Ty} : Coe (ValRand ds rs α) (ValRand ds (r :: rs) α) where
---   coe E := fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
-
--- abbrev drop {r : Ty} (E : ValRand ds rs ⟪A⟫) : ValRand ds (r :: rs) ⟪A⟫ :=
---   fun ds ↦ E ds ∘ₘ ⟨Prod.snd, measurable_snd⟩
-
--- /-- E substitutes the rv at the head of the randEnv list (generally denoted as `D`) -/
--- notation F "[ " E " /_] " => substValRand id (subst E) F
-
--- /-- Appendix B.17 from Lilac paper
--- clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
--- both the function `F[E₁]` and `F[E₂]`. -/
--- lemma congruence {B : Ty} (F : ValRand ds (A :: rs) ⟪B⟫) (E₁ E₂ : ValRand ds rs ⟪A⟫) :
---     iprop(own ⟨F[E₁/_], F[E₂/_]⟩ʳ ∧ drop E₁ ≗ drop E₂ ⊢ F[E₁/_] ≗ F[E₂/_]) := by
---   rintro ⟨γ, XD⟩ ⟨Ω, is_prob⟩ ⟨h_own, ⟨meas_E₁₂, full_E₁₂, hE₁₂⟩⟩
---   let E₁₂ := {ω | (↑(drop E₁ γ) ∘ ↑XD) ω = (↑(drop E₂ γ) ∘ ↑XD) ω}
---   let X₁ : RV ⟪A⟫ := (drop E₁) γ ∘ₘ XD
---   let X₂ : RV ⟪A⟫ := (drop E₂) γ ∘ₘ XD
---   have alt_hE₁₂ := (helper.aseq_measurable_alt Ω.ms ⟪A⟫ᵐ ⟪A⟫ᵐᵉ meas_E₁₂ X₁ X₂).out 0 1
---   apply alt_hE₁₂.1 at hE₁₂
---   let X₂D : EnvRand (A :: rs):= (subst E₂ γ) ∘ₘ XD
---   let X₁D : EnvRand (A :: rs):= (subst E₁ γ) ∘ₘ XD
---   let F₁ := (F[E₁/_]) γ ∘ₘ XD
---   let F₂ := (F[E₂/_]) γ ∘ₘ XD
---   -- The simplified version by applying `substValRand` def and reducing
---   have subst_lemma₁ : F₁ = F γ ∘ₘ X₁D := rfl
---   have subst_lemma₂ : F₂ = F γ ∘ₘ X₂D := rfl
---   let F₁₂ := {ω | F₁ ω = F₂ ω}
---   dsimp [own] at h_own
---   have meas_F₁₂ : @MeasurableSet _ Ω.ms F₁₂ := by
---     have hdiag : F₁₂ = ⟨F₁, F₂⟩ᶠ⁻¹' (Set.diagonal ⟪B⟫) := by
---       ext ω
---       simp only [Set.mem_preimage, Set.mem_diagonal_iff, fProd]
---       rfl
---     rw [hdiag]
---     exact h_own (@measurableSet_diagonal _ ⟪B⟫ᵐ ⟪B⟫ᵐᵉ)
---   have full_F₁₂ : Ω.μ F₁₂ = 1 := by
---     -- E₁₂ ⊆ F₁₂: if E₁ and E₂ agree on ω, then F applied to both also agrees
---     have h_sub : E₁₂ ⊆ F₁₂ := by
---       intro ω hω
---       have : (subst E₁ γ).1 (XD.1 ω) = (subst E₂ γ).1 (XD.1 ω) := by
---         dsimp [subst, MeasurableFunc.comp]
---         exact congr_arg₂ Prod.mk hω rfl
---       exact congrArg (F γ).1 this
---     exact le_antisymm (MeasureTheory.prob_le_one)
---       (full_E₁₂ ▸ MeasureTheory.measure_mono h_sub)
---   -- F₁₂ contains the entire pullback σ-algebra (F₁, F₂)⁻¹ (B ⊗ B), and so contains F₁₂ ∪
---   -- (F₁, F₂)⁻¹ (B ⊗ B) too.
---   have hF₁₂ : ∀ (x : Set (⟪B⟫ × ⟪B⟫)), MeasurableSet x →
---       @MeasurableSet _ Ω.ms (F₁₂ ∪ ⟨F₁, F₂⟩ᶠ⁻¹' x) := by
---     intro x hx
---     exact meas_F₁₂.union (h_own hx)
---   exact ⟨meas_F₁₂, full_F₁₂, hF₁₂⟩
+      -- have : (subst E₁ γ).1 (XD.1 ω) = (subst E₂ γ).1 (XD.1 ω) := by
+      --   dsimp [subst, MeasurableFunc.comp]
+      --   exact congr_arg₂ Prod.mk hω rfl
+      sorry
+      -- exact congrArg F (by
+      --   -- simp at hω
+      --   exact hω)
+    sorry
+    -- exact le_antisymm (MeasureTheory.prob_le_one)
+      -- (full_E₁₂ ▸ MeasureTheory.measure_mono h_sub)
+  -- F₁₂ contains the entire pullback σ-algebra (F₁, F₂)⁻¹ (B ⊗ B), and so contains F₁₂ ∪
+  -- (F₁, F₂)⁻¹ (B ⊗ B) too.
+  have hF₁₂ : ∀ (x : Set (⟪B⟫ × ⟪B⟫)), MeasurableSet x →
+      @MeasurableSet _ Ω.ms (F₁₂ ∪ ⟨F E₁, F E₂⟩ᶠ⁻¹' x) := by
+    intro x hx
+    exact meas_F₁₂.union (h_own hx)
+  exact ⟨meas_F₁₂, full_F₁₂, hF₁₂⟩
 
 -- B.19, don't think this is needed
 
@@ -384,12 +355,11 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
   let Ω_n : PSp := ⟨PSpace.mk'' leb (N_nil_I_borel_le_Inf_borel n), ff_N_nil_I_borel⟩
   -- Now extract ms_pre (after μ_k/μ' definitions to avoid instance shadowing)
   obtain ⟨ms_pre, h_ms_pre⟩ := ff_pre
-  -- The combined σ-algebra: ms_pre on first n coords, I_borel on coord n
-  let ms_combined := unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
+
   -- σ-algebra equality: the sum of the two sub-σ-algebras equals the combined one
   -- Uses: .sum = ⊔ (sum_eq_sup), commutativity of ⊔, and commute_over_equiv4
-  have h_sum_eq : (↓Ω_pre).1.ms.sum Ω_n.1.ms = ms_combined := by
-    show (↓Ω_pre).ms.sum Ω_n.ms = ms_combined
+  have h_sum_eq : (↓Ω_pre).1.ms.sum Ω_n.1.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil):= by
+    show (↓Ω_pre).ms.sum Ω_n.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
     rw [h_ms_pre, sum_eq_sup, sup_comm]
     exact commute_over_equiv4 ms_pre
   -- Construct the PSpace witness for the independent product
@@ -421,27 +391,69 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     cases h : (↓Ω_pre) ⋆ Ω_n with
     | some _ => rfl
     | none => simp [h] at h_map
-  sorry
-  -- refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
-  -- case Ω_post_le =>
+  have eq_Ω_post_ms : (↓Ω_post).ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) := sorry
+  have Ω' : ✓'(Ω ⋆ Ω_n) := by sorry -- from assoc of PSp applied on Ω_post
+  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') := by sorry -- from assoc of PSp applied on Ω_post
+  have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt := by sorry
+  use X, ↓Ω', Ω_post_alt, μ'
 
-  --   -- (↓hfr_Ω').1 ≤ PSpace.mk' μ': μ' agrees with Ω_fr⋆Ω on their coords
-  --   -- and with Ω_k on coord k, by construction of μ' = μ_k ⊗ leb.
-  --   sorry
-  -- case bind_eq =>
-  --   -- Both sides equal uniformOn (Set.Icc 0 1).
-  --   -- LHS: bind(uniformOn)(dirac) = uniformOn, then bind μ (const) = const.
-  --   -- RHS: μ'.map X = uniformOn since coord k is uniform under μ'.
-  --   sorry
-  -- case postcond =>
-  --   -- Q X via wand elimination
-  --   dsimp only [BIBase.forall, BIBase.sForall] at lhs
-  --   have h_wand := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩
-  --   have X_meas : @Measurable HC ⟪Ty.real⟫ ms_k _ X := HC.coordProj_measurable k
-  --   have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) := by
-  --     sorry
-  --   have h_qx := h_wand Ω_n hΩk_Ω ⟨X_meas, X_dist⟩
-  --   rwa [PSp.get_comm Ω_n Ω hΩk_Ω hΩ_Ωk] at h_qx
+  refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
+  case Ω_post_le =>
+    rw [← eq_Ω_post]
+
+    constructor
+    · change (↓Ω_post).ms ≤ Inf_borel
+      sorry
+    ·
+      -- dsimp
+      -- subst eq_Ω_post_ms
+
+      rw [@Measure.ext_iff _ (↓Ω_post).ms (↓Ω_post).μ ((PSpace.mk' μ').μ.cast (↓Ω_post).ms)]
+      apply MeasurableSpace.induction_on_inter
+      · apply MeasureOnSpace.isPiSystem_generator (p := (↓Ω_pre).1.1) (q := Ω_n.1.1)
+      · simp only [measure_empty, Measure.cast_eq_self]
+      · intro t ht
+
+        sorry
+      ·
+        sorry
+      ·
+        sorry
+      ·
+        sorry
+
+    -- simp [PSp.toPSpace, PSpace.mk', Option.isSome_dite, LE.le]
+    -- (↓hfr_Ω').1 ≤ PSpace.mk' μ': μ' agrees with Ω_fr⋆Ω on their coords
+    -- and with Ω_k on coord k, by construction of μ' = μ_k ⊗ leb.
+  case bind_eq =>
+    -- change ((fun ω ↦ (fun v ↦ Measure.dirac v) ∘ₘ (Term.unif01.den ∘ₚ D) ω) ∘ₘ μ) = ((fun ω ↦ Measure.dirac (X ω)) ∘ₘ μ')
+    -- change Measure.bind μ (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) (fun v ↦ Measure.dirac v)) =
+    --   (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω)))
+
+    calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) fun v ↦ Measure.dirac v)
+        = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac v)) := by
+
+          sorry
+      _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac v) := sorry
+      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := sorry
+
+    -- change ((fun ω ↦ (fun v ↦ Measure.dirac v) ∘ₘ (Term.unif01.den ∘ₚ D) ω) ∘ₘ μ) = ((fun ω ↦ Measure.dirac (X ω)) ∘ₘ μ')
+
+    --   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac v))) =
+    -- (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧
+
+        -- sorry
+  case postcond =>
+    -- Q X via wand elimination
+    dsimp only [BIBase.forall, BIBase.sForall] at lhs
+    have h_wand := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩
+    -- have X_meas : @Measurable HC ⟪Ty.real⟫ ms_pre _ X := HC.coordProj_measurable k
+    have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) := by
+      sorry
+    --fill below sorry with X_meas
+    have h_qx := h_wand Ω_n ((Pcm.comm Ω Ω_n) ▸ Ω') ⟨sorry, X_dist⟩
+    suffices h : ↓((Pcm.comm Ω Ω_n) ▸ Ω') = ↓Ω' by exact h ▸ h_qx
+    exact PSp.get_comm Ω_n Ω ((Pcm.comm Ω Ω_n) ▸ Ω') Ω'
 
 end
 end WP

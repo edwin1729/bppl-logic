@@ -83,7 +83,7 @@ def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
       MeasurableSet[ℱ] (F ∪ (fun ω ↦ (E₁ ω, E₂ ω))⁻¹' x)
     , sorry⟩
 
-def PSpace.mk' {Ω : Type*} [MeasurableSpace Ω] (μ : ProbabilityMeasure Ω) : PSpace Ω :=
+def PSpace.mk' {Ω : Type*} {ms : MeasurableSpace Ω} (μ : ProbabilityMeasure Ω) : PSpace Ω :=
   ⟨⟨_, μ.1⟩, μ.2⟩
 
 -- consider just taking another PSp instead of μ, if it might simplify proof later

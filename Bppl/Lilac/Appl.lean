@@ -52,6 +52,12 @@ abbrev MeasurableFun.fst (f : α -m→ β × γ) : α -m→ β := ⟨_ , Measura
 
 abbrev MeasurableFun.snd (f : α -m→ β × γ) : α -m→ γ := ⟨_ , Measurable.snd f.2⟩
 
+abbrev MeasurableFun.prod [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
+    (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
+  ⟨fun r ↦ (f r, g r), Measurable.prod f.2 g.2⟩
+
+notation " ⟨ " f " , " g " ⟩ʳ " => MeasurableFun.prod f g
+
 -- TODO: The below two don't actually work, because of clash with indexing notation.
 open MeasureTheory in
 /-- Optionally provide non-standard domain σ-algebra -/
@@ -118,6 +124,20 @@ noncomputable section
   | index => .of ℕ
   | G ty => MeasCat.Measure.obj (ty.den) --: Ty → Ty
 
+notation "⟪" t "⟫" => Ty.den t
+
+@[reducible] def Ty.MeasurableEq (ty : Ty) : MeasurableEq ⟪ty⟫ :=
+  match ty with
+  | prod ty₁ ty₂ => sorry
+  | bool => inferInstance
+  | real => inferInstance
+  | exp n ty => sorry
+  | index => inferInstance
+  | G ty => sorry
+
+notation "⟪" t "⟫ᵐ" => MeasCat.str (Ty.den t)
+notation "⟪" t "⟫ᵐᵉ" => Ty.MeasurableEq t
+
 -- Is this already defined somewhere
 -- also is there a more concise way to define measurable functions?
 @[reducible] def Arith.den : Arith → (ℝ × ℝ) -m→ ℝ
@@ -156,29 +176,6 @@ lemma foop : Measurable (foo) := by
   | lt => ⟨fun p ↦ p.1 < p.2, foop⟩
   | le => ⟨fun p ↦ p.1 ≤ p.2, sorry⟩
   | eq => ⟨fun p ↦ p.1 = p.2, sorry⟩
-
---TODO: 1) Make sure that some type has denotation `ℝ`
--- 2) The denotations must be measurable spaces which support equality
--- 2.2) Make a tactic to show that products of measurable spaces which support
--- equality also support equality ?
--- 3) Finite footprint
--- class DenotationalMeas (Ty : Type u) extends Denotational Ty where
---   instMeasurable : ∀ t, MeasurableSpace (den t)
---   instMeasurableEq : ∀ t, MeasurableEq (den t)
-  -- exists_den_real : ∃ t, (den t) = ℝ
-
-notation "⟪" t "⟫" => Ty.den t
-notation "⟪" t "⟫ᵐ" => MeasCat.str (Ty.den t)
--- notation "⟪" t "⟫ᵐᵉ" => DenotationalMeas.instMeasurableEq t
-
--- instance instMeasurableSpaceDenotation {Ty : Type u} [d : DenotationalMeas Ty] (t : Ty) :
---     MeasurableSpace ⟪t⟫ :=
---   d.instMeasurable t
-
--- instance : DenotationalMeas Ty where
---   den ty := ↑ty.den
---   instMeasurable ty := ty.den.2
---   instMeasurableEq ty := sorry
 
 instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with
