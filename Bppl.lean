@@ -6,3 +6,5 @@ import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules
 import Bppl.Lilac.Examples
 import Bpp.Lilac.HilbertCube
+import Bpp.Lilac.WPUnifHelpers
+import Bpp.Lilac.MeasureProduct

@@ -108,6 +108,20 @@ lemma ff_unSplitTri_I_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
 lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
     unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := sorry
 
+/-
+The second-first component of `splitTri n ω` equals `ω n`, the `n`-th coordinate.
+-/
+lemma splitTri_snd_fst (n : ℕ) (ω : ℕ → I) : (splitTri n ω).2.1 = ω n := by
+  unfold splitTri; aesop;
+/-
+The `n`-th coordinate projection `fun ω ↦ ↑(ω n) : HC → ℝ` is measurable
+    with respect to `N_nil_I_borel n`, since this σ-algebra includes `I_borel`
+    on coordinate `n`.
+-/
+lemma coordProj_measurable (n : ℕ) :
+    @Measurable (ℕ → I) ℝ (N_nil_I_borel n) _ (fun ω ↦ (↑(ω n) : ℝ)) :=
+  (Measurable.comp (Measurable.subtype_val measurable_snd.fst)) (comap_measurable _)
+
 
 end
 

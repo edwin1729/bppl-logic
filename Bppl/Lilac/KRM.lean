@@ -404,6 +404,27 @@ noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
   rfl
   psp_val_binop
 
+/-- The PSpace-level binop is also defined when the PSp binop is. -/
+lemma psp_isSome_val (x y : PSp) (h : ✓'(x ⋆ y)) : (x.1 ⋆ y.1).isSome := by
+  have hv := psp_val_binop x y
+  cases hxy : x ⋆ y with
+  | none => simp [hxy] at h
+  | some v => simp [hxy] at hv; rw [← hv]; exact rfl
+/-
+If PSp binop is defined, the underlying PSpace value equals the PSpace-level binop value.
+-/
+lemma psp_val_get (x y : PSp) (h : ✓'(x ⋆ y)) :
+    (↓h).1 = (x.1 ⋆ y.1).get (psp_isSome_val x y h) := by
+      convert Option.some_inj.mp _;
+      convert psp_val_binop x y using 1;
+      · unfold instPcmBase;
+        grind;
+      · grind
+open MeasureTheory in
+noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @ProbabilityMeasure HC ms)
+    (ms'_le_ms : ms' ≤ ms) (ff : FiniteFootprint ms') : PSp :=
+  ⟨⟨⟨ms', μ.1.trim ms'_le_ms⟩, Measure.trim_preserves_prob ms' ms ms'_le_ms μ.2⟩, ff⟩
+
 end PSp
 
 namespace Krm_helper
@@ -422,5 +443,59 @@ lemma exists_left (p q r : α) :
   have := K.assoc p q r;
   cases h : K.binop p q <;> simp_all +decide;
   exact this.symm
+
+/-! ### Derived associativity helpers for `isSome`-based API
+  These use `binop` explicitly rather than `⋆` notation to avoid parsing issues
+  with `(a ⋆ b).get hab` as a first argument to `⋆`. -/
+/-
+Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `b ⋆ c`.
+-/
+lemma isSome_right' (a b c : α)
+    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome) :
+    (binop b c).isSome := by
+      cases' ‹Krm α› with binop;
+      cases' h : binop.binop a b with x <;> simp_all +decide;
+      · grind;
+      · have := binop.assoc a b c;
+        cases' h' : binop.binop b c with y <;> simp_all +decide;
+        cases habc
+/-
+Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `a ⋆ ↓hbc`.
+-/
+lemma isSome_assoc_right' (a b c : α)
+    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome)
+    (hbc : (binop b c).isSome := isSome_right' a b c hab habc) :
+    (binop a ((binop b c).get hbc)).isSome := by
+      have := @Krm_helper.exists_left;
+      contrapose! this;
+      refine' ⟨ _, _, a, b, c, _, _ ⟩ <;> simp_all +decide [ Option.bind ];
+      bv_omega;
+      · cases h : ( ‹Krm α›.binop b c ) <;> simp_all +decide [ Option.bind ];
+        · grind;
+        · rename_i x;
+          have := ‹Krm α›.assoc a b c; simp_all +decide [ Option.bind ] ;
+          cases h' : ( ‹Krm α›.binop a b ) <;> simp_all +decide [ Option.bind ];
+          grind;
+      · cases h : ( ‹Krm α›.binop a b ) <;> simp_all +decide;
+        have := ‹Krm α›.assoc a b c; simp_all +decide [ Option.bind ] ;
+        cases h' : ( ‹Krm α›.binop b c ) <;> simp_all +decide [ Option.bind ];
+        grind
+/-
+The PCM assoc identity at the `get` level: `↓habc = ↓ha_bc`.
+-/
+lemma get_assoc_eq' (a b c : α)
+    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome)
+    (hbc : (binop b c).isSome := isSome_right' a b c hab habc)
+    (ha_bc : (binop a ((binop b c).get hbc)).isSome :=
+      isSome_assoc_right' a b c hab habc hbc) :
+    (binop ((binop a b).get hab) c).get habc =
+    (binop a ((binop b c).get hbc)).get ha_bc := by
+      unfold Option.get at *;
+      rename_i h;
+      obtain ⟨x, hx⟩ := Option.isSome_iff_exists.mp hab
+      obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp habc
+      obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hbc
+      obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp ha_bc;
+      have := h.assoc a b c; aesop;
 
 end Krm_helper

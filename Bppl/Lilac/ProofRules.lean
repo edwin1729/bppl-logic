@@ -13,6 +13,7 @@ import Iris.ProofMode
 import Bppl.Lilac.Assertion
 import Bppl.Lilac.BI
 import Bppl.Lilac.Appl
+import Bppl.Lilac.WPUnifHelpers
 
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
@@ -259,9 +260,6 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     wp (M.den ∘ₚ D) (fun X ↦ (wp (N.den ∘ₚ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₚ D) Q :=
   sorry
 
-/-- The semantic (native lean) uniform distribution in the interval [0,1]. -/
-def unif01_sem : Measure ⟪Ty.real⟫ := uniformOn (Set.Icc 0 1)
-
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
 
@@ -399,59 +397,61 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
 
   refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
   case Ω_post_le =>
-    rw [← eq_Ω_post]
+    -- (↓Ω_post).toPSpace = r_pspace by uniqueness of the independent product.
+    -- Step 1: The PSp binop relates to the PSpace binop via psp_val_binop.
+    have h_psp_some : (↓Ω_pre) ⋆ Ω_n = some (↓Ω_post) :=
+      (Option.some_get Ω_post).symm
+    have h_pspace_post : (↓Ω_pre).toPSpace ⋆ Ω_n.toPSpace = some (↓Ω_post).toPSpace := by
+      have h_map := PSp.psp_val_binop (↓Ω_pre) Ω_n
+      rw [h_psp_some, Option.map_some] at h_map
+      exact h_map.symm
+    -- Step 2: By uniqueness, (↓Ω_post).toPSpace = r_pspace
+    have h_Ω_post_eq_r : (↓Ω_post).toPSpace = r_pspace :=
+      Option.some_injective _ (h_pspace_post.symm.trans h_pspace_binop)
+    -- Step 3: r_pspace ≤ PSpace.mk' μ' because r_pspace = (PSpace.mk' μ').trim ...
+    have h_r_le : r_pspace ≤ PSpace.mk' μ' := by
+      -- r_pspace = PSpace.mk'' μ' le = ⟨⟨ms_combined, μ'.1.trim le⟩, ...⟩
+      -- PSpace.mk' μ' = ⟨⟨Inf_borel, μ'.1⟩, μ'.2⟩
+      -- (PSpace.mk' μ').trim le = ⟨⟨ms_combined, μ'.1.trim le⟩, ...⟩ = r_pspace
+      -- And trim_le gives the result.
+      have : r_pspace = (PSpace.mk' μ').trim (unSplitTri_I_borel_le_Inf_borel ms_pre) := by
+        apply PSpace.ext_ms
+        · rfl
+        · intro E hE
+          rfl
+      rw [this]
+      exact PSpace.trim_le (unSplitTri_I_borel_le_Inf_borel ms_pre)
 
-    constructor
-    · change (↓Ω_post).ms ≤ Inf_borel
-      sorry
-    ·
-      -- dsimp
-      -- subst eq_Ω_post_ms
+    rw [← h_Ω_post_eq_r, eq_Ω_post] at h_r_le
+    exact h_r_le
 
-      rw [@Measure.ext_iff _ (↓Ω_post).ms (↓Ω_post).μ ((PSpace.mk' μ').μ.cast (↓Ω_post).ms)]
-      apply MeasurableSpace.induction_on_inter
-      · apply MeasureOnSpace.isPiSystem_generator (p := (↓Ω_pre).1.1) (q := Ω_n.1.1)
-      · simp only [measure_empty, Measure.cast_eq_self]
-      · intro t ht
-
-        sorry
-      ·
-        sorry
-      ·
-        sorry
-      ·
-        sorry
-
-    -- simp [PSp.toPSpace, PSpace.mk', Option.isSome_dite, LE.le]
-    -- (↓hfr_Ω').1 ≤ PSpace.mk' μ': μ' agrees with Ω_fr⋆Ω on their coords
-    -- and with Ω_k on coord k, by construction of μ' = μ_k ⊗ leb.
   case bind_eq =>
-    -- change ((fun ω ↦ (fun v ↦ Measure.dirac v) ∘ₘ (Term.unif01.den ∘ₚ D) ω) ∘ₘ μ) = ((fun ω ↦ Measure.dirac (X ω)) ∘ₘ μ')
-    -- change Measure.bind μ (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) (fun v ↦ Measure.dirac v)) =
-    --   (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω)))
-
     calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) fun v ↦ Measure.dirac v)
         = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac v)) := by
-
+          congr 1
           sorry
-      _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac v) := sorry
-      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := sorry
+      _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac v) := by
+          rw [Measure.bind_const]
+          simp [measure_univ]
+      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := by
+          rw [Measure.bind_dirac, Measure.bind_dirac_eq_map _ X.2]
+          -- Goal: unif01_sem = Measure.map X μ'
+          -- Shadow ms_pre with the standard MeasurableSpace.pi instance
+          letI : MeasurableSpace (Fin n → I) := MeasurableSpace.pi
+          have hμ' : (↑μ' : Measure (ℕ → I)) =
+              Measure.map (↑(splitBi n).symm) ↑(μ_k.prod leb) := by
+            rw [ProbabilityMeasure.toMeasure_map]
+          exact unif01_eq_map_coord_prod n μ_k leb rfl μ' hμ'
 
-    -- change ((fun ω ↦ (fun v ↦ Measure.dirac v) ∘ₘ (Term.unif01.den ∘ₚ D) ω) ∘ₘ μ) = ((fun ω ↦ Measure.dirac (X ω)) ∘ₘ μ')
-
-    --   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac v))) =
-    -- (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧
-
-        -- sorry
   case postcond =>
     -- Q X via wand elimination
     dsimp only [BIBase.forall, BIBase.sForall] at lhs
     have h_wand := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩
-    -- have X_meas : @Measurable HC ⟪Ty.real⟫ ms_pre _ X := HC.coordProj_measurable k
-    have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) := by
-      sorry
-    --fill below sorry with X_meas
-    have h_qx := h_wand Ω_n ((Pcm.comm Ω Ω_n) ▸ Ω') ⟨sorry, X_dist⟩
+
+    have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) :=
+      WP.X_dist_helper n leb rfl
+    have X_meas : @Measurable HC ⟪Ty.real⟫ Ω_n.ms _ X := HC.coordProj_measurable n
+    have h_qx := h_wand Ω_n ((Pcm.comm Ω Ω_n) ▸ Ω') ⟨X_meas, X_dist⟩
     suffices h : ↓((Pcm.comm Ω Ω_n) ▸ Ω') = ↓Ω' by exact h ▸ h_qx
     exact PSp.get_comm Ω_n Ω ((Pcm.comm Ω Ω_n) ▸ Ω') Ω'
 
