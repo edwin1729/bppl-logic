@@ -425,24 +425,29 @@ noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @Probabili
     (ms'_le_ms : ms' ≤ ms) (ff : FiniteFootprint ms') : PSp :=
   ⟨⟨⟨ms', μ.1.trim ms'_le_ms⟩, Measure.trim_preserves_prob ms' ms ms'_le_ms μ.2⟩, ff⟩
 
+-- lemma pspace_le_of_psp_le {x y : PSp} {}
+
 end PSp
 
+/- ### TODO rename to just Krm, remove all the repetitions of this done separately for PSpace-/
 namespace Krm_helper
-variable {α : Type*} [Krm α]
+
+
+variable {α : Type*} [krm_α : Krm α]
 open PcmBase
 
-@[grind]
-lemma exists_right (p q r : α) :
-    (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
-  cases hq : ‹Krm α›.binop q r <;> simp_all +decide;
-  have := ‹Krm α›.assoc p q r; aesop;
+-- @[grind]
+-- lemma exists_right (p q r : α) :
+--     (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
+--   cases hq : ‹Krm α›.binop q r <;> simp_all +decide;
+--   have := ‹Krm α›.assoc p q r; aesop;
 
-lemma exists_left (p q r : α) :
-    (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
-  rename_i K;
-  have := K.assoc p q r;
-  cases h : K.binop p q <;> simp_all +decide;
-  exact this.symm
+-- lemma exists_left (p q r : α) :
+--     (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
+--   rename_i K;
+--   have := K.assoc p q r;
+--   cases h : K.binop p q <;> simp_all +decide;
+--   exact this.symm
 
 /-! ### Derived associativity helpers for `isSome`-based API
   These use `binop` explicitly rather than `⋆` notation to avoid parsing issues
@@ -450,52 +455,73 @@ lemma exists_left (p q r : α) :
 /-
 Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `b ⋆ c`.
 -/
-lemma isSome_right' (a b c : α)
-    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome) :
-    (binop b c).isSome := by
+lemma right {a b c : α}
+    {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
+    ✓'(b ⋆ c) := by
       cases' ‹Krm α› with binop;
       cases' h : binop.binop a b with x <;> simp_all +decide;
       · grind;
       · have := binop.assoc a b c;
         cases' h' : binop.binop b c with y <;> simp_all +decide;
         cases habc
+
+lemma left {a b c : α}
+    {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
+    ✓'(a ⋆ b) := by sorry
+
 /-
 Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `a ⋆ ↓hbc`.
 -/
-lemma isSome_assoc_right' (a b c : α)
-    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome)
-    (hbc : (binop b c).isSome := isSome_right' a b c hab habc) :
-    (binop a ((binop b c).get hbc)).isSome := by
-      have := @Krm_helper.exists_left;
-      contrapose! this;
-      refine' ⟨ _, _, a, b, c, _, _ ⟩ <;> simp_all +decide [ Option.bind ];
-      bv_omega;
-      · cases h : ( ‹Krm α›.binop b c ) <;> simp_all +decide [ Option.bind ];
-        · grind;
-        · rename_i x;
-          have := ‹Krm α›.assoc a b c; simp_all +decide [ Option.bind ] ;
-          cases h' : ( ‹Krm α›.binop a b ) <;> simp_all +decide [ Option.bind ];
-          grind;
-      · cases h : ( ‹Krm α›.binop a b ) <;> simp_all +decide;
-        have := ‹Krm α›.assoc a b c; simp_all +decide [ Option.bind ] ;
-        cases h' : ( ‹Krm α›.binop b c ) <;> simp_all +decide [ Option.bind ];
-        grind
+lemma assoc_right {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
+  ✓'(a ⋆ ↓(right habc)) := by
+    have hassoc := ‹Krm α›.assoc a b c
+    obtain ⟨x, hx⟩ := Option.isSome_iff_exists.mp hab
+    obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp habc
+    obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp <| right habc
+    simp_all
+
+lemma assoc_left {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
+  ✓'(↓(left habc) ⋆ c) := by
+    have hassoc := ‹Krm α›.assoc a b c
+    obtain ⟨x, hx⟩ := Option.isSome_iff_exists.mp <| left habc
+    obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp habc
+    obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hbc
+    simp_all
+
+@[simp]
+lemma assoc_left_eq {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
+  ↓(assoc_left habc) = ↓habc := sorry
+
+@[simp]
+lemma assoc_right_eq {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
+  ↓(assoc_right habc) = ↓habc := sorry
 /-
 The PCM assoc identity at the `get` level: `↓habc = ↓ha_bc`.
 -/
 lemma get_assoc_eq' (a b c : α)
-    (hab : (binop a b).isSome) (habc : (binop ((binop a b).get hab) c).isSome)
-    (hbc : (binop b c).isSome := isSome_right' a b c hab habc)
+    (hab : ✓'(a ⋆ b)) (habc : (binop ((binop a b).get hab) c).isSome)
+    (hbc : (binop b c).isSome := right habc)
     (ha_bc : (binop a ((binop b c).get hbc)).isSome :=
-      isSome_assoc_right' a b c hab habc hbc) :
+      assoc_right habc) :
     (binop ((binop a b).get hab) c).get habc =
     (binop a ((binop b c).get hbc)).get ha_bc := by
       unfold Option.get at *;
-      rename_i h;
       obtain ⟨x, hx⟩ := Option.isSome_iff_exists.mp hab
       obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp habc
       obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hbc
       obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp ha_bc;
-      have := h.assoc a b c; aesop;
+      have := krm_α.assoc a b c; aesop;
+
+/-- This seems more useful in all situations. Consider changing it to be the
+definition. -/
+lemma le_mul_mono' (x₁ x₂ y₁ y₂ : α)
+    (lex : x₁ ≤ x₂) (ley : y₁ ≤ y₂)
+    (xy₂ : ✓'(x₂ ⋆ y₂)) : ∃ xy₁ : ✓'(x₁ ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry
+
+lemma le_mul_mono_left' {x₁ x₂ y : α} (lex : x₁ ≤ x₂)
+    (xy₂ : ✓'(x₂ ⋆ y)) : ∃ xy₁ : ✓'(x₁ ⋆ y), ↓xy₁ ≤ ↓xy₂ := by sorry
+
+lemma le_mul_mono_right' {x y₁ y₂ : α} (ley : y₁ ≤ y₂)
+    (xy₂ : ✓'(x ⋆ y₂)) : ∃ xy₁ : ✓'(x ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry
 
 end Krm_helper

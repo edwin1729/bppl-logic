@@ -223,27 +223,34 @@ variable {ds : List Ty} {rs : List Ty} {r r' : Ty} {A B ty₁ ty₂ : Ty}
 noncomputable section
 
 -- Appendix B.20
--- it is unclear how to write down Q_of_P? Is it better to use -∗ ?
 lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)}
-    (Q_of_P : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
+    (P_entails_Q : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
   intro Ω wp_l Ω_fr μ hΩ
   sorry
 
+open Krm_helper in
 lemma wp_frame {F : LProp} {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
     iprop(F ∗ (wp M Q) ⊢ wp M (fun X ↦ iprop(F ∗ Q X))) := by
-  rintro Ω ⟨Ω_F, Ω_M, hΩ_F_M, _,  hF, h_M⟩ Ω_fr μ hΩ
-  -- Proof sketch:
-  -- 1. Using `le_mul_mono` establish `Ω_fr ⋆ (Ω_F ⋆ Ω_M)` exists
-  --    from `Ω_fr ⋆ Ω ≤ .mk μ` and `(Ω_F ⋆ Ω_M) ≤ Ω`
-  -- 2. Using `assoc` (specifically the helper `exists_left`) establish `(Ω_fr ∗ Ω_F)` exists
-  -- 3. Feed `(Ω_fr ∗ Ω_F)` as the Ω_fr for `h_M`. Next supply proof using `assoc`
-  --    that `Ω_fr ∗ (Ω_F ∗ Ω_M)`.
-  -- 4. By applying the h_M above we easily reach our goal as required. We now get the
-  --    `X : RV _` and an `Ω'` and `μ'` such that the `measure bind` based thing in the
-  --    `wp` def and the post condition hold.
-  --    The measure bind thing is the same on both sides. On the left hand side wp we just
-  --    additionally need to show that for all X, F also holds.
-  sorry
+  rintro Ω ⟨Ω_F, Ω_M, Ω_F_M, hΩ_F_M,  hF, wp_left⟩ Ω_fr Ω_fr_Ω μ hΩ_fr_Ω
+  -- all the shuffling paranthesis needed to feed arguments into `wp_left`
+  obtain ⟨Ω_fr_F_M, hΩ_fr_F_M⟩ := le_mul_mono_right' hΩ_F_M Ω_fr_Ω
+  have Ω_fr_F_M_le_μ : (↓(assoc_left Ω_fr_F_M)).toPSpace ≤ PSpace.mk' μ := by
+    trans (↓Ω_fr_Ω).toPSpace
+    · rw [assoc_left_eq Ω_fr_F_M]
+      exact hΩ_fr_F_M
+    · exact hΩ_fr_Ω
+  obtain ⟨X, Ω_M', Ω_fr_F_M', μ', Ω_fr_F_M'_le_μ', calc_block, post_left_wp⟩ :=
+    wp_left ↓(left Ω_fr_F_M) (assoc_left Ω_fr_F_M) μ Ω_fr_F_M_le_μ
+  -- and now feed these "outputs" from `wp_left` into wp_right (the goal).
+  refine ⟨X, ↓(right Ω_fr_F_M'), (assoc_right Ω_fr_F_M'), μ', ?le_μ', calc_block, ?post_right_wp⟩
+  case le_μ' =>
+    have : (↓(assoc_right Ω_fr_F_M')).toPSpace = (↓Ω_fr_F_M').toPSpace := by
+      rw [assoc_right_eq Ω_fr_F_M'] ; rfl
+    -- rw [this]
+    -- exact Ω_fr_F_M'_le_μ'
+    sorry
+  case post_right_wp =>
+    use Ω_F, Ω_M', (right Ω_fr_F_M')
 
 lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
     iprop((wp M P) ∨ (wp M Q) ⊢ wp M (fun X ↦ iprop(P X ∨ Q X))) := sorry
@@ -402,12 +409,10 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
   have eq_Ω_post_ms : (↓Ω_post).ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) := by
     show (↓Ω_post).1.ms = _
     rw [h_val_eq]; rfl
-  -- Ω': from assoc of PSp applied on Ω_post
-  have Ω' : ✓'(Ω ⋆ Ω_n) :=
-    Krm_helper.isSome_right' Ω_fr Ω Ω_n Ω_pre Ω_post
+  --right_post
+  have Ω' : ✓'(Ω ⋆ Ω_n) := Krm_helper.right Ω_post
   -- Ω_post_alt: from assoc of PSp applied on Ω_post
-  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') :=
-    Krm_helper.isSome_assoc_right' Ω_fr Ω Ω_n Ω_pre Ω_post Ω'
+  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') := Krm_helper.assoc_right Ω_pre Ω_post
   -- eq_Ω_post: the two parenthesizations give the same result
   have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt :=
     Krm_helper.get_assoc_eq' Ω_fr Ω Ω_n Ω_pre Ω_post Ω' Ω_post_alt
