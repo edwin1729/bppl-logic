@@ -273,13 +273,9 @@ instance (Ω : Type*) : Preorder (PSpace Ω) where
 
 /-- Holds if `r` is the independent product of `p` and `q` -/
 def PSpace.isIndependentProduct (r p q : PSpace Ω) :=
-  r.1.ms = p.1.ms.sum q.1.ms ∧
-  letI μ₁ := p.1.μ
-  letI μ₂ := q.1.μ
-  letI μ := r.1.μ
-  ∀ E (_ : MeasurableSet[p.1.ms] E)
-    F (_ : MeasurableSet[q.1.ms] F),
-  μ (E ∩ F) = μ₁ E * μ₂ F
+  r.ms = p.ms.sum q.ms ∧
+  ∀ E (_ : MeasurableSet[p.ms] E) F (_ : MeasurableSet[q.ms] F),
+    r.μ (E ∩ F) = p.μ E * q.μ F
 
 lemma PSpace.isIndependentProduct_def {r p q : PSpace Ω} :
   isIndependentProduct r p q ↔
