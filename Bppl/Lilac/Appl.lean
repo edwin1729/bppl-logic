@@ -6,6 +6,7 @@ Authors: Edwin Fernando
 
 import Mathlib
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
+
 /-! The probabilistic programming language without the observe/score primitive.
 As defined in Lilac.
 
@@ -128,10 +129,31 @@ notation "⟪" t "⟫" => Ty.den t
 
 @[reducible] def Ty.MeasurableEq (ty : Ty) : MeasurableEq ⟪ty⟫ :=
   match ty with
-  | prod ty₁ ty₂ => sorry
+  | prod ty₁ ty₂ =>
+    have := ty₁.MeasurableEq
+    have := ty₂.MeasurableEq
+    ⟨by
+      have : Set.diagonal (⟪ty₁⟫ × ⟪ty₂⟫) =
+        (fun p : (⟪ty₁⟫ × ⟪ty₂⟫) × (⟪ty₁⟫ × ⟪ty₂⟫) => (p.1.1, p.2.1)) ⁻¹' Set.diagonal ⟪ty₁⟫ ∩
+        (fun p : (⟪ty₁⟫ × ⟪ty₂⟫) × (⟪ty₁⟫ × ⟪ty₂⟫) => (p.1.2, p.2.2)) ⁻¹' Set.diagonal ⟪ty₂⟫ := by
+        ext ⟨⟨a₁, b₁⟩, ⟨a₂, b₂⟩⟩; simp [Set.diagonal, Prod.ext_iff]
+      rw [this]
+      exact MeasurableSet.inter
+        (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.fst) (measurable_snd.fst)))
+        (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.snd) (measurable_snd.snd)))⟩
   | bool => inferInstance
   | real => inferInstance
-  | exp n ty => sorry
+  | exp n ty =>
+    have := ty.MeasurableEq
+    ⟨by
+      have : Set.diagonal (Fin n → ⟪ty⟫) =
+        ⋂ i : Fin n, (fun p : (Fin n → ⟪ty⟫) × (Fin n → ⟪ty⟫) => (p.1 i, p.2 i)) ⁻¹' Set.diagonal ⟪ty⟫ := by
+        ext ⟨f, g⟩; simp [Set.diagonal, funext_iff]
+      rw [this]
+      exact MeasurableSet.iInter (fun i =>
+        measurableSet_diagonal.preimage (Measurable.prod
+          (measurable_pi_apply i |>.comp measurable_fst)
+          (measurable_pi_apply i |>.comp measurable_snd)))⟩
   | index => inferInstance
   | G ty => sorry
 
@@ -147,35 +169,23 @@ notation "⟪" t "⟫ᵐᵉ" => Ty.MeasurableEq t
   | div => ⟨fun (x,y) ↦ x / y, measurable_div⟩
   | pow => ⟨fun (x,y) ↦ x ^ y, measurable_pow⟩
 
-def foo (p : ℝ × ℝ) : Bool := p.1 < p.2
-
-lemma foop : Measurable (foo) := by
-  -- apply measurable_to_bool -- much simpler method using this
-  rw [Measurable]
-  intro t ht
-
-  have h : t = ∅ ∨ t = {true} ∨ t = {false} ∨ t = Set.univ := by
-    rcases em (true ∈ t) with ht' | ht' <;> rcases em (false ∈ t) with hf' | hf'
-    · right; right; right; ext b; cases b <;> simp [*]
-    · right; left; ext b; cases b <;> simp [*]
-    · right; right; left; ext b; cases b <;> simp [*]
-    · left; ext b; cases b <;> simp [*]
-  rcases h with rfl | rfl | rfl | rfl
-  · exact MeasurableSet.empty
-  · have : foo ⁻¹' {true} = {p : ℝ × ℝ | p.1 < p.2} := by ext p; simp [foo]
-    rw [this]
-    exact isOpen_lt continuous_fst continuous_snd |>.measurableSet
-  · have : foo ⁻¹' {false} = {p : ℝ × ℝ | p.1 < p.2}ᶜ := by ext p; simp [foo, not_lt]
-    rw [this]
-    exact (isOpen_lt continuous_fst continuous_snd).measurableSet.compl
-  · exact MeasurableSet.univ
-
--- surely it shouldn't be this hard to show that the comparison operators are measurable
--- Either generalise over all of them or make a tactic
 @[reducible] def Cmp.den : Cmp → (ℝ × ℝ) -m→ Bool
-  | lt => ⟨fun p ↦ p.1 < p.2, foop⟩
-  | le => ⟨fun p ↦ p.1 ≤ p.2, sorry⟩
-  | eq => ⟨fun p ↦ p.1 = p.2, sorry⟩
+  | lt => ⟨fun p ↦ p.1 < p.2, by
+    apply measurable_to_bool
+    have h := measurableSet_lt (α := ℝ) measurable_fst measurable_snd
+    convert h using 1
+    ext p; simp [decide_eq_true_eq]⟩
+  | le => ⟨fun p ↦ p.1 ≤ p.2, by
+    apply measurable_to_bool
+    have h := measurableSet_le (α := ℝ) measurable_fst measurable_snd
+    convert h using 1
+    ext p; simp [decide_eq_true_eq]⟩
+  | eq => ⟨fun p ↦ p.1 = p.2, by
+    apply measurable_to_bool
+    have h := @measurableSet_eq_fun _ ℝ _ _ inferInstance _ _ measurable_fst measurable_snd
+    convert h using 1
+    ext p; simp [decide_eq_true_eq]⟩
+
 
 instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with

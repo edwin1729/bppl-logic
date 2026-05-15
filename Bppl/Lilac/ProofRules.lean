@@ -245,11 +245,7 @@ lemma wp_frame {F : LProp} {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫
   -- and now feed these "outputs" from `wp_left` into wp_right (the goal).
   refine ⟨X, ↓(right Ω_fr_F_M'), (assoc_right Ω_fr_F_M'), μ', ?le_μ', calc_block, ?post_right_wp⟩
   case le_μ' =>
-    have : (↓(assoc_right Ω_fr_F_M')).toPSpace = (↓Ω_fr_F_M').toPSpace := by
-      rw [assoc_right_eq Ω_fr_F_M'] ; rfl
-    -- rw [this]
-    -- exact Ω_fr_F_M'_le_μ'
-    sorry
+    exact (assoc_right_eq Ω_fr_F_M').symm ▸ Ω_fr_F_M'_le_μ'
   case post_right_wp =>
     use Ω_F, Ω_M', (right Ω_fr_F_M')
 

@@ -94,20 +94,62 @@ lemma commute_over_equiv4 {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
 abbrev N_nil_I_borel (N : ℕ) := unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil)
 abbrev N_borel_I_borel (N : ℕ) := unSplitTri ((N_borel N) ×ₘ I_borel ×ₘ Inf_nil)
 
-lemma ff_N_nil_I_borel {N : ℕ} : FiniteFootprint (N_nil_I_borel N) := sorry
-lemma ff_N_borel_I_borel {N : ℕ} : FiniteFootprint (N_borel_I_borel N) := sorry
+/-
+this helper relates `unSplitTri` at `N` to `unSplitBi`
+at `N+1` by absorbing the middle `I`-coordinate into the
+finite (first) part.
+-/
+lemma unSplitTri_eq_unSplitBi_succ {N : ℕ}
+    (ms_N : MeasurableSpace (Fin N → I))
+    (ms_I : MeasurableSpace I) :
+    unSplitTri (ms_N ×ₘ ms_I ×ₘ Inf_nil) =
+    @unSplitBi (N + 1)
+      ((MeasurableSpace.comap (· ∘ Fin.castSucc) ms_N ⊔
+        MeasurableSpace.comap
+          (fun f => f (Fin.last N)) ms_I) ×ₘ
+        Inf_nil) := by
+          simp +decide [ unSplitTri, unSplitBi, MeasurableSpace.prod ];
+          congr! 2
 
-lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by sorry
-lemma N_borel_I_borel_le_Inf_borel (N : ℕ) : N_borel_I_borel N ≤ Inf_borel := by sorry
 
 /-- `FiniteFootprint` for an arbitrary sub-σ-algebra on the first `N` coordinates
 combined with `I_borel` on coordinate `N`. -/
 lemma ff_unSplitTri_I_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
-    FiniteFootprint (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) := sorry
-/-- The combined σ-algebra on first `N` coords + Borel on coord `N` is ≤ `Inf_borel`. -/
-lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
-    unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := sorry
+    FiniteFootprint (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) :=
+  ⟨N + 1, _, unSplitTri_eq_unSplitBi_succ ms I_borel⟩
 
+lemma ff_N_nil_I_borel {N : ℕ} : FiniteFootprint (N_nil_I_borel N) :=
+  ff_unSplitTri_I_borel (N_nil N)
+lemma ff_N_borel_I_borel {N : ℕ} : FiniteFootprint (N_borel_I_borel N) :=
+  ff_unSplitTri_I_borel (N_borel N)
+
+lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by
+  unfold N_nil_I_borel
+  refine' MeasurableSpace.comap_le_iff_le_map.mpr _
+  simp +decide [MeasurableSpace.prod,
+    MeasurableSpace.map]
+  exact MeasurableSpace.comap_le_iff_le_map.mpr
+    (measurable_snd.fst)
+
+lemma N_borel_I_borel_le_Inf_borel (N : ℕ) : N_borel_I_borel N ≤ Inf_borel := by
+  unfold N_borel_I_borel
+  simp +decide [N_borel, Inf_nil,
+    MeasurableSpace.prod]
+  constructor <;> intro s hs <;>
+    rcases hs with ⟨t, ht, rfl⟩
+  · exact measurable_pi_lambda _
+      (fun _ => measurable_pi_apply _) ht
+  · apply_rules [MeasurableSet.preimage, ht]
+    fun_prop
+
+/-- The combined σ-algebra on first `N` coords + Borel on coord `N` is ≤ `Inf_borel`. -/
+lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ}
+    (ms : MeasurableSpace (Fin N → I))
+    (hms : ms ≤ N_borel N) :
+    unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤
+      Inf_borel := by
+        refine' trans _ ( N_borel_I_borel_le_Inf_borel N );
+        apply_rules [ MeasurableSpace.comap_mono, sup_le_sup_right ]
 /-
 The second-first component of `splitTri n ω` equals `ω n`, the `n`-th coordinate.
 -/
@@ -128,13 +170,5 @@ end
 /-- The first component of `splitBi n ω` at index `i : Fin n` equals `ω ↑i`. -/
 @[simp]
 lemma splitBi_fst_apply (n : ℕ) (ω : ℕ → I) (i : Fin n) : (splitBi n ω).1 i = ω i := rfl
-
--- /-- A `unSplitBi` space at `n` coordinates embeds into one at `n_max ≥ n` coordinates
--- by precomposing with the restriction `Fin.castLE h`. -/
--- lemma unSplitBi_mono {n n_max : ℕ} (h : n ≤ n_max) (ms' : MeasurableSpace (Fin n → I)) :
---     unSplitBi (ms' ×ₘ Inf_nil) = @unSplitBi n_max (ms'.comap (· ∘ Fin.castLE h) ×ₘ Inf_nil) := by
---   simp only [unSplitBi, Inf_nil, MeasurableSpace.prod, MeasurableSpace.comap_bot, sup_bot_eq]
---   rw [← MeasurableSpace.comap_comp, ← MeasurableSpace.comap_comp, ← MeasurableSpace.comap_comp]
---   congr 1; funext ω i; simp [Function.comp]
 
 end HC
