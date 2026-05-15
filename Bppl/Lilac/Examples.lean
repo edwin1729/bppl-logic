@@ -38,7 +38,7 @@ abbrev half : Term [Ty.real] Ty.real.G :=
 
 abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨λ _ ↦ PUnit.unit, measurable_const⟩
 
-abbrev post1 : LProp := wp (unif1.den ∘ₚ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X WP.unif01_sem)
+abbrev post1 : LProp := wp (unif1.den ∘ₚ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
 
 lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ₚ (X ; nil)) = X := by rfl
 
@@ -55,7 +55,7 @@ notation:10 D ".ₘ1" => (measurableFun_fst ∘ₚ D)
 notation:10 D ".ₘ2" => (measurableFun_snd ∘ₚ D)
 
 abbrev post2 : LProp := wp (unif2.den ∘ₚ nil) (λ (Z : RV ⟪Ty.prod .real .real⟫) ↦
-  iprop((Z.ₘ1) ∼ WP.unif01_sem ∗ (Z.ₘ2) ∼ WP.unif01_sem))
+  iprop((Z.ₘ1) ∼ unif01_sem ∗ (Z.ₘ2) ∼ unif01_sem))
 
 lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_fst ∘ₚ ((var head.tail).pair (var head)).den ∘ₚ (Y ; X ; nil)) = X := by rfl
 lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_snd ∘ₚ ((var head.tail).pair (var head)).den ∘ₚ (Y ; X ; nil)) = Y := by rfl

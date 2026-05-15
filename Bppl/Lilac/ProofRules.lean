@@ -14,6 +14,7 @@ import Bppl.Lilac.Assertion
 import Bppl.Lilac.BI
 import Bppl.Lilac.Appl
 import Bppl.Lilac.WPUnifHelpers
+import Bppl.Lilac.MeasureProduct
 
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
@@ -270,7 +271,6 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
 
-
 lemma wp_meas {A : Ty} (Q : RV ⟪A⟫ → LProp) (μ : Measure ⟪A⟫) :
     iprop(∀ (X : RV ⟪A⟫), iprop(X ∼ μ -∗ Q X))
     ⊢ wp ⟨fun _ ↦ μ, measurable_const⟩ Q := by
@@ -381,10 +381,57 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
         r_pspace.μ (E ∩ F) = (↓Ω_pre).μ E * Ω_n.μ F := by
     -- The proof connects PSpace measures to underlying measures and applies
     -- wp_unif_measure_product_core from MeasureProduct.lean.
-    -- Due to complex PSpace/PCM infrastructure, this bridging step remains sorry'd.
-    -- The core mathematical fact (product measure factorization) IS proved in
-    -- wp_unif_measure_product_core.
-    sorry
+    intro E hE F hF
+    -- Decompose E: E = (fst ∘ splitBi n)⁻¹' A for some ms_pre-measurable A
+    have hE' : MeasurableSet[unSplitBi (ms_pre ×ₘ Inf_nil)] E := h_ms_pre ▸ hE
+    rw [unSplitBi_eq_comap_fst] at hE'
+    obtain ⟨A, hA_pre, rfl⟩ := hE'
+    -- Decompose F: F = (· n)⁻¹' B_I for some Borel B_I
+    have hF' : MeasurableSet[N_nil_I_borel n] F := hF
+    rw [N_nil_I_borel_eq_comap_coord] at hF'
+    obtain ⟨B_I, hB_I, rfl⟩ := hF'
+    -- ms_pre ≤ pi
+    have h_ms_pre_le : unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel :=
+      h_ms_pre ▸ hΩ_pre.1
+    have h_pi := ms_pre_le_pi_of_le_Inf_borel n ms_pre h_ms_pre_le
+    have hA_pi : @MeasurableSet _ MeasurableSpace.pi A := h_pi A hA_pre
+    -- r_pspace.μ (E ∩ F) = μ'.1 (E ∩ F) via trim
+    have hE_combined := pre_measurable_in_combined n ms_pre
+      (show MeasurableSet[unSplitBi (ms_pre ×ₘ Inf_nil)] _ from by
+        rw [unSplitBi_eq_comap_fst]; exact ⟨A, hA_pre, rfl⟩)
+    have hF_combined := coord_measurable_in_combined n ms_pre
+      (show MeasurableSet[N_nil_I_borel n] _ from by
+        rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
+    have h_r : r_pspace.μ ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) =
+        μ'.1 ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) :=
+      trim_measurableSet_eq (unSplitTri_I_borel_le_Inf_borel ms_pre)
+        (hE_combined.inter hF_combined)
+    -- (↓Ω_pre).μ E = μ.1 E via le_preserves_measure
+    have h_pre : (↓Ω_pre).μ ((Prod.fst ∘ splitBi n) ⁻¹' A) =
+        μ.1 ((Prod.fst ∘ splitBi n) ⁻¹' A) := by
+      exact MeasureOnSpace.le_preserves_measure hΩ_pre (h_ms_pre ▸ by
+        rw [unSplitBi_eq_comap_fst]; exact ⟨A, hA_pre, rfl⟩)
+    -- Ω_n.μ F = μ'.1 F via trim
+    have h_n : Ω_n.μ ((· n) ⁻¹' B_I) = μ'.1 ((· n) ⁻¹' B_I) := by
+      show μ'.1.trim (N_nil_I_borel_le_Inf_borel n) _ = μ'.1 _
+      exact trim_measurableSet_eq (N_nil_I_borel_le_Inf_borel n)
+        (by rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
+    -- Core: μ'.1 (E ∩ F) = μ.1 E * leb.1 F
+    have h_core := wp_unif_measure_product_core n μ hA_pi hB_I rfl rfl
+    -- leb.1 F = Ω_n.μ F  (since both equal volume B_I)
+    -- Use: Ω_n.μ = μ'.1.trim h, and trim_measurableSet_eq gives Ω_n.μ F = μ'.1 F
+    -- And μ'.1 F = leb.1 F by product measure marginal
+    -- μ'.1 F = leb.1 F: use wp_unif_measure_product_core with A = univ
+    have h_μ'_eq_leb : μ'.1 ((· n) ⁻¹' B_I) =
+        (Measure.infinitePiNat (fun _ => (volume : Measure I))) ((· n) ⁻¹' B_I) := by
+      have h_univ := wp_unif_measure_product_core n μ
+        (@MeasurableSet.univ _ MeasurableSpace.pi) hB_I
+        (show @Set.univ HC = (Prod.fst ∘ splitBi n) ⁻¹' Set.univ from by simp) rfl
+      simp only [Set.univ_inter, Set.preimage_univ] at h_univ
+      rwa [show μ.1 (@Set.univ HC) = 1 from @measure_univ _ Inf_borel μ.1 μ.2, one_mul] at h_univ
+    rw [h_r, h_core, h_pre]
+    congr 1
+    rw [← h_μ'_eq_leb, ← h_n]
   -- Assemble the independent product proof
   have h_indep : r_pspace =ᵢ (↓Ω_pre).1 ⊕ᵢ Ω_n.1 :=
     ⟨h_sum_eq.symm, h_measure_product⟩
@@ -452,7 +499,6 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) fun v ↦ Measure.dirac v)
         = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac v)) := by
           congr 1
-          sorry
       _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac v) := by
           rw [Measure.bind_const]
           simp [measure_univ]
@@ -470,10 +516,18 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     -- Q X via wand elimination
     dsimp only [BIBase.forall, BIBase.sForall] at lhs
     have h_wand := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩
-
-    have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) :=
-      sorry
-      -- WP.X_dist_helper n leb rfl
+    have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) := by
+      -- Unfold X to get (fun ω ↦ ↑(ω n)) and Ω_n.μ to μ'.1.trim
+      show unif01_sem = @Measure.bind _ _ (N_nil_I_borel n) _
+        (μ'.1.trim (N_nil_I_borel_le_Inf_borel n))
+        (fun ω ↦ Measure.dirac (↑(ω n) : ℝ))
+      rw [bind_dirac_trim_eq_map_orig (HC.coordProj_measurable n) μ'.1
+          (N_nil_I_borel_le_Inf_borel n)]
+      letI : MeasurableSpace (Fin n → I) := MeasurableSpace.pi
+      have hμ' : (↑μ' : Measure (ℕ → I)) =
+          Measure.map (↑(splitBi n).symm) ↑(μ_k.prod leb) := by
+        rw [ProbabilityMeasure.toMeasure_map]
+      exact unif01_eq_map_coord_prod n μ_k leb rfl μ' hμ'
     have X_meas : @Measurable HC ⟪Ty.real⟫ Ω_n.ms _ X := HC.coordProj_measurable n
     have h_qx := h_wand Ω_n ((Pcm.comm Ω Ω_n) ▸ Ω') ⟨X_meas, X_dist⟩
     suffices h : ↓((Pcm.comm Ω Ω_n) ▸ Ω') = ↓Ω' by exact h ▸ h_qx

@@ -3,8 +3,16 @@ Copyright (c) 2026 Edwin Fernando. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
-import Mathlib
+import Mathlib.CategoryTheory.Countable
+import Mathlib.MeasureTheory.Constructions.UnitInterval
+import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
+import Mathlib.MeasureTheory.Measure.RegularityCompacts
+import Mathlib.Probability.ProductMeasure
+import Mathlib.Topology.EMetricSpace.Paracompact
+import Mathlib.Topology.UniformSpace.Uniformizable
+
 import Bppl.Lilac.HilbertCube
+import Bppl.Lilac.Appl
 
 /-! # Helper lemmas for `wp_unif` (B.21)
 
@@ -15,16 +23,10 @@ the Iris proof mode imports used in `ProofRules.lean`.
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
-open HC MeasureTheory unitInterval
+open HC MeasureTheory unitInterval Appl
 
 noncomputable section
 
-/-- The semantic (native lean) uniform distribution in the interval [0,1].
-
-This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
-via the subtype coercion `↑ : I → ℝ`. -/
-def WP.unif01_sem : Measure ℝ :=
-  Measure.map Subtype.val (MeasureTheory.MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
 
 /-! ### `Measure.bind ∘ dirac` on a trimmed measure equals `Measure.map` on the original -/
 
@@ -91,14 +93,14 @@ lemma WP.X_dist_helper (n : ℕ)
     (h_leb : leb.1 = Measure.infinitePiNat (fun _ =>
       (MeasureTheory.MeasureSpace.volume : Measure I))) :
     let μ_trim := leb.1.trim (N_nil_I_borel_le_Inf_borel n)
-    WP.unif01_sem =
+    unif01_sem =
       @Measure.bind (ℕ → I) ℝ (N_nil_I_borel n) _
         μ_trim (fun ω ↦ Measure.dirac (↑(ω n) : ℝ)) := by
   intro μ_trim
   rw [bind_dirac_trim_eq_map_orig (HC.coordProj_measurable n) leb.1
     (N_nil_I_borel_le_Inf_borel n)]
   -- Now: unif01_sem = @Measure.map ... Inf_borel _ (fun ω ↦ ↑(ω n)) leb.1
-  show WP.unif01_sem = @Measure.map (ℕ → I) ℝ Inf_borel _ (fun ω ↦ (↑(ω n) : ℝ)) leb.1
+  show unif01_sem = @Measure.map (ℕ → I) ℝ Inf_borel _ (fun ω ↦ (↑(ω n) : ℝ)) leb.1
   rw [coord_val_eq_comp]
   rw [show @Measure.map (ℕ → I) ℝ Inf_borel _ (Subtype.val ∘ (· n)) leb.1 =
     Measure.map Subtype.val (@Measure.map (ℕ → I) I Inf_borel _ (· n) leb.1) from

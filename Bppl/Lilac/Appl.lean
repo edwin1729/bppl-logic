@@ -191,6 +191,12 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
 -- may used through a type class and still be made reducible? Investigate
 -- and at the same time I struggle to get type class inference to notice the M
 
+/-- The semantic (native lean) uniform distribution in the interval [0,1].
+This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
+via the subtype coercion `↑ : I → ℝ`. -/
+def unif01_sem : Measure ℝ :=
+  Measure.map Subtype.val (MeasureTheory.MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
+
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
@@ -216,7 +222,7 @@ to give an element of a measurable space -/
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | cmp op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | unif01 => ⟨fun _ ↦ uniformOn (Set.Icc (0: ℝ) 1), measurable_const⟩
+  | unif01 => ⟨fun _ ↦ unif01_sem, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
   | vect f => ⟨fun env ↦ (fun n ↦ (f n).den.1 env), sorry⟩
