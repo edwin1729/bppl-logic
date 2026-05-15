@@ -364,9 +364,13 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     show (↓Ω_pre).ms.sum Ω_n.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
     rw [h_ms_pre, sum_eq_sup, sup_comm]
     exact commute_over_equiv4 ms_pre
+
+  have ms_pre_le_Inf_borel : unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := by
+    have h_le : unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel := h_ms_pre ▸ hΩ_pre.1
+    exact unSplitTri_I_borel_le_Inf_borel ms_pre (ms_pre_le_pi_of_le_Inf_borel n ms_pre h_le)
   -- Construct the PSpace witness for the independent product
   let r_pspace : PSpace HC :=
-    PSpace.mk'' μ' (unSplitTri_I_borel_le_Inf_borel ms_pre)
+    PSpace.mk'' μ' ms_pre_le_Inf_borel
   -- The measure product condition: under μ', sets from disjoint coordinates
   -- factor as a product. This is the key measure-theoretic fact:
   -- μ' = (μ_k × leb) ∘ (splitBi n)⁻¹ is a product measure, and sets measurable
@@ -398,10 +402,8 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     have hF_combined := coord_measurable_in_combined n ms_pre
       (show MeasurableSet[N_nil_I_borel n] _ from by
         rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
-    have h_r : r_pspace.μ ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) =
-        μ'.1 ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) :=
-      trim_measurableSet_eq (unSplitTri_I_borel_le_Inf_borel ms_pre)
-        (hE_combined.inter hF_combined)
+    have h_r : r_pspace.μ ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) = μ'.1 ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) :=
+      trim_measurableSet_eq ms_pre_le_Inf_borel (hE_combined.inter hF_combined)
     -- (↓Ω_pre).μ E = μ.1 E via le_preserves_measure
     have h_pre : (↓Ω_pre).μ ((Prod.fst ∘ splitBi n) ⁻¹' A) =
         μ.1 ((Prod.fst ∘ splitBi n) ⁻¹' A) := by
@@ -480,13 +482,13 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
       -- PSpace.mk' μ' = ⟨⟨Inf_borel, μ'.1⟩, μ'.2⟩
       -- (PSpace.mk' μ').trim le = ⟨⟨ms_combined, μ'.1.trim le⟩, ...⟩ = r_pspace
       -- And trim_le gives the result.
-      have : r_pspace = (PSpace.mk' μ').trim (unSplitTri_I_borel_le_Inf_borel ms_pre) := by
+      have : r_pspace = (PSpace.mk' μ').trim ms_pre_le_Inf_borel := by
         apply PSpace.ext_ms
         · rfl
         · intro E hE
           rfl
       rw [this]
-      exact PSpace.trim_le (unSplitTri_I_borel_le_Inf_borel ms_pre)
+      exact PSpace.trim_le ms_pre_le_Inf_borel
 
     rw [← h_Ω_post_eq_r, eq_Ω_post] at h_r_le
     exact h_r_le
