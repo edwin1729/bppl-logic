@@ -412,7 +412,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
   --right_post
   have Ω' : ✓'(Ω ⋆ Ω_n) := Krm_helper.right Ω_post
   -- Ω_post_alt: from assoc of PSp applied on Ω_post
-  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') := Krm_helper.assoc_right Ω_pre Ω_post
+  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') := Krm_helper.assoc_right Ω_post
   -- eq_Ω_post: the two parenthesizations give the same result
   have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt :=
     Krm_helper.get_assoc_eq' Ω_fr Ω Ω_n Ω_pre Ω_post Ω' Ω_post_alt

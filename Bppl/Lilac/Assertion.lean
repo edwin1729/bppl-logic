@@ -62,10 +62,24 @@ namespace LProp
 variable {ds : List Ty} {rs : List Ty} {A : Ty}
 
 def own [MeasurableSpace α] (E : RV α) : LProp :=
-  ⟨fun Ω ↦ Measurable[Ω.ms] E, sorry⟩
+  ⟨fun Ω ↦ Measurable[Ω.ms] E, by
+    intro σ₁ σ₂ hle hm
+    exact hm.mono hle.1 le_rfl ⟩
 
 def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
-  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = Measure.bind Ω.μ (fun ω ↦ Measure.dirac (E ω)) , sorry⟩
+  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = Measure.bind Ω.μ (fun ω ↦ Measure.dirac (E ω)),
+  -- monotonicity proof
+  by
+    intro σ₁ σ₂ hle ⟨hm, hbind⟩
+    change σ₁.toPSpace ≤ σ₂.toPSpace at hle
+    obtain ⟨hms, hmu⟩ := hle
+    refine ⟨hm.mono hms le_rfl, ?_⟩
+    rw [hbind]; simp only [Measure.bind]; congr 1
+    rw [hmu, Measure.cast_eq_self]
+    have : (fun ω ↦ Measure.dirac (E.1 ω)) = Measure.dirac ∘ E.1 := rfl
+    rw [this, Measure.map_map (Measure.measurable_dirac.comp hm) (measurable_id.mono hms le_rfl)]
+    simp
+  ⟩
 
 -- TODO
 -- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
@@ -80,8 +94,16 @@ def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
     MeasurableSet[ℱ] F ∧ μ F = 1 ∧
     -- (F ∪ ⟨X₁, X₂⟩ᶠ⁻¹' ·) '' (⟪A⟫ᵐ.prod ⟪A⟫ᵐ).MeasurableSet' ⊆ ℱ.MeasurableSet'
     ∀ x :Set (⟪A⟫ × ⟪A⟫), MeasurableSet x →
-      MeasurableSet[ℱ] (F ∪ (fun ω ↦ (E₁ ω, E₂ ω))⁻¹' x)
-    , sorry⟩
+      MeasurableSet[ℱ] (F ∪ (fun ω ↦ (E₁ ω, E₂ ω))⁻¹' x),
+    -- monotonicity proof
+    by
+    intro σ₁ σ₂ hle ⟨hF_meas, hF_prob, hF_union⟩
+    change σ₁.toPSpace ≤ σ₂.toPSpace at hle
+    obtain ⟨hms, hmu⟩ := hle
+    refine ⟨hms _ hF_meas, ?_, fun x hx => hms _ (hF_union x hx)⟩
+    rw [hmu] at hF_prob
+    rwa [Measure.map_apply (measurable_id.mono hms le_rfl) hF_meas, Set.preimage_id] at hF_prob
+  ⟩
 
 def PSpace.mk' {Ω : Type*} {ms : MeasurableSpace Ω} (μ : ProbabilityMeasure Ω) : PSpace Ω :=
   ⟨⟨_, μ.1⟩, μ.2⟩
@@ -109,7 +131,17 @@ def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac v))) =
     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧
   (Q X).1 Ω'
-  , sorry⟩
+  ,
+  -- monotonicity proof
+  by
+  intro σ₁ σ₂ hle hσ₁ Ω_fr Ω_pre μ hpre_le
+  -- From σ₁ ≤ σ₂ and ✓'(Ω_fr ⋆ σ₂), get ✓'(Ω_fr ⋆ σ₁) with ↓ ≤ ↓
+  obtain ⟨Ω_pre₁, hle_pre⟩ := Krm_helper.le_mul_mono_right' hle Ω_pre
+  have hpre_le' : (↓Ω_pre₁).toPSpace ≤ PSpace.mk' μ :=
+    (show (↓Ω_pre₁).toPSpace ≤ (↓Ω_pre).toPSpace from hle_pre).trans hpre_le
+  exact hσ₁ Ω_fr Ω_pre₁ μ hpre_le'
+
+  ⟩
 
 open Iris.BI
 
