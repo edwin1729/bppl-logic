@@ -260,9 +260,24 @@ lemma wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term
   sorry
 
 lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
-      (M : Term rs A.G) (N : Term (A::rs) B.G) :
-    wp (M.den ∘ₚ D) (fun X ↦ (wp (N.den ∘ₚ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₚ D) Q :=
-  sorry
+    (M : Term rs A.G) (N : Term (A::rs) B.G)
+    : wp (M.den ∘ₚ D) (fun X ↦ (wp (N.den ∘ₚ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₚ D) Q := by
+  rintro Ω wp_outer Ω_fr Ω_pre μ Ω_pre_le_μ
+  obtain ⟨X, Ω_X, Ω_fr_X, μX, Ω_fr_X_le_μX, calc_outer, wp_inner⟩ :=
+    wp_outer Ω_fr Ω_pre μ Ω_pre_le_μ
+  obtain ⟨Y, Ω_Y, Ω_fr_Y, μY, Ω_fr_Y_le_μY, calc_inner, post_cond⟩ :=
+    wp_inner Ω_fr Ω_fr_X μX Ω_fr_X_le_μX
+  refine ⟨Y, Ω_Y, Ω_fr_Y, μY, Ω_fr_Y_le_μY, ?calc_left, post_cond⟩
+
+  calc
+    -- unfold denotation of syntactic bind into semantic bind
+    _ = μ.1.bind (λ ω ↦ (M.den (D ω)).bind (λ x ↦ (N.den ((x, D ω))))) := by
+      -- note `N.den ⋯` returns `y`
+
+      sorry
+    -- associativity of bind
+    -- _ = (μ.1.bind (M.den ∘ₚ D)).bind (λ x ↦ (N.den ((x, D ω))))) := sorry
+    _ = _ := sorry
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
