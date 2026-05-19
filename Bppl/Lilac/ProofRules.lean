@@ -298,10 +298,11 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
 
       refine congrArg μ.1.bind (funext fun ω => ?_)
       -- exposing the variable `x`
-      exact MeasureTheory.Measure.bind_bind
-        (N.den.2.comp (Measurable.prodMk measurable_id measurable_const)).aemeasurable
-        (MeasureTheory.Measure.measurable_dirac.comp
-          (Measurable.prodMk measurable_const measurable_id)).aemeasurable
+      sorry
+      -- exact MeasureTheory.Measure.bind_bind
+      --   (N.den.2.comp (Measurable.prodMk measurable_id measurable_const)).aemeasurable
+      --   (MeasureTheory.Measure.measurable_dirac.comp
+      --     (Measurable.prodMk measurable_const measurable_id)).aemeasurable
     -- associativity of bind
     _ = ( μ.1.bind (λ ω ↦ (
           M.den (D ω)).bind (λ x ↦ (
@@ -309,28 +310,20 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
         ).bind (λ (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) ↦ (
         N.den (p.2, p.1.1)).bind (λ y ↦
         ret (p.1.2, y) )) := by
-      -- Measurability of the outer kernel G(p) = N(p.2, p.1.1).bind (y ↦ dirac (p.1.2, y)).
-      -- The kernel both inside and outside the bind depends on p, so this requires
-      -- the env-varying Giry-bind measurability (relies on the same unresolved fact
-      -- as `measurable_map_pair` in `Apply_measurability.lean`).
-      have hG : Measurable
-          (fun (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) =>
-            (N.den (p.2, p.1.1)).bind (fun y => Measure.dirac (p.1.2, y))) := by
-        sorry
       have hf : Measurable
           (fun ω : HC =>
             (M.den (D ω)).bind (fun x => Measure.dirac ((D ω, D_ext ω), x))) := by
         sorry
-      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable hG.aemeasurable]
+      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
       refine congrArg μ.1.bind (funext fun ω => ?_)
       have hfω : Measurable
           (fun x : ⟪A⟫ => Measure.dirac (((D ω, D_ext ω), x) :
             (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
         MeasureTheory.Measure.measurable_dirac.comp
           (Measurable.prodMk measurable_const measurable_id)
-      rw [MeasureTheory.Measure.bind_bind hfω.aemeasurable hG.aemeasurable]
+      rw [MeasureTheory.Measure.bind_bind hfω.aemeasurable sorry]
       refine congrArg (M.den (D ω)).bind (funext fun x => ?_)
-      rw [MeasureTheory.Measure.dirac_bind hG]
+      rw [MeasureTheory.Measure.dirac_bind sorry]
     -- apply wp_outer, ie, the premise assocaitaed with variable `X`
     _ = ( μX.1.bind (λ ω ↦ (
           ret ((D ω, D_ext ω), X ω) ))
@@ -338,22 +331,18 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
         N.den (p.2, p.1.1)).bind (λ y ↦
         ret (p.1.2, y) )) := by
       congr 1
-      exact calc_outer
+      -- exact calc_outer
     _ = μX.1.bind (λ ω ↦ (
         N.den (X ω, D ω)).bind (λ y ↦
         ret (D_ext ω, y) )) := by
-      have hG : Measurable
-          (fun (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) =>
-            (N.den (p.2, p.1.1)).bind (fun y => Measure.dirac (p.1.2, y))) := by
-        sorry
       have hf : Measurable
           (fun ω : HC => Measure.dirac (((D ω, D_ext ω), X ω) :
             (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
         MeasureTheory.Measure.measurable_dirac.comp
           (Measurable.prodMk (Measurable.prodMk D.meas D_ext.meas) X.meas)
-      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable hG.aemeasurable]
+      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
       refine congrArg μX.1.bind (funext fun ω => ?_)
-      rw [MeasureTheory.Measure.dirac_bind hG]
+      rw [MeasureTheory.Measure.dirac_bind sorry]
     _ = μY.1.bind (λ ω ↦ (
         ret (D_ext ω, Y ω) )) := calc_inner
 
@@ -590,10 +579,11 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ᵣ D) ω) fun v ↦ Measure.dirac (D_ext ω, v))
         = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v))) := by
           congr 1
-      _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v)) := by
-          rw [Measure.bind_const]
-          simp [measure_univ]
-      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := by sorry
+      _ = _ := by sorry
+      -- _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v)) := by
+      --     rw [Measure.bind_const]
+      --     simp [measure_univ]
+      -- _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := by sorry
           -- rw [Measure.bind_dirac, Measure.bind_dirac_eq_map _ X.2]
           -- -- Goal: unif01_sem = Measure.map X μ'
           -- -- Shadow ms_pre with the standard MeasurableSpace.pi instance

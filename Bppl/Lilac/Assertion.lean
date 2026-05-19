@@ -89,21 +89,8 @@ def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
 def PSpace.mk' {Ω : Type*} {ms : MeasurableSpace Ω} (μ : ProbabilityMeasure Ω) : PSpace Ω :=
   ⟨⟨_, μ.1⟩, μ.2⟩
 
--- consider just taking another PSp instead of μ, if it might simplify proof later
--- the old wp with D_ext. Let's see if we actually need D_ext...
--- def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
---   ⟨fun Ω ↦
---   ∀ Ω_fr : PSpace HC, ∀ μ : ProbabilityMeasure HC,
---   Ω_fr ⋆ Ω ≤ some (PSpace.mk' μ) → ∀ {rs' : List Ty},
---   ∀ D' : RV (List.TProd (⟪·⟫) rs'),
---   ∃ X : RV ⟪A⟫, ∃ Ω' : PSpace HC,
---   ∃ μ' : ProbabilityMeasure HC, Ω_fr ⋆ Ω' ≤ some (PSpace.mk' μ) ∧
---   (Measure.bind μ.1 (fun ω ↦ Measure.bind (M ω) (fun v ↦ Measure.dirac (D' ω, v)))) =
---     (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D' ω, X ω))) ∧
---   (Q X).1 Ω'
---   , sorry⟩
 open HC in
-def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
+def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
   ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D : RV α),

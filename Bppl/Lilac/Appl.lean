@@ -172,9 +172,7 @@ via the subtype coercion `↑ : I → ℝ`. -/
 def unif01_sem : Measure ℝ :=
   Measure.map Subtype.val (MeasureTheory.MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
 
--- instance {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
---     : Coe (α -m→ (Measure β)) (Kernel α β) where
---   coe f := ⟨f.1, f.2⟩
+namespace Kernel
 
 instance {α : Type*} [MeasurableSpace α] {ty : Ty}
     : Coe (α -m→ ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
@@ -183,6 +181,12 @@ instance {α : Type*} [MeasurableSpace α] {ty : Ty}
 instance {α : Type*} [MeasurableSpace α] {ty : Ty}
     : Coe (Kernel α ⟪ty⟫) (α -m→ ⟪Ty.G ty⟫) where
   coe f := ⟨f.1, f.2⟩
+
+-- instance {α : Type*} [MeasurableSpace α] {ty : Ty}
+--     : Coe (RV ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
+--   coe f := ⟨f.1, f.2⟩
+
+end Kernel
 
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
