@@ -105,22 +105,21 @@ open HC in
 def wp (M : RV (Measure ⟪A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
   ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : @ProbabilityMeasure HC Inf_borel,
-    (↓Ω_pre).1 ≤ PSpace.mk' μ →
+    (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D : RV α),
   ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
-  (μ.1.bind (fun ω ↦ (M ω).bind (fun v ↦ Measure.dirac v))) =
-    (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (X ω))) ∧
+  (μ.1.bind (fun ω ↦ (M ω).bind (fun v ↦ Measure.dirac (D ω, v)))) =
+    (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D ω, X ω))) ∧
   (Q X).1 Ω'
   ,
   -- monotonicity proof
   by
-  intro σ₁ σ₂ hle hσ₁ Ω_fr Ω_pre μ hpre_le
+  intro σ₁ σ₂ hle hσ₁ Ω_fr Ω_pre μ hpre_le _ _ D
   -- From σ₁ ≤ σ₂ and ✓'(Ω_fr ⋆ σ₂), get ✓'(Ω_fr ⋆ σ₁) with ↓ ≤ ↓
   obtain ⟨Ω_pre₁, hle_pre⟩ := Krm_helper.le_mul_mono_right' hle Ω_pre
   have hpre_le' : (↓Ω_pre₁).toPSpace ≤ PSpace.mk' μ :=
     (show (↓Ω_pre₁).toPSpace ≤ (↓Ω_pre).toPSpace from hle_pre).trans hpre_le
-  exact hσ₁ Ω_fr Ω_pre₁ μ hpre_le'
-
+  exact hσ₁ Ω_fr Ω_pre₁ μ hpre_le' D
   ⟩
 
 open Iris.BI
