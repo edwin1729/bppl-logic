@@ -55,6 +55,9 @@ def FiniteFootprint (ms : MeasurableSpace (ℕ → I)) : Prop :=
 
 end
 end HC
+
+open MeasureTheory (Measure)
+open ProbabilityTheory (Kernel)
 variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
 
 structure MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β] where
@@ -72,9 +75,10 @@ abbrev MeasurableFun.fst (f : α -m→ β × γ) : α -m→ β := ⟨_ , Measura
 
 abbrev MeasurableFun.snd (f : α -m→ β × γ) : α -m→ γ := ⟨_ , Measurable.snd f.2⟩
 
-instance instCoeMeasurableFun {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
-    : CoeFun (α -m→ β) (fun _ => α → β) where
+instance instFunLikeMeasurableFun {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    : FunLike (α -m→ β) α β where
   coe f := f.toFun
+  coe_injective' f g h := by cases f; cases g; congr
 
 abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
@@ -85,8 +89,11 @@ structure RV (β : Type*) [msβ : MeasurableSpace β] extends MeasurableFun HC �
   /-- Finite footprint -/
   ff : HC.FiniteFootprint (msβ.comap toFun)
 
-instance instCoeFunRV {β : Type*} [MeasurableSpace β] : CoeFun (RV β) (fun _ => HC → β) where
+instance instFunLikeRV {β : Type*} [MeasurableSpace β] : FunLike (RV β) HC β where
   coe D := D.toFun
+  coe_injective' f g h := by
+    cases f; cases g; congr
+    exact DFunLike.coe_injective h
 
 instance instCoeRV {β : Type*} [MeasurableSpace β] : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
@@ -102,7 +109,7 @@ abbrev RV.prod [MeasurableSpace α] [MeasurableSpace β]
   ⟩
 notation x " ;; " xs => RV.prod x xs
 
-def RV.comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
+abbrev RV.comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
   ⟨⟨g ∘ f, Measurable.comp g.meas f.meas⟩, sorry⟩
 notation g " ∘ᵣ " f => RV.comp g f
 

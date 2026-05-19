@@ -54,11 +54,12 @@ def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
     change σ₁.toPSpace ≤ σ₂.toPSpace at hle
     obtain ⟨hms, hmu⟩ := hle
     refine ⟨hm.mono hms le_rfl, ?_⟩
-    rw [hbind]; simp only [Measure.bind]; congr 1
-    rw [hmu, Measure.cast_eq_self]
-    have : (fun ω ↦ Measure.dirac (E.1 ω)) = Measure.dirac ∘ E.1 := rfl
-    rw [this, Measure.map_map (Measure.measurable_dirac.comp hm) (measurable_id.mono hms le_rfl)]
-    simp
+    rw [hbind, hmu,
+        Measure.bind_dirac_eq_map _ (hm.mono hms le_rfl),
+        Measure.bind_dirac_eq_map _ hm,
+        Measure.cast_eq_self,
+        Measure.map_map hm (measurable_id.mono hms le_rfl)]
+    rfl
   ⟩
 
 -- TODO

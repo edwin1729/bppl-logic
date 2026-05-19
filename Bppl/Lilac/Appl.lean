@@ -172,25 +172,42 @@ via the subtype coercion `↑ : I → ℝ`. -/
 def unif01_sem : Measure ℝ :=
   Measure.map Subtype.val (MeasureTheory.MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
 
+-- instance {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+--     : Coe (α -m→ (Measure β)) (Kernel α β) where
+--   coe f := ⟨f.1, f.2⟩
+
+instance {α : Type*} [MeasurableSpace α] {ty : Ty}
+    : Coe (α -m→ ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
+  coe f := ⟨f.1, f.2⟩
+
+instance {α : Type*} [MeasurableSpace α] {ty : Ty}
+    : Coe (Kernel α ⟪ty⟫) (α -m→ ⟪Ty.G ty⟫) where
+  coe f := ⟨f.1, f.2⟩
+
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
   | ret X => ⟨fun env ↦ .dirac (X.den env),
       MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
-  -- the arguemnt `X` is the extra term in `N`'s context
-  -- sorry notes: `Measure.measurable_bind'` is not exactly what we want since
-  -- `(fun X ↦ N.den.1 (X, env))` uses `env`
-  | bind M N => ⟨fun env ↦ Measure.bind (M.den env) (fun X ↦ N.den (X, env)), sorry⟩
+  -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
+  -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
+  -- to use its deep measure theoretic results for constructing measurable functions
+  | @bind ctx ty₁ ty₂ M N =>
+    letI T := List.TProd (⟪·⟫) ctx
+    letI head : Kernel T (T × T) := Kernel.copy (List.TProd (⟪·⟫) ctx)
+    letI mid : Kernel (T × T) (⟪ty₁⟫ × T) := Kernel.parallelComp M.den Kernel.id
+    letI tail : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := Kernel.mk N.den.1 N.den.2
+    tail.comp (mid.comp head)
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
   | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
   | T => ⟨fun env ↦ true, measurable_const⟩
   | F => ⟨fun env ↦ false, measurable_const⟩
   | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
-      -- This is just a slightly finicky sorry, to show the function translating from bool to Prop
-      -- is Measurable. Just need that as an additional lemma
-      Measurable.ite (by sorry) M.den.2 N.den.2⟩
+      -- the function translating from bool to Prop is `Measurable`
+      -- by `measurableSet_singleton true`
+      Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
   | flip p hp => ⟨fun _ ↦ (bernoulli p hp).toMeasure, measurable_const⟩
   | r x => ⟨fun _ ↦ x, measurable_const⟩
   | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
