@@ -277,12 +277,6 @@ noncomputable instance instKrm : Krm (PSpace α) where
 
 end PSpace
 
--- The Hilbert cube instantiation is used in giving the semantics (satisfiability relation)
-abbrev HC := ℕ → Set.Icc (0:ℝ) 1
-
-instance : Inhabited HC where
-  default := fun _ ↦ 0
-
 open HC
 
 structure PSp extends (PSpace HC) where

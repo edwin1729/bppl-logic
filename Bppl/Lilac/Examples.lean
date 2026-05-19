@@ -36,11 +36,11 @@ abbrev half : Term [Ty.real] Ty.real.G :=
   )
 
 
-abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨λ _ ↦ PUnit.unit, measurable_const⟩
+abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, sorry⟩
 
-abbrev post1 : LProp := wp (unif1.den ∘ₚ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
+abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
 
-lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ₚ (X ; nil)) = X := by rfl
+lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ᵣ (X ;; nil)) = X := by rfl
 
 theorem unif1_spec : iprop(⊢ post1) := by
   iapply wp_bind
@@ -51,14 +51,14 @@ theorem unif1_spec : iprop(⊢ post1) := by
   rw [hrw]
   iexact H
 
-notation:10 D ".ₘ1" => (measurableFun_fst ∘ₚ D)
-notation:10 D ".ₘ2" => (measurableFun_snd ∘ₚ D)
+notation:10 D ".ₘ1" => (measurableFun_fst ∘ᵣ D)
+notation:10 D ".ₘ2" => (measurableFun_snd ∘ᵣ D)
 
-abbrev post2 : LProp := wp (unif2.den ∘ₚ nil) (λ (Z : RV ⟪Ty.prod .real .real⟫) ↦
+abbrev post2 : LProp := wp (unif2.den ∘ᵣ nil) (λ (Z : RV ⟪Ty.prod .real .real⟫) ↦
   iprop((Z.ₘ1) ∼ unif01_sem ∗ (Z.ₘ2) ∼ unif01_sem))
 
-lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_fst ∘ₚ ((var head.tail).pair (var head)).den ∘ₚ (Y ; X ; nil)) = X := by rfl
-lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_snd ∘ₚ ((var head.tail).pair (var head)).den ∘ₚ (Y ; X ; nil)) = Y := by rfl
+lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_fst ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = X := by rfl
+lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_snd ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = Y := by rfl
 
 theorem unif2_spec : iprop(⊢ post2) := by
   rw [post2]

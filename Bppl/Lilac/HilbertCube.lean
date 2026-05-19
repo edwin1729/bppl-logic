@@ -1,5 +1,13 @@
+/-
+Copyright (c) 2026 Edwin Fernando. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Edwin Fernando
+-/
+
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 import Mathlib.Topology.UnitInterval
+
+import Bppl.Lilac.Std
 
 namespace HC
 -- equivalence of generated-σ-algebras
@@ -19,32 +27,6 @@ lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) :
 
 -- notation:25 α " ≃ᵐ[ " msα " , " msβ  " ] " β => @MeasurableEquiv α β msα msβ
 
--- scoped[HilbertCube] infixr:25 " ×ₘ " => MeasurableSpace.prod
-scoped infixr:60 " ×ₘ " => MeasurableSpace.prod
-
-noncomputable def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ → I) :=
-  (MeasurableEquiv.piCongrLeft (fun _ => I) (finSumNatEquiv n)).symm.trans
-  (MeasurableEquiv.sumPiEquivProdPi (fun _ => I))
-
-abbrev unSplitBi {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
-  ms.comap (splitBi n)
-
-noncomputable def splitOne : (ℕ → I) ≃ᵐ I × (ℕ → I) :=
-  (MeasurableEquiv.piCongrLeft (fun _ => I)
-    (Equiv.natEquivNatSumPUnit.trans (Equiv.sumComm ℕ Unit))).trans
-  ((MeasurableEquiv.sumPiEquivProdPi (fun _ => I)).trans
-  ((MeasurableEquiv.funUnique Unit I).prodCongr (MeasurableEquiv.refl _)))
-
-abbrev unSplitOne (ms : MeasurableSpace (I × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
-  ms.comap splitOne
-
-noncomputable def splitTri (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × I × (ℕ → I) :=
-  (splitBi n).trans ((MeasurableEquiv.refl _).prodCongr splitOne)
-
-abbrev unSplitTri {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × I × (ℕ → I)))
-    : MeasurableSpace (ℕ → I) :=
-  ms.comap (splitTri n)
-
 -- noncomputable def split (n : ℕ) (ms₂ : MeasurableSpace ((Fin n → I) × (ℕ → I))) :
 --     (ℕ → I) ≃ᵐ[ms₂.comap (splitEquiv n), ms₂] ((Fin n → I) × (ℕ → I)) where
 --   toEquiv := (splitEquiv n).toEquiv
@@ -53,22 +35,6 @@ abbrev unSplitTri {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × I × (ℕ �
 --     rw [comap_comp, show (splitEquiv n : (ℕ → I) → _) ∘ (splitEquiv n).symm = id from
 --       funext (splitEquiv n).apply_symm_apply, comap_id])
 
--- standard borel measurable spaces
-abbrev Inf_borel : MeasurableSpace (ℕ → I) := inferInstance
-abbrev N_borel (N : ℕ) : MeasurableSpace (Fin N → I) := inferInstance
--- the measurabe space with only univ and empty
-abbrev Inf_nil : MeasurableSpace (ℕ → I) := ⊥
-abbrev N_nil (N : ℕ) : MeasurableSpace (Fin N → I) := ⊥
-abbrev I_nil : MeasurableSpace I := ⊥
-abbrev I_borel : MeasurableSpace I := inferInstance
-
-/-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
-In the rest of the coordinates, its the `univ` set. -/
-def FiniteFootprint (ms : MeasurableSpace (ℕ → I)) : Prop :=
-  ∃ n : ℕ, ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ Inf_nil)
-  -- ∀ F : Set HC, MeasurableSet[ms] F →
-  --   ∃ F' : Set (Fin n → Set.Icc (0:ℝ) 1),
-  --     F = HC.splitMeasEquiv n ⁻¹' (F' ×ˢ (@Set.univ HC))
 
 -- now we look at some lemmas of the shape we want. Specifically
 -- (borel, nil, nil) ⊔ (nil, borel, nil) = (borel, borel, nil)
@@ -148,7 +114,7 @@ lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ}
     (hms : ms ≤ N_borel N) :
     unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤
       Inf_borel := by
-        refine' trans _ ( N_borel_I_borel_le_Inf_borel N );
+        refine' trans _ ( N_borel_I_borel_le_Inf_borel N )
         apply_rules [ MeasurableSpace.comap_mono, sup_le_sup_right ]
 /-
 The second-first component of `splitTri n ω` equals `ω n`, the `n`-th coordinate.

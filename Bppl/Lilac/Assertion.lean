@@ -27,26 +27,6 @@ set_option relaxedAutoImplicit true
 open MeasureTheory Appl
 open List (TProd)
 
-abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
-notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
-namespace MeasurableFunc
-variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-
-def comp (g : β -m→ γ) (f : α -m→ β)
-  : α -m→ γ := ⟨g.1 ∘ f.1, Measurable.comp g.2 f.2⟩
-
-notation g " ∘ₚ " f => comp g f
-
-def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
-  ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
-
-notation x " ; " xs => fun_prod x xs
-
-end MeasurableFunc
-
-/-- Todo add finite footprint condition -/
-abbrev RV (α : Type) [MeasurableSpace α] := @MeasurableFun HC α MeasurableSpace.pi _
-
 open Iris.Instances.Intuitionistic
 open Iris.Instances.Intuitionistic.instBIBase
 

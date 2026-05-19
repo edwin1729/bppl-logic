@@ -170,7 +170,7 @@ lemma transfer_dist (E₁ E₂ : RV ⟪A⟫) (ν : MeasureTheory.Measure ⟪A⟫
 clarification: `own(F[E₁], F[E₂])` refers to owning the rv which takes an input and applies it to
 both the function `F[E₁]` and `F[E₂]`. -/
 lemma congruence {B : Ty} (F : RV ⟪A⟫ → RV ⟪B⟫) (E₁ E₂ : RV ⟪A⟫) :
-    iprop(own ⟨F E₁, F E₂⟩ʳ ∧ E₁ ≗ E₂ ⊢ F E₁ ≗ F E₂) := by
+    iprop(own (F E₁ ;; F E₂) ∧ E₁ ≗ E₂ ⊢ F E₁ ≗ F E₂) := by
 
   rintro Ω ⟨h_own, ⟨meas_E₁₂, full_E₁₂, hE₁₂⟩⟩
 
@@ -256,12 +256,12 @@ lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
 
 lemma wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term rs A) :
-    iprop((Q (M.den ∘ₚ D)) ⊢ wp ((Term.ret M).den ∘ₚ D) Q) := by
+    iprop((Q (M.den ∘ᵣ D)) ⊢ wp ((Term.ret M).den ∘ᵣ D) Q) := by
   sorry
 
 lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     (M : Term rs A.G) (N : Term (A::rs) B.G)
-    : wp (M.den ∘ₚ D) (fun X ↦ (wp (N.den ∘ₚ (X ; D)) Q)) ⊢ wp ((M.bind N).den ∘ₚ D) Q := by
+    : wp (M.den ∘ᵣ D) (fun X ↦ (wp (N.den ∘ᵣ (X ;; D)) Q)) ⊢ wp ((M.bind N).den ∘ᵣ D) Q := by
   rintro Ω wp_outer Ω_fr Ω_pre μ Ω_pre_le_μ
   obtain ⟨X, Ω_X, Ω_fr_X, μX, Ω_fr_X_le_μX, calc_outer, wp_inner⟩ :=
     wp_outer Ω_fr Ω_pre μ Ω_pre_le_μ
@@ -276,18 +276,18 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
 
       sorry
     -- associativity of bind
-    -- _ = (μ.1.bind (M.den ∘ₚ D)).bind (λ x ↦ (N.den ((x, D ω))))) := sorry
+    -- _ = (μ.1.bind (M.den ∘ᵣ D)).bind (λ x ↦ (N.den ((x, D ω))))) := sorry
     _ = _ := sorry
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
 
-lemma wp_meas {A : Ty} (Q : RV ⟪A⟫ → LProp) (μ : Measure ⟪A⟫) :
-    iprop(∀ (X : RV ⟪A⟫), iprop(X ∼ μ -∗ Q X))
-    ⊢ wp ⟨fun _ ↦ μ, measurable_const⟩ Q := by
-  rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, n, ff⟩ lhs Ω_fr Ω_pre μ hΩ_pre
-  -- let X : RV ⟪A⟫ := ⟨fun ω ↦ ω n, sorry⟩
-  sorry
+-- lemma wp_meas {A : Ty} (Q : RV ⟪A⟫ → LProp) (μ : Measure ⟪A⟫) :
+--     iprop(∀ (X : RV ⟪A⟫), iprop(X ∼ μ -∗ Q X))
+--     ⊢ wp ⟨fun _ ↦ μ, measurable_const⟩ Q := by
+--   rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, n, ff⟩ lhs Ω_fr Ω_pre μ hΩ_pre
+--   -- let X : RV ⟪A⟫ := ⟨fun ω ↦ ω n, sorry⟩
+--   sorry
 
 
 open unitInterval
@@ -347,7 +347,7 @@ open HC in
 open MeasureTheory in
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
-    ⊢ wp ((@Term.unif01 rs).den ∘ₚ D) Q := by
+    ⊢ wp ((@Term.unif01 rs).den ∘ᵣ D) Q := by
   rintro Ω lhs Ω_fr Ω_pre μ hΩ_pre
   -- Extract the finite footprint: n is the number of coordinates used
   obtain ⟨n, ff_pre⟩ := (↓Ω_pre).finite_footprint
@@ -360,7 +360,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
       rw [hsome] at this; simpa using this.symm
     exact (PSpace.le_of_isIndependentProduct_right
       (PSpace.isIndependentProduct_of_binop_eq_some hval)).1
-  let X : RV ⟪Ty.real⟫ := ⟨fun ω ↦ ω n, by fun_prop⟩
+  let X : RV ⟪Ty.real⟫ := ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
   -- Step 2: Constructions that need default MeasurableSpace (before ms_k shadows it)
   let leb : @ProbabilityMeasure HC Inf_borel :=
     ⟨Measure.infinitePiNat (fun _ => (volume : Measure I)), inferInstance⟩
@@ -509,21 +509,21 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     exact h_r_le
 
   case bind_eq =>
-    calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ₚ D) ω) fun v ↦ Measure.dirac v)
+    calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ᵣ D) ω) fun v ↦ Measure.dirac v)
         = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac v)) := by
           congr 1
       _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac v) := by
           rw [Measure.bind_const]
           simp [measure_univ]
-      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := by
-          rw [Measure.bind_dirac, Measure.bind_dirac_eq_map _ X.2]
-          -- Goal: unif01_sem = Measure.map X μ'
-          -- Shadow ms_pre with the standard MeasurableSpace.pi instance
-          letI : MeasurableSpace (Fin n → I) := MeasurableSpace.pi
-          have hμ' : (↑μ' : Measure (ℕ → I)) =
-              Measure.map (↑(splitBi n).symm) ↑(μ_k.prod leb) := by
-            rw [ProbabilityMeasure.toMeasure_map]
-          exact unif01_eq_map_coord_prod n μ_k leb rfl μ' hμ'
+      _ = (Measure.bind μ' (fun ω ↦ Measure.dirac (X ω))) := by sorry
+          -- rw [Measure.bind_dirac, Measure.bind_dirac_eq_map _ X.2]
+          -- -- Goal: unif01_sem = Measure.map X μ'
+          -- -- Shadow ms_pre with the standard MeasurableSpace.pi instance
+          -- letI : MeasurableSpace (Fin n → I) := MeasurableSpace.pi
+          -- have hμ' : (↑μ' : Measure (ℕ → I)) =
+          --     Measure.map (↑(splitBi n).symm) ↑(μ_k.prod leb) := by
+          --   rw [ProbabilityMeasure.toMeasure_map]
+          -- exact unif01_eq_map_coord_prod n μ_k leb rfl μ' hμ'
 
   case postcond =>
     -- Q X via wand elimination

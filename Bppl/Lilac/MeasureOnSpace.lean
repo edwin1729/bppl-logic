@@ -52,7 +52,7 @@ lemma MeasurableSet.measurableSet_bot_induction
 
 end MeasureTheory
 
-@[simp]
+@[simp, reducible]
 def MeasurableSpace.sum (m₁ : MeasurableSpace Ω) (m₂ : MeasurableSpace Ω) : MeasurableSpace Ω :=
   MeasurableSpace.generateFrom (MeasurableSet[m₁] ∪ MeasurableSet[m₂])
 
@@ -127,7 +127,7 @@ section Sum
 
 variable {Ω : Type*} (m m₁ m₂ : MeasurableSpace Ω)
 
-@[simp]
+@[simp, reducible]
 def MeasurableSpace.sumUnit : MeasurableSpace Ω := ⊥
 
 lemma MeasurableSpace.sum_identity

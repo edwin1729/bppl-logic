@@ -6,6 +6,7 @@ Authors: Edwin Fernando
 
 import Mathlib
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Bppl.Lilac.HilbertCube
 
 /-! The probabilistic programming language without the observe/score primitive.
 As defined in Lilac.
@@ -32,42 +33,6 @@ theorem List.TProd.measurable_get [∀ i, MeasurableSpace (β i)] (mem : Member 
   induction mem with
   | head => exact measurable_fst
   | tail _ ih => exact ih.comp measurable_snd
-
-abbrev MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β]
-  := {f: α → β // Measurable f}
-
-notation α " -m→ " β => MeasurableFun α β
-
-/- Bundled measurable functions -/
-section MeasurableFun
-variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-
-instance instCoeMeasurableFun : CoeFun (α -m→ β) (fun _ => α → β) where
-  coe f := f.val
-
-abbrev measurableFun_fst : (α × β) -m→ α := ⟨_ , measurable_fst⟩
-
-abbrev measurableFun_snd : (α × β) -m→ β := ⟨_ , measurable_snd⟩
-
-abbrev MeasurableFun.fst (f : α -m→ β × γ) : α -m→ β := ⟨_ , Measurable.fst f.2⟩
-
-abbrev MeasurableFun.snd (f : α -m→ β × γ) : α -m→ γ := ⟨_ , Measurable.snd f.2⟩
-
-abbrev MeasurableFun.prod [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-    (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
-  ⟨fun r ↦ (f r, g r), Measurable.prod f.2 g.2⟩
-
-notation " ⟨ " f " , " g " ⟩ʳ " => MeasurableFun.prod f g
-
--- TODO: The below two don't actually work, because of clash with indexing notation.
-open MeasureTheory in
-/-- Optionally provide non-standard domain σ-algebra -/
-notation α " -m[ " σ₁  "]→ " β => {f: α → β // Measurable[σ₁] f}
-open MeasureTheory in
-/-- Optionally provide non-standard (co)domain σ-algebra -/
-notation α " -m[ " σ₁ ", " σ₂ "]→ " β => {f: α → β // Measurable[σ₁, σ₂] f}
-
-end MeasurableFun
 
 open NNReal MeasureTheory PMF Measurable ProbabilityTheory
 namespace Appl
@@ -211,34 +176,34 @@ def unif01_sem : Measure ℝ :=
 to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
-  | ret X => ⟨fun env ↦ .dirac (X.den.1 env),
+  | ret X => ⟨fun env ↦ .dirac (X.den env),
       MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
   -- the arguemnt `X` is the extra term in `N`'s context
   -- sorry notes: `Measure.measurable_bind'` is not exactly what we want since
   -- `(fun X ↦ N.den.1 (X, env))` uses `env`
-  | bind M N => ⟨fun env ↦ Measure.bind (M.den.1 env) (fun X ↦ N.den.1 (X, env)), sorry⟩
-  | pair M N => ⟨fun env ↦ (M.den.1 env, N.den.1 env), Measurable.prod M.den.2 N.den.2⟩
-  | fst M => ⟨fun env ↦ (M.den.1 env).fst, Measurable.fst M.den.2⟩
-  | snd M => ⟨fun env ↦ (M.den.1 env).snd, Measurable.snd M.den.2⟩
+  | bind M N => ⟨fun env ↦ Measure.bind (M.den env) (fun X ↦ N.den (X, env)), sorry⟩
+  | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
+  | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
+  | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
   | T => ⟨fun env ↦ true, measurable_const⟩
   | F => ⟨fun env ↦ false, measurable_const⟩
-  | ite P M N => ⟨fun env ↦ if P.den.1 env then M.den.1 env else N.den.1 env,
+  | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
       -- This is just a slightly finicky sorry, to show the function translating from bool to Prop
       -- is Measurable. Just need that as an additional lemma
       Measurable.ite (by sorry) M.den.2 N.den.2⟩
   | flip p hp => ⟨fun _ ↦ (bernoulli p hp).toMeasure, measurable_const⟩
   | r x => ⟨fun _ ↦ x, measurable_const⟩
-  | arith op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),
+  | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | cmp op M N => ⟨fun env ↦ op.den.1 (M.den.1 env, N.den.1 env),
+  | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | unif01 => ⟨fun _ ↦ unif01_sem, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
-  | vect f => ⟨fun env ↦ (fun n ↦ (f n).den.1 env), sorry⟩
+  | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩
   | @index _ len _ N M => ⟨fun env ↦
-    let n : ℕ := (N.den.1 env)
-    if h: n < len then (M.den.1 env) ⟨n, h⟩ else default, sorry⟩
+    let n : ℕ := (N.den env)
+    if h: n < len then (M.den env) ⟨n, h⟩ else default, sorry⟩
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   | @«for» _ ty n Mᵢ Mₛ =>
     let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
