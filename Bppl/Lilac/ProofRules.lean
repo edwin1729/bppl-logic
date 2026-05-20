@@ -216,8 +216,8 @@ lemma congruence {B : Ty} (F : RV ⟪A⟫ → RV ⟪B⟫) (E₁ E₂ : RV ⟪A�
 
 end Aseq
 namespace WP
-open Appl PMF NNReal List
-open Iris.BI.BIBase LProp Iris.BI Appl List Appl
+open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel
+open Iris.BI.BIBase LProp Iris.BI
 -- importing all of MeasureTheory imports an operator ∗ conflicting with the separating conjunct
 open MeasureTheory (Measure)
 open MeasureTheory.Measure (dirac)
@@ -262,16 +262,7 @@ lemma wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term
     iprop((Q (M.den ∘ᵣ D)) ⊢ wp ((Term.ret M).den ∘ᵣ D) Q) := by
   rintro Ω wp Ω_fr Ω_pre μ Ω_pre_le_μ _ _ D_ext
   use (M.den ∘ᵣ D), Ω, Ω_pre, μ, Ω_pre_le_μ
-  constructor
-  · refine congrArg μ.1.bind (funext fun ω => ?_)
-    nth_rewrite 1 [Term.den]
-    dsimp [RV.comp]
-    apply Measure.dirac_bind
-    -- simp_rw [← Measure.dirac_prod_dirac]
-    -- apply Measurable.prod
-    -- exact Measurable.prod measurable_const Measure.measurable_dirac
-    measurability
-  · exact wp
+  exact ⟨rfl, wp⟩
 
 lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     (M : Term rs A.G) (N : Term (A::rs) B.G)
@@ -292,13 +283,13 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
         M.den (D ω)).bind (λ x ↦ (
         N.den (x, D ω)).bind (λ y ↦
         Measure.dirac (D_ext ω, y) ))) := by
-      nth_rewrite 1 [Appl.Term.den]
-      simp_rw [RV.comp]
-      dsimp
-
-      refine congrArg μ.1.bind (funext fun ω => ?_)
-      -- exposing the variable `x`
       sorry
+      -- nth_rewrite 1 [Appl.Term.den]
+      -- simp_rw [RV.comp]
+      -- dsimp
+
+      -- refine congrArg μ.1.bind (funext fun ω => ?_)
+      -- exposing the variable `x`
       -- exact MeasureTheory.Measure.bind_bind
       --   (N.den.2.comp (Measurable.prodMk measurable_id measurable_const)).aemeasurable
       --   (MeasureTheory.Measure.measurable_dirac.comp
@@ -331,6 +322,7 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
         N.den (p.2, p.1.1)).bind (λ y ↦
         ret (p.1.2, y) )) := by
       congr 1
+      sorry
       -- exact calc_outer
     _ = μX.1.bind (λ ω ↦ (
         N.den (X ω, D ω)).bind (λ y ↦
@@ -344,7 +336,8 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
       refine congrArg μX.1.bind (funext fun ω => ?_)
       rw [MeasureTheory.Measure.dirac_bind sorry]
     _ = μY.1.bind (λ ω ↦ (
-        ret (D_ext ω, Y ω) )) := calc_inner
+        ret (D_ext ω, Y ω) )) := sorry --calc_inner
+  sorry
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure

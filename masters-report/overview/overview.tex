@@ -1,4 +1,4 @@
-\textbf{Contributions}
+\section{Contributions}
 \begin{itemize}
 \item We provide the first complete implementation of a probabilistic separation logic.
 Specifically Lilac is formalised in the Lean theorem prover complete with both soundness proof and
@@ -39,3 +39,39 @@ significant program logic lives.
 
 Expressive tactic-based reasoning about programs is developed through Lean meta-programming. 
 \end{itemize}
+
+\section{Motivation}
+\emph{Here we give an informal account of what probabilistic programs are and why we would care to use them}
+A Probabilistic programming language is not an established or general paradigm of programming such as Functional or Imperative programming.
+Most generally probabilistic programs are simply programs which have a \texttt{sample} construct for sampling from probability distributions,
+and optionally, an \texttt{observe} for specifying a new distribution given an old distribution and some newly observed data.
+
+Statisticians use languages such as Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican}, to build complex statistical models
+succinctly using the expressivity of a programming language. Note that here, a model is simply a probability distribution over some quantity of
+interest, take for instance the probability of a 3d structure being correct for the given protein sequence, (other examples may come from
+weather forecasting, medical diagnosis, economics, statistical mechanics etc).
+"Running" this code corresponds to running a simulation of the model, where we can get answers such as the mean or variance, or just samples
+(sample protein structure to test in a lab in the example).
+
+What distinguishes a probabilistic programming language is that it decouples the specification of a statistical model from the algorithm for
+its simulation (henceforth called probabilistic inference). Inference algorithms are often highly optimised and specialised to the specific model
+and the interpreter of a PPLs attempts to make the best choice/combination of inference algorithms for the given code (model), relieving
+the user of this additional work.
+
+So in other words PPLs are a layer of abstraction which sits between a statistical model and the inference algorithms which simulate it.
+This abstraction unlocks the verification of correctness properties of the statistical model, which is the main topic of this report.
+
+\subsection{Probabilistic Programs in the wild}
+1) Cryptography -> we're not building a statistical model here... what's going on?
+2)
+\subsection{}
+
+Importantly, probabilistic programming decouples the specification of a model from its calculation:
+The specification is the source code, obtained by composing distributions \texttt{sample} and
+\texttt{observe} operations. The calculation is from the inference algorithms which  
+
+Statisticians use languages such as Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican}, to build complex statistical models
+succinctly using the expressivity of a programming language.
+
+this paradigm code represents statistical models which are use for simulation and prediction in complex systems  
+Some examples of such languages include Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican} 

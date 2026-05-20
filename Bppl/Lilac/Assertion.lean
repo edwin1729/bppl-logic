@@ -24,11 +24,10 @@ set_option relaxedAutoImplicit true
 /-!
 -/
 
-open MeasureTheory Appl
+open Appl MeasureTheory MeasureTheory.Measure ProbabilityTheory ProbabilityTheory.Kernel
 open List (TProd)
 
-open Iris.Instances.Intuitionistic
-open Iris.Instances.Intuitionistic.instBIBase
+open Iris.Instances.Intuitionistic Iris.Instances.Intuitionistic.instBIBase
 
 /-- Lilac propositions -/
 abbrev LProp := IProp PSp
@@ -89,6 +88,9 @@ def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
 def PSpace.mk' {Ω : Type*} {ms : MeasurableSpace Ω} (μ : ProbabilityMeasure Ω) : PSpace Ω :=
   ⟨⟨_, μ.1⟩, μ.2⟩
 
+noncomputable abbrev toKer [MeasurableSpace α] (X : RV α) : Kernel HC α  :=
+  ⟨(dirac ∘ X.toFun), by fun_prop⟩
+
 open HC in
 def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
@@ -96,8 +98,9 @@ def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
     (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D : RV α),
   ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
-  (μ.1.bind (fun ω ↦ (M ω).bind (fun v ↦ Measure.dirac (D ω, v)))) =
-    (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D ω, X ω))) ∧
+  -- (μ.1.bind (fun ω ↦ (M ω).bind (fun v ↦ Measure.dirac (D ω, v)))) =
+  --   (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D ω, X ω))) ∧
+  (toKer D ×ₖ M) ∘ₘ μ = (toKer D ×ₖ toKer X) ∘ₘ μ' ∧
   (Q X).1 Ω'
   ,
   -- monotonicity proof

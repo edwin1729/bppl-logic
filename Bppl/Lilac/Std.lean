@@ -65,6 +65,9 @@ structure MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β
   toFun : α → β
   meas: Measurable toFun
 
+@[fun_prop]
+lemma measurable_MeasurableFun (f : MeasurableFun α β) : Measurable f.toFun := f.meas
+
 notation α " -m→ " β => MeasurableFun α β
 
 abbrev measurableFun_fst : (α × β) -m→ α := ⟨_ , measurable_fst⟩

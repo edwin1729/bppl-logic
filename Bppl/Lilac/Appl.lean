@@ -34,7 +34,7 @@ theorem List.TProd.measurable_get [∀ i, MeasurableSpace (β i)] (mem : Member 
   | head => exact measurable_fst
   | tail _ ih => exact ih.comp measurable_snd
 
-open NNReal MeasureTheory PMF Measurable ProbabilityTheory
+open NNReal MeasureTheory PMF Measurable ProbabilityTheory ProbabilityTheory.Kernel
 namespace Appl
 -- Lilac A.1 and A.2 (appendix)
 inductive Ty where
@@ -197,12 +197,7 @@ to give an element of a measurable space -/
   -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
   -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
   -- to use its deep measure theoretic results for constructing measurable functions
-  | @bind ctx ty₁ ty₂ M N =>
-    letI T := List.TProd (⟪·⟫) ctx
-    letI head : Kernel T (T × T) := Kernel.copy (List.TProd (⟪·⟫) ctx)
-    letI mid : Kernel (T × T) (⟪ty₁⟫ × T) := Kernel.parallelComp M.den Kernel.id
-    letI tail : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := Kernel.mk N.den.1 N.den.2
-    tail.comp (mid.comp head)
+  | bind M N => (Kernel.mk N.den.1 N.den.2) ∘ₖ (M.den ×ₖ Kernel.id)
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
   | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
