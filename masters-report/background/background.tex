@@ -11,6 +11,12 @@ bayesian perspective underpinned by Baye's law which describes how we update a p
 
 A simple example taken from \cite{prob-semantics} is reproduced below to show how 
 
+\section{bayesian updates}
+\label{sec:bayes}
+This section can be skipped if the comparison between PPLs which support vs do not support the observe construct is not of interest. The logic being
+formalised in this project does not support the observe construct.
+
+
 \Todo{example of bus frequency on weekends vs weekdays}
 
 \Todo{State Baye's law through the example}
@@ -30,8 +36,8 @@ A measure on a measurable space is a function
  $\mu : \Sigma_\Omega \rightarrow [0, \infty]$. 
 
 A probability measure on the other hand is more restrictive: $\mu : \Sigma_\Omega \rightarrow [0, 1]$.
-This is essentially providing a probability density or probability mass function for the set of events
-$\Sigma_\Omega$. A similar but more general notion than what a measure gives us, is a random variable: a measurable
+It gives the probability of an event $E \in \Sigma\_\Omega$ ocurring. 
+A similar but more general notion than what a measure gives us, is a random variable: a measurable
 function between two measurable spaces. I say "more general notion", since using the identity measurable function
 yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \xrightarrow{m} (\Omega_2, \mathcal{G})$
 $f : \Omega_1  \xrightarrow{m} \Omega_2$ is well defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
@@ -41,7 +47,24 @@ A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\O
 In order for this to always be well defined we require the following measurability to be satisfied by all measurable functions:
 $\forall G \in \mathcal{G}, f^{-1}(G) \in \Sigma_\Omega$.
 
-\Todo{Define lebesgue integration}
+A Lebesgue integral is a generalisation of the standard (Reimann) integral. Intuitively the lebesgue and reimann integral will coincide on the spaces such as $\mathbb{R}$,
+where the domain of integration is continuous. The lebesgue integral relaxes that requirement. The lesbesgue integral of a measurable function $f : \Omega \rightarrow [0, \infty]$
+with respect to a measure $\mu : \Sigma_\Omega \rightarrow [0, \infty] $ is a number defined by:
+
+\[
+\int_{\Omega} f\,d\mu := \sup \left\{
+\sum_{i=1}^{n} f(\omega_i)\,\mu(U_i)
+\;\middle|\;
+\{U_i \in \Sigma_\Omega\}_{i=1}^{n} \text{ disjoint cover of } \Omega
+\right\}.
+\]
+
+To get an intuition remember that integrals are supposed to add the values of function by breaking the domain up into infinitesimal pieces.
+Observe that the integral is a weighted sum of $f(\omega)$, weighted by the measure. The integral is iterating over the entire space
+by picking some choice of measurable disjoint sets whose union is the $\Omega$ (disjoint cover of $\Omega$). And for each measurable set ($U_i$) it picks a representative
+point $\omega$ evaluates f on $\omega$ and weights it by how large the set is ($\mu U_i)$. The supremum and infimum together enforce that the chosen disjoint
+cover is chosen as finely (small measure) as possible.
+
 
 % \subsection{Pi-lambda theorem}
 
@@ -55,9 +78,12 @@ $\forall G \in \mathcal{G}, f^{-1}(G) \in \Sigma_\Omega$.
 \section{Semantics of Probabilistic Programs}
 Staton provided a compositional semantics for first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
 validation of inference algorithms, etc. The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
-are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. BaSL uses exactly Staton's
-semantics. Note that supporting bayesian updates, involves the constructs \texttt{observe} and \texttt{normalize} in the language. We will present here the
-Staton's semantics.
+are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. So in the following, we present
+the relevant excerpt of the semantics.
+
+% BaSL uses exactly Staton's
+% semantics. Note that supporting bayesian updates, involves the constructs \texttt{observe} and \texttt{normalize} in the language. We will present here the
+% Staton's semantics.
 The key contribution of the paper is the introduction of \texttt{s-finite kernels}, motivated by validating a basic commutativity property that programmers expect.
 Specifically:
 \begin{figure}[h]
@@ -83,6 +109,10 @@ when neither x is free in u nor y is free in t. Another benefit of this semantic
 in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
 as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
 s-finite kernels denote open programs and s-finite measures denote closed programs.
+
+% In Lilac due to the absence of bayesian updates we do not need to work
+At this point it is important to disseminate the difference between Lilac's lack of bayesian updates (call this APPL) and the more general language with
+bayesian updates (call this BPPL). As justified in the \ref{sec:bayes}, it is necessary to work with (unnormalised) measures when 
 
 \subsection{Types in BPPL}
 The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 

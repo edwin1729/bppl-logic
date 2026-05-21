@@ -1,30 +1,30 @@
 \chapter{Formalisation of Lilac}
-Here I present the current progress in the formalisation of Lilac, and how I went about it. I divide it into 2 parts
-Initial work which was mostly measure theoretic, and recent work which is more structured.
-As in any project its best to get to the most uncertain parts of it first, to minimise its risk. I think I have somewhat
-intuitively followed this principle in my formalisation so far, also meaning its full of \texttt{sorry}s.
-However the shape of the formalisation
-of Lilac is reasonably clear and I was able to identify some noteworthy problems which show up in the formalisation.
+% Here I present the current progress in the formalisation of Lilac, and how I went about it. I divide it into 2 parts
+% Initial work which was mostly measure theoretic, and recent work which is more structured.
+% As in any project its best to get to the most uncertain parts of it first, to minimise its risk. I think I have somewhat
+% intuitively followed this principle in my formalisation so far, also meaning its full of \texttt{sorry}s.
+% However the shape of the formalisation
+% of Lilac is reasonably clear and I was able to identify some noteworthy problems which show up in the formalisation.
 
-The repository can be found on \href{https://github.com/edwin1729/bppl-logic}{GitHub}: It contains most of the syntax and semantics of both the language and program logic for it. 
-These can be regarded as the "data" parts (as opposed to "proof" parts) of the formalisation. There was much consideration (and confusion) in modelling
-both language and logic in a principled manner. We want a representations for free variables and contexts where we don't go out of bounds by construction.
-The approach is inspired by Dependent de Bruijn Indices \cite{cpdt} which also shows how types/propositions and terms in the language/logic are translated consistently
-into lean types and terms repsectively when taking the denotation.
+% The repository can be found on \href{https://github.com/edwin1729/bppl-logic}{GitHub}: It contains most of the syntax and semantics of both the language and program logic for it. 
+% These can be regarded as the "data" parts (as opposed to "proof" parts) of the formalisation. There was much consideration (and confusion) in modelling
+% both language and logic in a principled manner. We want a representations for free variables and contexts where we don't go out of bounds by construction.
+% The approach is inspired by Dependent de Bruijn Indices \cite{cpdt} which also shows how types/propositions and terms in the language/logic are translated consistently
+% into lean types and terms repsectively when taking the denotation.
 
-The goal with defining these, data parts is to be able to, using MoSeL, reimplement the case studies
-provided in the Lilac paper in an ergonomic manner (with tactical support), with the proofs of soundness of the logic itself being left as \texttt{sorry}.
-The "proof" parts are mostly incomplete, with the proof of unitarity of the
-unital element of the KRM being almost complete, being a first milestone (as it involves proof of corollaries of the $\pi$-$\lambda$-theorem)
+% The goal with defining these, data parts is to be able to, using MoSeL, reimplement the case studies
+% provided in the Lilac paper in an ergonomic manner (with tactical support), with the proofs of soundness of the logic itself being left as \texttt{sorry}.
+% The "proof" parts are mostly incomplete, with the proof of unitarity of the
+% unital element of the KRM being almost complete, being a first milestone (as it involves proof of corollaries of the $\pi$-$\lambda$-theorem)
 
-As a brief reflection on the difference in formalisation on the maths and computer science sides, in my limited experience,
-I do think in this project (computer science) I do need to think of multiple things at once and papers generally disseminate
-dependencies more clearly without depending as heavily on the reader to morph and modify lemmas as required. However
-the objects in Lilac are so unconventional from the measure theory in mathlib, that it requires inventing some things from
-scratch and quite challenging. This is ideal for my goals of understanding how to use a dependent type theory for formalisation. 
-As such \ref{pi-lambda} talking about formalisation specific issues. But \ref{dependent-store}
-talks about something more conceptual in Lilac! (My pivot towards the aim of a more theoretical contribution is that
-I feel I have gotten enough Knowledge of Lean from formalising Lilac)
+% As a brief reflection on the difference in formalisation on the maths and computer science sides, in my limited experience,
+% I do think in this project (computer science) I do need to think of multiple things at once and papers generally disseminate
+% dependencies more clearly without depending as heavily on the reader to morph and modify lemmas as required. However
+% the objects in Lilac are so unconventional from the measure theory in mathlib, that it requires inventing some things from
+% scratch and quite challenging. This is ideal for my goals of understanding how to use a dependent type theory for formalisation. 
+% As such \ref{pi-lambda} talking about formalisation specific issues. But \ref{dependent-store}
+% talks about something more conceptual in Lilac! (My pivot towards the aim of a more theoretical contribution is that
+% I feel I have gotten enough Knowledge of Lean from formalising Lilac)
 
 % \section{Measure spaces as a dependent type}
 % \label{paired-prob-space}

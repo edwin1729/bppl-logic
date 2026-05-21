@@ -1,3 +1,4 @@
+\chapter{Overview}
 \section{Contributions}
 \begin{itemize}
 \item We provide the first complete implementation of a probabilistic separation logic.
@@ -59,19 +60,39 @@ and the interpreter of a PPLs attempts to make the best choice/combination of in
 the user of this additional work.
 
 So in other words PPLs are a layer of abstraction which sits between a statistical model and the inference algorithms which simulate it.
-This abstraction unlocks the verification of correctness properties of the statistical model, which is the main topic of this report.
+This abstraction unlocks the verification of correctness properties of the statistical model, which led to the development of program
+logics for reasoning about PPLs. This will be the main topic of this report.
 
-\subsection{Probabilistic Programs in the wild}
-1) Cryptography -> we're not building a statistical model here... what's going on?
-2)
-\subsection{}
 
-Importantly, probabilistic programming decouples the specification of a model from its calculation:
-The specification is the source code, obtained by composing distributions \texttt{sample} and
-\texttt{observe} operations. The calculation is from the inference algorithms which  
+\subsection{Discrete vs Continuous distributions}
+First let us define what discrete and general (continuous) PPLs are. A discrete PPL does not allow specifying a probability distribution
+over $\mathbb{R}$. This is achieved most straightforwardly by not including a type corresponding to $\mathbb{R}$ in the syntax of a PPL.
+A general PPL will have a type corresponding to $\mathbb{R}$. This seemingly small detail has significant consequences on the semantics 
+of a PPL which in turn dictates the complexity of program logics for such a language. This dichotomy largely exists due to difficulties
+with semantics of continuous PPLs. Take for example that a semantics for higher order PPLs was given by \citep{prob-semantics} within the decade.
+% inventing \emph{Quasi-borel space} as an alternative 
 
-Statisticians use languages such as Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican}, to build complex statistical models
-succinctly using the expressivity of a programming language.
+However, all the PPLs above are continuous. Indeed PPLs are made only relevant when working with continuous distributions,
+as the remove the difficulty of working with the probabilistic inference algorithms. Much less sophistication is required in the inference algorithms
+for discrete algorithms, so discrete PPLs are not of much interest. So why are programs logics for discrete PPLs such as \citep{bluebell} and \cite{lohse} important?
 
-this paradigm code represents statistical models which are use for simulation and prediction in complex systems  
-Some examples of such languages include Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican} 
+\subsection{Probabilistic programs in the wild}
+In the most general sense a probabilistic program is just any program which samples from a distribution. Support for this
+can be found in the standard libraries of every major programming language, such as Python, C++ or Java. 
+Some of critical applications manipulating discrete distributions, where formal verification is desirable is Cryptography \cite{} and
+differential privacy \cite{}. In fact one of the first major applications of probabilistic \emph{separation} logic is being pursued
+in the formalisation of \citep{bluebell} to prove soundness of Zero Knowledge Proof Systems (subfield of Cryptography).
+
+% 1) Cryptography -> we're not building a statistical model here... what's going on?
+% 2)
+% \subsection{}
+
+% Importantly, probabilistic programming decouples the specification of a model from its calculation:
+% The specification is the source code, obtained by composing distributions \texttt{sample} and
+% \texttt{observe} operations. The calculation is from the inference algorithms which  
+
+% Statisticians use languages such as Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican}, to build complex statistical models
+% succinctly using the expressivity of a programming language.
+
+% this paradigm code represents statistical models which are use for simulation and prediction in complex systems  
+% Some examples of such languages include Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican} 
