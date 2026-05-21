@@ -216,24 +216,23 @@ lemma congruence {B : Ty} (F : RV ⟪A⟫ → RV ⟪B⟫) (E₁ E₂ : RV ⟪A�
 
 end Aseq
 namespace WP
-open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel
+open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel MeasureTheory.Measure
 open Iris.BI.BIBase LProp Iris.BI
 -- importing all of MeasureTheory imports an operator ∗ conflicting with the separating conjunct
-open MeasureTheory (Measure)
-open MeasureTheory.Measure (dirac)
+open MeasureTheory (Measure ProbabilityMeasure)
 variable {ds : List Ty} {rs : List Ty} {r r' : Ty} {A B ty₁ ty₂ : Ty}
 noncomputable section
 
 abbrev ret [MeasurableSpace α] (a : α) := dirac a
 
 -- Appendix B.20
-lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)}
+lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
     (P_entails_Q : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
   intro Ω wp_l Ω_fr μ hΩ
   sorry
 
 open Krm_helper in
-lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
+lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop(F ∗ (wp M Q) ⊢ wp M (fun X ↦ iprop(F ∗ Q X))) := by
   rintro Ω ⟨Ω_F, Ω_M, Ω_F_M, hΩ_F_M,  hF, wp_left⟩ Ω_fr Ω_fr_Ω μ hΩ_fr_Ω _ _ D_ext
   -- all the shuffling paranthesis needed to feed arguments into `wp_left`
@@ -252,7 +251,7 @@ lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)}
   case post_right_wp =>
     use Ω_F, Ω_M', (right Ω_fr_F_M')
 
-lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (Measure ⟪A⟫)} :
+lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop((wp M P) ∨ (wp M Q) ⊢ wp M (fun X ↦ iprop(P X ∨ Q X))) := sorry
 
 -- Appendix B.22 from Lilac paper
@@ -279,65 +278,79 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
   -- Also note that Measure.dirac
   calc
     -- unfold denotation of syntactic bind into semantic bind
-    _ = μ.1.bind (λ ω ↦ (
-        M.den (D ω)).bind (λ x ↦ (
-        N.den (x, D ω)).bind (λ y ↦
-        Measure.dirac (D_ext ω, y) ))) := by
-      sorry
-      -- nth_rewrite 1 [Appl.Term.den]
-      -- simp_rw [RV.comp]
-      -- dsimp
+    _ = ((Kernel.comap (toMK (M.bind N).den) D D.meas) ×ₖ det D_ext) ∘ₘ μ := by rfl
+    _ = ((Kernel.comap ((toMK N.den) ∘ₖ (toMK M.den ×ₖ Kernel.id)) D D.meas) ×ₖ det D_ext) ∘ₘ μ := by rfl
+    -- _ = (toKer D_ext ×ₖ (((tmp N.den).comap _ (measurable_id.prod D.meas)) ∘ₖ ((M.den ×ₖ Kernel.id).comap D D.meas))) ∘ₘ μ := by rfl
+    _ = (toMK N.den ∥ₖ Kernel.id) ∘ₘ (((Kernel.comap (toMK M.den) D D.meas ×ₖ det D) ×ₖ det D_ext) ∘ₘ μ) := by sorry
+    _ = (toMK N.den ∥ₖ Kernel.id) ∘ₘ (((det X ×ₖ det D) ×ₖ det D_ext) ∘ₘ μX)  := by sorry
+    _ = (((toMK N.den) ∘ₖ (det X ×ₖ det D)) ×ₖ det D_ext) ∘ₘ μX  := by sorry
+    _ = (det Y ×ₖ det D_ext) ∘ₘ μY := by sorry
+-- (toKer (D ;; D_ext) ×ₖ M) ∘ₘ μ
+    -- (tmp N.den) ∘ₖ (M.den ×ₖ Kernel.id)
+  --   _ = (toKer D_ext ×ₖ (Kernel.map (M.bind N).den D)) ∘ₘ μ := by
+  --   -- _ = (toKer D_ext ×ₖ ((M.bind N).den ∘ᵣ D)) ∘ₘ μ
+  --   -- (Kernel.mk N.den.1 N.den.2) ∘ₖ (M.den ×ₖ Kernel.id)
+  --       -- μ.1.bind (λ ω ↦ (
+  --       -- M.den (D ω)).bind (λ x ↦ (
+  --       -- N.den (x, D ω)).bind (λ y ↦
+  --       -- Measure.dirac (D_ext ω, y) ))) := by
+  --     sorry
+  --     -- nth_rewrite 1 [Appl.Term.den]
+  --     -- simp_rw [RV.comp]
+  --     -- dsimp
 
-      -- refine congrArg μ.1.bind (funext fun ω => ?_)
-      -- exposing the variable `x`
-      -- exact MeasureTheory.Measure.bind_bind
-      --   (N.den.2.comp (Measurable.prodMk measurable_id measurable_const)).aemeasurable
-      --   (MeasureTheory.Measure.measurable_dirac.comp
-      --     (Measurable.prodMk measurable_const measurable_id)).aemeasurable
-    -- associativity of bind
-    _ = ( μ.1.bind (λ ω ↦ (
-          M.den (D ω)).bind (λ x ↦ (
-          ret ((D ω, D_ext ω), x) )))
-        ).bind (λ (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) ↦ (
-        N.den (p.2, p.1.1)).bind (λ y ↦
-        ret (p.1.2, y) )) := by
-      have hf : Measurable
-          (fun ω : HC =>
-            (M.den (D ω)).bind (fun x => Measure.dirac ((D ω, D_ext ω), x))) := by
-        sorry
-      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
-      refine congrArg μ.1.bind (funext fun ω => ?_)
-      have hfω : Measurable
-          (fun x : ⟪A⟫ => Measure.dirac (((D ω, D_ext ω), x) :
-            (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
-        MeasureTheory.Measure.measurable_dirac.comp
-          (Measurable.prodMk measurable_const measurable_id)
-      rw [MeasureTheory.Measure.bind_bind hfω.aemeasurable sorry]
-      refine congrArg (M.den (D ω)).bind (funext fun x => ?_)
-      rw [MeasureTheory.Measure.dirac_bind sorry]
-    -- apply wp_outer, ie, the premise assocaitaed with variable `X`
-    _ = ( μX.1.bind (λ ω ↦ (
-          ret ((D ω, D_ext ω), X ω) ))
-        ).bind (λ (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) ↦ (
-        N.den (p.2, p.1.1)).bind (λ y ↦
-        ret (p.1.2, y) )) := by
-      congr 1
-      sorry
-      -- exact calc_outer
-    _ = μX.1.bind (λ ω ↦ (
-        N.den (X ω, D ω)).bind (λ y ↦
-        ret (D_ext ω, y) )) := by
-      have hf : Measurable
-          (fun ω : HC => Measure.dirac (((D ω, D_ext ω), X ω) :
-            (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
-        MeasureTheory.Measure.measurable_dirac.comp
-          (Measurable.prodMk (Measurable.prodMk D.meas D_ext.meas) X.meas)
-      rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
-      refine congrArg μX.1.bind (funext fun ω => ?_)
-      rw [MeasureTheory.Measure.dirac_bind sorry]
-    _ = μY.1.bind (λ ω ↦ (
-        ret (D_ext ω, Y ω) )) := sorry --calc_inner
-  sorry
+  --     -- refine congrArg μ.1.bind (funext fun ω => ?_)
+  --     -- exposing the variable `x`
+  --     -- exact MeasureTheory.Measure.bind_bind
+  --     --   (N.den.2.comp (Measurable.prodMk measurable_id measurable_const)).aemeasurable
+  --     --   (MeasureTheory.Measure.measurable_dirac.comp
+  --     --     (Measurable.prodMk measurable_const measurable_id)).aemeasurable
+  --   -- associativity of bind
+  --   _ = ( μ.1.bind (λ ω ↦ (
+  --         M.den (D ω)).bind (λ x ↦ (
+  --         ret ((D ω, D_ext ω), x) )))
+  --       ).bind (λ (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) ↦ (
+  --       N.den (p.2, p.1.1)).bind (λ y ↦
+  --       ret (p.1.2, y) )) := by
+  --     sorry
+  --   --   have hf : Measurable
+  --   --       (fun ω : HC =>
+  --   --         (M.den (D ω)).bind (fun x => Measure.dirac ((D ω, D_ext ω), x))) := by
+  --   --     sorry
+  --   --   rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
+  --   --   refine congrArg μ.1.bind (funext fun ω => ?_)
+  --   --   have hfω : Measurable
+  --   --       (fun x : ⟪A⟫ => Measure.dirac (((D ω, D_ext ω), x) :
+  --   --         (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
+  --   --     MeasureTheory.Measure.measurable_dirac.comp
+  --   --       (Measurable.prodMk measurable_const measurable_id)
+  --   --   rw [MeasureTheory.Measure.bind_bind hfω.aemeasurable sorry]
+  --   --   refine congrArg (M.den (D ω)).bind (funext fun x => ?_)
+  --   --   rw [MeasureTheory.Measure.dirac_bind sorry]
+  --   -- -- apply wp_outer, ie, the premise assocaitaed with variable `X`
+  --   -- _ = ( μX.1.bind (λ ω ↦ (
+  --   --       ret ((D ω, D_ext ω), X ω) ))
+  --   --     ).bind (λ (p : (TProd (⟪·⟫) rs × _) × ⟪A⟫) ↦ (
+  --   --     N.den (p.2, p.1.1)).bind (λ y ↦
+  --   --     ret (p.1.2, y) )) := by
+  --   --   congr 1
+  --   --   sorry
+  --     -- exact calc_outer
+  --   _ = μX.1.bind (λ ω ↦ (
+  --       N.den (X ω, D ω)).bind (λ y ↦
+  --       ret (D_ext ω, y) )) := by
+  --       sorry
+  --     -- have hf : Measurable
+  --     --     (fun ω : HC => Measure.dirac (((D ω, D_ext ω), X ω) :
+  --     --       (TProd (⟪·⟫) rs × _) × ⟪A⟫)) :=
+  --     --   MeasureTheory.Measure.measurable_dirac.comp
+  --     --     (Measurable.prodMk (Measurable.prodMk D.meas D_ext.meas) X.meas)
+  --     -- rw [MeasureTheory.Measure.bind_bind hf.aemeasurable sorry]
+  --     -- refine congrArg μX.1.bind (funext fun ω => ?_)
+  --     -- rw [MeasureTheory.Measure.dirac_bind sorry]
+  --   _ = μY.1.bind (λ ω ↦ (
+  --       ret (D_ext ω, Y ω) )) := sorry --calc_inner
+  -- sorry
 
 def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
   fun _ ↦ (bernoulli p hp).toMeasure
@@ -568,11 +581,11 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     rw [← h_Ω_post_eq_r, eq_Ω_post] at h_r_le
     exact h_r_le
 
-  case bind_eq =>
-    calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ᵣ D) ω) fun v ↦ Measure.dirac (D_ext ω, v))
-        = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v))) := by
-          congr 1
-      _ = _ := by sorry
+  case bind_eq => sorry
+    -- calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ᵣ D) ω) fun v ↦ Measure.dirac (D_ext ω, v))
+    --     = Measure.bind μ.1 (fun ω ↦ Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v))) := by
+    --       congr 1
+    --   _ = _ := by sorry
       -- _ = Measure.bind unif01_sem (fun v ↦ Measure.dirac (D_ext ω, v)) := by
       --     rw [Measure.bind_const]
       --     simp [measure_univ]

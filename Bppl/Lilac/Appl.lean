@@ -34,7 +34,8 @@ theorem List.TProd.measurable_get [∀ i, MeasurableSpace (β i)] (mem : Member 
   | head => exact measurable_fst
   | tail _ ih => exact ih.comp measurable_snd
 
-open NNReal MeasureTheory PMF Measurable ProbabilityTheory ProbabilityTheory.Kernel
+open NNReal MeasureTheory MeasureTheory.Measure PMF Measurable
+  ProbabilityTheory ProbabilityTheory.Kernel
 namespace Appl
 -- Lilac A.1 and A.2 (appendix)
 inductive Ty where
@@ -77,7 +78,7 @@ inductive Term : List Ty → Ty → Type
   | vect : (Fin n → Term ctx ty) → Term ctx (.exp n ty)
   | index : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
-  | for : ℕ → Term ctx ty → Term (.index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
+  -- | for : ℕ → Term ctx ty → Term (.index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
 
 noncomputable section
 -- Most of the MeasurableSpace instance provided in
@@ -88,7 +89,8 @@ noncomputable section
   | real => .of ℝ
   | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
   | index => .of ℕ
-  | G ty => MeasCat.Measure.obj (ty.den) --: Ty → Ty
+  -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
+  | G ty => .of (ProbabilityMeasure (ty.den))
 
 notation "⟪" t "⟫" => Ty.den t
 
@@ -156,7 +158,7 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with
     | .prod ty₁ ty₂ =>
       (@default ty₁.den.carrier (arbitrary ty₁), @default ty₂.den.carrier (arbitrary ty₂))
-    | (Ty.G ty) => Measure.dirac (@default ty.den.carrier (arbitrary ty))
+    | (Ty.G ty) => ⟨Measure.dirac (@default ty.den.carrier (arbitrary ty)), Measure.dirac.isProbabilityMeasure⟩
     | Ty.index => default
     | Ty.exp _ ty => fun _ ↦ @default ty.den.carrier (arbitrary ty)
     | Ty.real => default
@@ -174,13 +176,13 @@ def unif01_sem : Measure ℝ :=
 
 namespace Kernel
 
-instance {α : Type*} [MeasurableSpace α] {ty : Ty}
-    : Coe (α -m→ ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
-  coe f := ⟨f.1, f.2⟩
+-- instance instCoeKernel {α : Type*} [MeasurableSpace α] {ty : Ty}
+--     : Coe (α -m→ ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
+--   coe f := ⟨λ a ↦ f.1, f.2⟩
 
-instance {α : Type*} [MeasurableSpace α] {ty : Ty}
-    : Coe (Kernel α ⟪ty⟫) (α -m→ ⟪Ty.G ty⟫) where
-  coe f := ⟨f.1, f.2⟩
+-- instance {α : Type*} [MeasurableSpace α] {ty : Ty}
+--     : Coe (Kernel α ⟪ty⟫) (α -m→ ⟪Ty.G ty⟫) where
+--   coe f := ⟨f.1, f.2⟩
 
 -- instance {α : Type*} [MeasurableSpace α] {ty : Ty}
 --     : Coe (RV ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
@@ -188,16 +190,42 @@ instance {α : Type*} [MeasurableSpace α] {ty : Ty}
 
 end Kernel
 
+instance : IsProbabilityMeasure unif01_sem :=
+  isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
+
+abbrev toMK {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    (f : α -m→ ProbabilityMeasure β) : Kernel α β :=
+  ⟨fun a ↦ (f a : Measure _), measurable_subtype_coe.comp f.2⟩
+
+instance instIsMarkovKernel {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    (f : α -m→ ProbabilityMeasure β) : IsMarkovKernel (toMK f) :=
+  ⟨fun a ↦ (f a).2⟩
+
+/-- A Markov kernel gives rise to a measurable map into `ProbabilityMeasure`. -/
+abbrev toDen {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    (k : Kernel α β) [hk : IsMarkovKernel k] : α -m→ ProbabilityMeasure β :=
+  ⟨fun a ↦ ⟨k a, hk.isProbabilityMeasure a⟩, k.measurable.subtype_mk⟩
+
+
+abbrev probDirac [MeasurableSpace α] (a : α) : ProbabilityMeasure α := ⟨.dirac a, inferInstance⟩
+
+@[fun_prop]
+lemma measurable_probDirac [MeasurableSpace α] : Measurable probDirac (α := α) := by fun_prop
+
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
-  | ret X => ⟨fun env ↦ .dirac (X.den env),
-      MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
+  | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
+      -- MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
   -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
   -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
   -- to use its deep measure theoretic results for constructing measurable functions
-  | bind M N => (Kernel.mk N.den.1 N.den.2) ∘ₖ (M.den ×ₖ Kernel.id)
+  | @bind _ ty₁ ty₂ M N =>
+    letI T := List.TProd (⟪·⟫) ctx
+    letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
+    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den -- need to provide type annotation for this
+    toDen (k₂ ∘ₖ k₁)
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
   | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
@@ -207,13 +235,13 @@ to give an element of a measurable space -/
       -- the function translating from bool to Prop is `Measurable`
       -- by `measurableSet_singleton true`
       Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
-  | flip p hp => ⟨fun _ ↦ (bernoulli p hp).toMeasure, measurable_const⟩
+  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
   | r x => ⟨fun _ ↦ x, measurable_const⟩
   | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | unif01 => ⟨fun _ ↦ unif01_sem, measurable_const⟩
+  | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
   | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩
@@ -221,11 +249,11 @@ to give an element of a measurable space -/
     let n : ℕ := (N.den env)
     if h: n < len then (M.den env) ⟨n, h⟩ else default, sorry⟩
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
-  | @«for» _ ty n Mᵢ Mₛ =>
-    let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
-      .dirac v else
-      Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
-    ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
+  -- | @«for» _ ty n Mᵢ Mₛ =>
+  --   let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
+  --     .dirac v else
+  --     Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
+  --   ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
 end
 end Appl

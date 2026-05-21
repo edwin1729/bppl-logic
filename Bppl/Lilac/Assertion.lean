@@ -88,19 +88,19 @@ def eq (E₁ E₂ : RV ⟪A⟫) : LProp :=
 def PSpace.mk' {Ω : Type*} {ms : MeasurableSpace Ω} (μ : ProbabilityMeasure Ω) : PSpace Ω :=
   ⟨⟨_, μ.1⟩, μ.2⟩
 
-noncomputable abbrev toKer [MeasurableSpace α] (X : RV α) : Kernel HC α  :=
-  ⟨(dirac ∘ X.toFun), by fun_prop⟩
+noncomputable abbrev det [MeasurableSpace α] (X : RV α) : Kernel HC α  :=
+  deterministic X X.meas
 
 open HC in
 def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   ⟨fun Ω ↦
   ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ : @ProbabilityMeasure HC Inf_borel,
-    (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D : RV α),
+    (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D_ext : RV α),
   ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ' : @ProbabilityMeasure HC Inf_borel,
     (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
   -- (μ.1.bind (fun ω ↦ (M ω).bind (fun v ↦ Measure.dirac (D ω, v)))) =
   --   (Measure.bind μ'.1 (fun ω ↦ Measure.dirac (D ω, X ω))) ∧
-  (toKer D ×ₖ M) ∘ₘ μ = (toKer D ×ₖ toKer X) ∘ₘ μ' ∧
+  (toMK M ×ₖ det D_ext) ∘ₘ μ = (det X ×ₖ det D_ext) ∘ₘ μ' ∧
   (Q X).1 Ω'
   ,
   -- monotonicity proof
