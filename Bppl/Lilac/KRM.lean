@@ -280,7 +280,7 @@ end PSpace
 open HC
 
 structure PSp extends (PSpace HC) where
-  finite_footprint : FiniteFootprint ms
+  finite_footprint : ∃ n, FiniteFootprint n ms
 
 namespace PSp
 open Classical
@@ -291,8 +291,8 @@ abbrev coerceOption {α : Type*} {x : Option α} (h : x.isSome) := x.get h
 
 prefix:max "↓" => coerceOption
 
-lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : FiniteFootprint ms₁)
-    (hms₂ : FiniteFootprint ms₂) : FiniteFootprint (ms₁.sum ms₂) := by
+lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : ∃ n, FiniteFootprint n ms₁)
+    (hms₂ : ∃ n, FiniteFootprint n ms₂) : ∃ n, FiniteFootprint n (ms₁.sum ms₂) := by
   obtain ⟨n₁, ff₁⟩ := hms₁
   obtain ⟨n₂, ff₂⟩ := hms₂
   use max n₁ n₂
@@ -319,7 +319,7 @@ lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : FiniteFoo
 /-
 The unit PSpace has finite footprint (trivial σ-algebra depends on 0 coordinates).
 -/
-lemma ff_unit : FiniteFootprint (PSpace.unit (Ω := HC)).ms := by
+lemma ff_unit : ∃ n, FiniteFootprint n (PSpace.unit (Ω := HC)).ms := by
   sorry
   -- use 0; simp +decide [ PSpace.unit ] ; (
   -- intro F hF; use if F = Set.univ then Set.univ else ∅; split_ifs <;> simp_all +decide [ Set.ext_iff ] ;
@@ -330,8 +330,8 @@ noncomputable instance : One PSp where
 
 /-- If `r =ᵢ p ⊕ᵢ q` and both `p` and `q` have finite footprint, then `r` does too. -/
 lemma ff_of_isIndependentProduct {p q r : PSpace HC}
-    (h : r =ᵢ p ⊕ᵢ q) (hp : FiniteFootprint p.ms) (hq : FiniteFootprint q.ms) :
-    FiniteFootprint r.ms := by
+    (h : r =ᵢ p ⊕ᵢ q) (hp : ∃ n, FiniteFootprint n p.ms) (hq : ∃ n, FiniteFootprint n q.ms) :
+    ∃ n, FiniteFootprint n r.ms := by
   rw [h.1]
   exact ff_closed_under_sum p.ms q.ms hp hq
 
@@ -416,7 +416,7 @@ lemma psp_val_get (x y : PSp) (h : ✓'(x ⋆ y)) :
       · grind
 open MeasureTheory in
 noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @ProbabilityMeasure HC ms)
-    (ms'_le_ms : ms' ≤ ms) (ff : FiniteFootprint ms') : PSp :=
+    (ms'_le_ms : ms' ≤ ms) (ff : ∃ n, FiniteFootprint n ms') : PSp :=
   ⟨⟨⟨ms', μ.1.trim ms'_le_ms⟩, Measure.trim_preserves_prob ms' ms ms'_le_ms μ.2⟩, ff⟩
 
 -- lemma pspace_le_of_psp_le {x y : PSp} {}
@@ -424,7 +424,7 @@ noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @Probabili
 end PSp
 
 /- ### TODO rename to just Krm, remove all the repetitions of this done separately for PSpace-/
-namespace Krm_helper
+namespace KrmHelper
 
 
 variable {α : Type*} [krm_α : Krm α]
@@ -518,4 +518,4 @@ lemma le_mul_mono_left' {x₁ x₂ y : α} (lex : x₁ ≤ x₂)
 lemma le_mul_mono_right' {x y₁ y₂ : α} (ley : y₁ ≤ y₂)
     (xy₂ : ✓'(x ⋆ y₂)) : ∃ xy₁ : ✓'(x ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry
 
-end Krm_helper
+end KrmHelper

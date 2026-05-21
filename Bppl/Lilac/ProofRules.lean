@@ -231,7 +231,7 @@ lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
   intro Ω wp_l Ω_fr μ hΩ
   sorry
 
-open Krm_helper in
+open KrmHelper in
 lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop(F ∗ (wp M Q) ⊢ wp M (fun X ↦ iprop(F ∗ Q X))) := by
   rintro Ω ⟨Ω_F, Ω_M, Ω_F_M, hΩ_F_M,  hF, wp_left⟩ Ω_fr Ω_fr_Ω μ hΩ_fr_Ω _ _ D_ext
@@ -416,14 +416,20 @@ private lemma sum_eq_sup {Ω : Type*} (m₁ m₂ : MeasurableSpace Ω) :
       (by first | left; exact hs | right; exact hs)
 
 -- Appendix B.21 from Lilac paper — "Uniform" proof rule.
+open KrmHelper in
 open HC in
 open MeasureTheory in
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
     iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
     ⊢ wp ((@Term.unif01 rs).den ∘ᵣ D) Q := by
   rintro Ω lhs Ω_fr Ω_pre μ hΩ_pre _ _ D_ext
-  -- Extract the finite footprint: n is the number of coordinates used
-  obtain ⟨n, ff_pre⟩ := (↓Ω_pre).finite_footprint
+  -- Extract the finite footprint: n is the max number of coordinates used among both
+  -- the resource and (`Ω_pre`) and arbitrary `RV` (`D_ext`)
+  obtain ⟨n₁, ff_pre⟩ := (↓Ω_pre).finite_footprint
+  obtain ⟨n₂, ff_D_ext⟩ := D_ext.ff
+  let n := max n₁ n₂
+  have ff_pre := HC.finite_footprint_of_ge ff_pre n (le_max_left n₁ n₂)
+  have ff_D_ext := HC.finite_footprint_of_ge ff_D_ext n (le_max_right n₁ n₂)
   -- Ω.ms ≤ ↓Ω_pre.ms (since Ω is a component of the independent product)
   have hΩ_le_pre : Ω.ms ≤ (↓Ω_pre).ms := by
     set x := (Ω_fr ⋆ Ω).get Ω_pre
@@ -542,14 +548,11 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
   have eq_Ω_post_ms : (↓Ω_post).ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) := by
     show (↓Ω_post).1.ms = _
     rw [h_val_eq]; rfl
-  --right_post
-  have Ω' : ✓'(Ω ⋆ Ω_n) := Krm_helper.right Ω_post
-  -- Ω_post_alt: from assoc of PSp applied on Ω_post
-  have Ω_post_alt : ✓'(Ω_fr ⋆ ↓Ω') := Krm_helper.assoc_right Ω_post
-  -- eq_Ω_post: the two parenthesizations give the same result
-  have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt :=
-    Krm_helper.get_assoc_eq' Ω_fr Ω Ω_n Ω_pre Ω_post Ω' Ω_post_alt
-  use X, ↓Ω', Ω_post_alt, μ'
+  -- The new resource
+  have Ω' : ✓'(Ω ⋆ Ω_n) := right Ω_post
+  -- have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt :=
+  --   Krm_helper.get_assoc_eq' Ω_fr Ω Ω_n Ω_pre Ω_post Ω' Ω_post_alt
+  use X, ↓Ω', (assoc_right Ω_post), μ'
 
   refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
   case Ω_post_le =>
@@ -578,8 +581,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) :
       rw [this]
       exact PSpace.trim_le ms_pre_le_Inf_borel
 
-    rw [← h_Ω_post_eq_r, eq_Ω_post] at h_r_le
-    exact h_r_le
+    exact (assoc_right_eq Ω_post).symm ▸ h_Ω_post_eq_r.symm ▸ h_r_le
 
   case bind_eq => sorry
     -- calc Measure.bind μ.1 (fun ω ↦ Measure.bind ((Term.unif01.den ∘ᵣ D) ω) fun v ↦ Measure.dirac (D_ext ω, v))

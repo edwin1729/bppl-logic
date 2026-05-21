@@ -50,8 +50,12 @@ abbrev unSplitTri {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × I × (ℕ �
 
 /-- The σ-algebra is only "interesting" in the first `n` coordinates for some finite `n`.
 In the rest of the coordinates, its the `univ` set. -/
-def FiniteFootprint (ms : MeasurableSpace (ℕ → I)) : Prop :=
-  ∃ n : ℕ, ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ Inf_nil)
+def FiniteFootprint (n : ℕ) (ms : MeasurableSpace (ℕ → I)) : Prop :=
+  ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ Inf_nil)
+
+lemma finite_footprint_of_ge {n : ℕ} {ms : MeasurableSpace (ℕ → I)} (ff : FiniteFootprint n ms)
+    : ∀ n' ≥ n, FiniteFootprint n' ms :=
+  sorry
 
 end
 end HC
@@ -90,7 +94,7 @@ instance : Inhabited HC where
 
 structure RV (β : Type*) [msβ : MeasurableSpace β] extends MeasurableFun HC β where
   /-- Finite footprint -/
-  ff : HC.FiniteFootprint (msβ.comap toFun)
+  ff : ∃ n, HC.FiniteFootprint n (msβ.comap toFun)
 
 instance instFunLikeRV {β : Type*} [MeasurableSpace β] : FunLike (RV β) HC β where
   coe D := D.toFun

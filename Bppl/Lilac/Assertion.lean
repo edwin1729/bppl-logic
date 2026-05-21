@@ -107,7 +107,7 @@ def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   by
   intro σ₁ σ₂ hle hσ₁ Ω_fr Ω_pre μ hpre_le _ _ D
   -- From σ₁ ≤ σ₂ and ✓'(Ω_fr ⋆ σ₂), get ✓'(Ω_fr ⋆ σ₁) with ↓ ≤ ↓
-  obtain ⟨Ω_pre₁, hle_pre⟩ := Krm_helper.le_mul_mono_right' hle Ω_pre
+  obtain ⟨Ω_pre₁, hle_pre⟩ := KrmHelper.le_mul_mono_right' hle Ω_pre
   have hpre_le' : (↓Ω_pre₁).toPSpace ≤ PSpace.mk' μ :=
     (show (↓Ω_pre₁).toPSpace ≤ (↓Ω_pre).toPSpace from hle_pre).trans hpre_le
   exact hσ₁ Ω_fr Ω_pre₁ μ hpre_le' D

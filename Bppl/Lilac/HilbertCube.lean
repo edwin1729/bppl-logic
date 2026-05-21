@@ -77,16 +77,15 @@ lemma unSplitTri_eq_unSplitBi_succ {N : ℕ}
           simp +decide [ unSplitTri, unSplitBi, MeasurableSpace.prod ];
           congr! 2
 
-
 /-- `FiniteFootprint` for an arbitrary sub-σ-algebra on the first `N` coordinates
 combined with `I_borel` on coordinate `N`. -/
-lemma ff_unSplitTri_I_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I)) :
-    FiniteFootprint (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) :=
-  ⟨N + 1, _, unSplitTri_eq_unSplitBi_succ ms I_borel⟩
+lemma ff_unSplitTri_I_borel {n : ℕ} (ms : MeasurableSpace (Fin n → I)) :
+    ∃ n', FiniteFootprint n' (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) :=
+  ⟨n + 1, _, unSplitTri_eq_unSplitBi_succ ms I_borel⟩
 
-lemma ff_N_nil_I_borel {N : ℕ} : FiniteFootprint (N_nil_I_borel N) :=
+lemma ff_N_nil_I_borel {N : ℕ} : ∃ n, FiniteFootprint n (N_nil_I_borel N) :=
   ff_unSplitTri_I_borel (N_nil N)
-lemma ff_N_borel_I_borel {N : ℕ} : FiniteFootprint (N_borel_I_borel N) :=
+lemma ff_N_borel_I_borel {N : ℕ} : ∃ n, FiniteFootprint n (N_borel_I_borel N) :=
   ff_unSplitTri_I_borel (N_borel N)
 
 lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by
