@@ -3,7 +3,7 @@ import Bppl.Lilac.MeasureOnSpace
 import Bppl.Lilac.KRM
 import Bppl.Lilac.BI
 import Bppl.Lilac.Assertion
-import Bppl.Lilac.ProofRules
+import Bppl.Lilac.ProofRules.WP
 import Bppl.Lilac.Examples
 import Bppl.Lilac.HilbertCube
 import Bppl.Lilac.WPUnifHelpers
