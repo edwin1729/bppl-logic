@@ -29,6 +29,8 @@ noncomputable def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ �
   (MeasurableEquiv.piCongrLeft (fun _ => I) (finSumNatEquiv n)).symm.trans
   (MeasurableEquiv.sumPiEquivProdPi (fun _ => I))
 
+/-- Constructs a MeasurableSpace on a Hilbert cube given a MeasurableSpace on the first N
+dimensions and another space on the rest of the infinite dimensions. -/
 abbrev unSplitBi {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
   ms.comap (splitBi n)
 
@@ -53,9 +55,21 @@ In the rest of the coordinates, its the `univ` set. -/
 def FiniteFootprint (n : ℕ) (ms : MeasurableSpace (ℕ → I)) : Prop :=
   ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ Inf_nil)
 
-lemma finite_footprint_of_ge {n : ℕ} {ms : MeasurableSpace (ℕ → I)} (ff : FiniteFootprint n ms)
-    : ∀ n' ≥ n, FiniteFootprint n' ms :=
-  sorry
+/-- `unSplitBi (ms_pre ×ₘ Inf_nil)` is the comap of `ms_pre` through `fst ∘ splitBi n`. -/
+lemma unSplitBi_eq_comap_fst (n : ℕ)
+    (ms_pre : MeasurableSpace (Fin n → I)) :
+    unSplitBi (ms_pre ×ₘ Inf_nil) = ms_pre.comap (Prod.fst ∘ splitBi n) := by
+  simp only [unSplitBi, Inf_nil, MeasurableSpace.prod, MeasurableSpace.comap_bot,
+    sup_bot_eq, MeasurableSpace.comap_comp]
+
+lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn : n ≤ n') (ff : FiniteFootprint n ms)
+    : FiniteFootprint n' ms := by
+  obtain ⟨ms_n, h_ms_n⟩ := ff
+  use ms_n.comap (fun (a : Fin n' → I) (i : Fin n) => a (Fin.castLE hn i))
+  convert h_ms_n using 1
+  convert unSplitBi_eq_comap_fst n' _
+  convert unSplitBi_eq_comap_fst n ms_n
+  ext; simp [splitBi]
 
 end
 end HC
@@ -91,6 +105,12 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 
 instance : Inhabited HC where
   default := fun _ ↦ 0
+
+/-- The Lebesgue measure on the Hilbert cube: the infinite product of uniform measures
+on the unit interval. -/
+noncomputable abbrev lebHC : @MeasureTheory.ProbabilityMeasure HC HC.Inf_borel :=
+  ⟨Measure.infinitePiNat (fun _ => (MeasureTheory.volume : Measure unitInterval)),
+   inferInstance⟩
 
 -- this should be refactored into a type class, or use the `fun_prop` style, where
 -- lemmas constructing the `ff` property are annotated with `fun_prop`

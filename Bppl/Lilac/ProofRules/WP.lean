@@ -111,7 +111,7 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     _ = (det Y ×ₖ det D_ext) ∘ₘ μY := by
         -- Compose `det X ×ₖ det D = det (X ;; D)` with `K ∘ₖ deterministic g = comap K g`
         -- to identify the LHS kernel with `toMK (N.den ∘ᵣ (X ;; D))`, then `calc_inner`.
-        convert calc_inner
+        convert calc_inner using 4
         change toMK N.den ∘ₖ (deterministic X.toFun X.meas ×ₖ deterministic D.toFun D.meas)
           = toMK (N.den ∘ᵣ X ;; D).toMeasurableFun
         rw [Kernel.deterministic_prod_deterministic X.meas D.meas]

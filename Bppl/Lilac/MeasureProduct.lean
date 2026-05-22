@@ -37,15 +37,6 @@ lemma coord_measurable_in_combined (n : ℕ)
     MeasurableSet[unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)] F :=
   (commute_over_equiv4 ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
 
-/-! ### σ-algebra characterization -/
-
-/-- `unSplitBi (ms_pre ×ₘ Inf_nil)` is the comap of `ms_pre` through `fst ∘ splitBi n`. -/
-lemma unSplitBi_eq_comap_fst (n : ℕ)
-    (ms_pre : MeasurableSpace (Fin n → I)) :
-    unSplitBi (ms_pre ×ₘ Inf_nil) = ms_pre.comap (Prod.fst ∘ splitBi n) := by
-  simp only [unSplitBi, Inf_nil, MeasurableSpace.prod, MeasurableSpace.comap_bot,
-    sup_bot_eq, MeasurableSpace.comap_comp]
-
 /-! ### Helper lemmas for the product factorization -/
 
 /-- `splitBi n` second component at index `k` gives `ω (n + k)`. -/
@@ -139,9 +130,8 @@ lemma wp_unif_measure_product_core
     (hE_eq : E = (Prod.fst ∘ splitBi n) ⁻¹' A)
     (hF_eq : F = (· n : HC → I) ⁻¹' B_I) :
     ((μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable |>.prod
-      ⟨Measure.infinitePiNat (fun _ => (volume : Measure I)), inferInstance⟩).map
-      (HC.splitBi n).symm.measurable.aemeasurable).1 (E ∩ F) =
-    μ.1 E * (Measure.infinitePiNat (fun _ => (volume : Measure I))) F := by
+      lebHC).map (HC.splitBi n).symm.measurable.aemeasurable).1 (E ∩ F) =
+    μ.1 E * lebHC.toMeasure F := by
   simp_all +decide [ ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_prod, Measure.map_apply, MeasurableEquiv.map_apply ];
   rw [ show ( splitBi n ).symm ⁻¹' ( Prod.fst ∘ ⇑ ( splitBi n ) ⁻¹' A ) ∩ ( splitBi n ).symm ⁻¹' ( ( fun x => x n ) ⁻¹' B_I ) = A ×ˢ ( ( fun x => x 0 ) ⁻¹' B_I ) from ?_ ];
   · rw [ Measure.prod_prod, Measure.map_apply ];
