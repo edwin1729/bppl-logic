@@ -92,6 +92,8 @@ abbrev HC := ℕ → Set.Icc (0:ℝ) 1
 instance : Inhabited HC where
   default := fun _ ↦ 0
 
+-- this should be refactored into a type class, or use the `fun_prop` style, where
+-- lemmas constructing the `ff` property are annotated with `fun_prop`
 structure RV (β : Type*) [msβ : MeasurableSpace β] extends MeasurableFun HC β where
   /-- Finite footprint -/
   ff : ∃ n, HC.FiniteFootprint n (msβ.comap toFun)
