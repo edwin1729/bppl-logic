@@ -65,6 +65,9 @@ by picking some choice of measurable disjoint sets whose union is the $\Omega$ (
 point $\omega$ evaluates f on $\omega$ and weights it by how large the set is ($\mu U_i)$. The supremum and infimum together enforce that the chosen disjoint
 cover is chosen as finely (small measure) as possible.
 
+\subsection{Borel spaces and lebesgue measures}
+
+\subsection{Product of measurable spaces}
 
 % \subsection{Pi-lambda theorem}
 
@@ -76,6 +79,138 @@ cover is chosen as finely (small measure) as possible.
 % \Todo more details in final report (as I haven't studied this yet)
 
 \section{Semantics of Probabilistic Programs}
+\label{sec:appl}
+
+We first present APPL \citep[][appendix A]{lilac}, a probabilistic programming language without bayesian updates. Syntactically it looks like a basic WHILE language.
+In Appl, there isn't an explicit \texttt{sample} construct, sampling is realised in the semantics of sequencing as explained later. Though the language is
+first order, PPLs still have a non-trivial, novel denotational semantics. The central difference is that types are interpreted as \texttt{MeasurableSpace} rather than
+just \texttt{Set} from which everything else follows. Concretely $\llbracket A \rrbracket = (\mathbb{A}, \Sigma_{\mathbb{A}})$. In our PPL we would like to express
+measures and manipulate measures. The type constructor $\mathrm{G} A$
+is interpreted as the (meta) type $ProbMeasure \llbracket A \rrbracket$, the
+\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$. So in order for $\mathrm{G} A$ to be a valid (object) type, there must
+be some canonical MeasurableSpace $\Sigma_{\mathrm{G} A} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed true, but we don't reprove
+the mathematical foundations on which the semantics stands, in this report.
+
+\Todo{Why measurableSpaces?}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{math}
+  \begin{aligned}
+  A, B &::= A \times B \mid bool \mid  real \mid A^n \mid index \mid \mathrm{G} A \\
+  p &\in [0,1] \\
+  r &\in \mathbb{R} \\
+  n &\in \mathbb{N} \\
+  \oplus &\in \mathrm{Arith} := \{+, -, \times, /, \hat{}\} \\
+  < &\in \mathrm{Cmp} := \{<, \leq, =\} \\
+  M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
+  &\quad (M, N) \mid \mathrm{fst}\ M \mid \mathrm{snd}\ M \mid \\
+  &\quad \mathrm{T} \mid \mathrm{F} \mid \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \mid \mathrm{flip}\ p \mid \\
+  &\quad r \mid M \oplus N \mid M < N \mid \mathrm{unif}\ [0,1] \mid \\
+  &\quad [M,\ldots,M] \mid [M|N] \mid \mathrm{for}(n, M_{\mathrm{init}}, i\ X.\, M_{\mathrm{step}})
+  \end{aligned}
+  \end{math}
+  \caption{Syntax of the language}
+  \label{fig:syntax}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \[
+  \begin{aligned}
+  \llbracket A \times B \rrbracket &= \llbracket A \rrbracket \otimes \llbracket B \rrbracket \\
+  \llbracket \mathbf{bool} \rrbracket &= (\{T,F\}, \mathcal{P}(\{T,F\})) \\
+  \llbracket \mathbf{real} \rrbracket &= (\mathbb{R}, \mathcal{B}(\mathbb{R})) \\
+  \llbracket A^n \rrbracket &= \underbrace{\llbracket A \rrbracket \otimes \cdots \otimes \llbracket A \rrbracket}_{n\ \text{times}} \\
+  \llbracket \mathbf{index} \rrbracket &= (\mathbb{N}, \mathcal{P}(\mathbb{N})) \\
+  \llbracket \mathbf{GA} \rrbracket &= \mathcal{G}[\![A]\!] \\
+  \llbracket \mathbf{1} \rrbracket &= \text{the one-point space}
+  \end{aligned}
+  \]
+  \caption{Denotational semantics of types}
+  \label{fig:denotations}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \[
+  \begin{aligned}
+  \llbracket X \rrbracket \rho &= \rho(X) \\
+  \llbracket \mathrm{ret}\ M \rrbracket \rho &= \mathrm{ret}\ \llbracket M \rrbracket \rho \\
+  \llbracket X \leftarrow M;\ N \rrbracket \rho &= v \leftarrow \llbracket M \rrbracket \rho;\ \llbracket N \rrbracket [X \mapsto v] \\
+  \llbracket (M,N) \rrbracket \rho &= (\llbracket M \rrbracket \rho,\ \llbracket N \rrbracket \rho) \\
+  \llbracket \mathrm{fst}\ M \rrbracket \rho &= \pi_1(\llbracket M \rrbracket \rho) \\
+  \llbracket \mathrm{snd}\ M \rrbracket \rho &= \pi_2(\llbracket M \rrbracket \rho) \\
+  \llbracket \mathrm{T} \rrbracket \rho &= \mathrm{T} \\
+  \llbracket \mathrm{F} \rrbracket \rho &= \mathrm{F} \\
+  \llbracket \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \rrbracket \rho &=
+  \begin{cases}
+    \llbracket N \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{T} \\
+    \llbracket O \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{F}
+  \end{cases} \\
+  \llbracket \mathrm{flip}\ p \rrbracket \rho &= \mathrm{Ber}\,p \\
+  \llbracket r \rrbracket \rho &= r \\
+  \llbracket M \oplus N \rrbracket \rho &= (\llbracket M \rrbracket \rho) \oplus (\llbracket N \rrbracket \rho) \\
+  \llbracket \mathrm{unif}\ [0,1] \rrbracket \rho &= \mathrm{Unif}\,[0,1] \\
+  \llbracket [M_1,\ldots,M_n] \rrbracket \rho &= (\llbracket M_1 \rrbracket \rho,\ldots,\llbracket M_n \rrbracket \rho) \\
+  \llbracket [M[N] : A] \rrbracket \rho &=
+  \begin{cases}
+    \pi_N \bigl(\llbracket M \rrbracket \rho\bigr), & 1 \leq \llbracket N \rrbracket \rho \leq n \\
+    \mathrm{arbitrary}(A), & \text{otherwise}
+  \end{cases} \\
+  \llbracket \mathrm{for}(n, M_i, i\ X.\, M_s) \rrbracket \rho
+  &= \mathrm{loop}\!\left(1,\ \llbracket M_i \rrbracket \rho,\ \lambda k.\ \llbracket M_s \rrbracket \rho[i \mapsto k,\ X \mapsto v]\right) \\
+  \text{where }\mathrm{loop}(k,u,f) &=
+  \begin{cases}
+    \mathrm{ret}\ u, & k > n \\
+    v' \leftarrow f(k,v);\ \mathrm{loop}(k+1,v',f), & \text{otherwise}
+  \end{cases}
+  \end{aligned}
+  \]
+  \caption{Denotational semantics of terms}
+  \label{fig:denotational-semantics}
+\end{figure}
+
+\subsection{Types in BPPL}
+The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 
+this category. Syntactically:
+\[ 
+\mathbb{A}, \mathbb{B} ::= \mathbb{R} \mid \mathcal{P}(\mathbb{A}) \mid 1 \mid \mathbb{A} \times \mathbb{B} \mid \cdots
+\]
+
+Objects in this category are of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
+It's the type of probability distributions over $\mathbb{A}$. Actually not quite, since we allow any measure $\mu : \Sigma_A \rightarrow [0, \infty]$,
+rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$,
+must itself form a measurable space. There is a construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
+requirements (we don't go into it here).
+
+A natural next question is how these measures can be created and manipulated. The semantics of PPLs are given in a monadic framework (in other words probabilistic
+programs can be thought of as effectful computations). In practice this means that there is are \texttt{ret} and \texttt{bind} type constructors to construct terms
+of (object) type $mathrm{G} ?$, such that
+
+\[
+\begin{array}{l@{\qquad}l}
+\llbracket \mathrm{ret} \rrbracket : A \to \mathcal{G}A
+&
+\llbracket \mathrm{bind} \rrbracket : \mathcal{G}A \to (A \to \mathcal{G}B) \to \mathcal{G}B
+\end{array}
+\]
+
+The core intuition of how probabilistic programs work is gained by studying the semantics of let bindings \ref{bind}. But first let's explain how variables work
+in Appl. A standard technique for representing variables is to use a variable context. A map from this context to the denotation of an AST would be considered
+a program. However, in Appl, the context is a measurable space, and the map is also measurable. Precisely the context and interpretation of well-typedness in context
+is given as:
+
+\[
+\begin{array}{l@{\qquad}l}
+\llbracket \Gamma, X\!:\!A \rrbracket = \llbracket \Gamma \rrbracket \otimes \llbracket A \rrbracket
+&
+\llbracket M \rrbracket : \llbracket \Gamma \rrbracket \xrightarrow{\text{m}} \llbracket A \rrbracket
+\end{array}
+\]
+
+\subsection{The let binding problem}
+
 Staton provided a compositional semantics for first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
 validation of inference algorithms, etc. The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
 are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. So in the following, we present
@@ -114,20 +249,8 @@ s-finite kernels denote open programs and s-finite measures denote closed progra
 At this point it is important to disseminate the difference between Lilac's lack of bayesian updates (call this APPL) and the more general language with
 bayesian updates (call this BPPL). As justified in the \ref{sec:bayes}, it is necessary to work with (unnormalised) measures when 
 
-\subsection{Types in BPPL}
-The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 
-this category. Syntactically:
-\[ 
-\mathbb{A}, \mathbb{B} ::= \mathbb{R} \mid \mathcal{P}(\mathbb{A}) \mid 1 \mid \mathbb{A} \times \mathbb{B} \mid \cdots
-\]
-
-Objects in this category are of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
-It's the type of probability distributions over $\mathbb{A}$. Actually not quite, since we allow any measure $\mu : \Sigma_A \rightarrow [0, \infty]$,
-rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$,
-must itself form a measurable space. There is a construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
-requirements (we don't go into it here).
-
 \subsection{Semantics of Let binding}
+\ref{sec:bind}
 Probabilistic programs are interpreted using the Giry monad \cite{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
 This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
 also naturally show up in type of the monadic bind, which motivates it. 
@@ -197,10 +320,10 @@ In short topological transformations of these diagrams corresponding to the moti
 % this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a \; c. \int \lambda b. \; \kappa(b, c) \; d\iota(a)$ 
 
 
-\subsection{Semantics of sample, observe and normalize}
-The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs \texttt{sample}, \texttt{observe} and \texttt{normalize}
+% \subsection{Semantics of sample, observe and normalize}
+% The bayesian probabilistic programming language (BPPL) is a standard ML like language with 3 special contstructs \texttt{sample}, \texttt{observe} and \texttt{normalize}
 
-\Todo{description of these constructs}
+% \Todo{description of these constructs}
 
 \section{Lean and related formalisation projects}
 

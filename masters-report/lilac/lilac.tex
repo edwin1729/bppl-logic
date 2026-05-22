@@ -57,6 +57,29 @@
 % where $\mathcal{P} = ([0, 1]^{\mathbb{N}}, F, \mu)$ and $F$ is $\mathcal{P}$'s $\sigma$-algebra.
 % So $𝐸 (\gamma) \circ 𝐷$ is F-measurable by construction. Ownership as measurability is a key concept of Lilac, and it neatly falls into place.
 
+\section{Syntax and semantics of Appl}
+To reason about Appl (see \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
+define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
+of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, in the assertion, and would lead to a
+proliferation of exception cases. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
+letting us define a syntax (AST) that is well-typed by construction.
+
+For disambiguation, we refer to types in the \emph{meta language} (in our case Lean) and \emph{object language} (Appl), when it is unclear.
+
+There are several standard ways to define object languages which are well-typed by construction, which all differ in the crucial problem of representing
+(object language) variables. This seemingly innocent problem of how to represent variables is one of the biggest issues encountered in this project, and
+standard techniques don't quite work for Appl, because of it's non-standard interpretation of (object language) types.
+
+The final (Lean) representation of chosen for Appl follows a technique called Dependent De Brujin Indices
+\citep[prefix][see chap 17, Reasoning about programming language syntax]{cpdt}. Discussion on the alternatives are postponed to \ref{}.
+
+
+
+To see why representing a programming language formally is nontrivial, and the difficulty 
+
+There is also an
+alternative 
+
 \section{Pi-lambda-theorem as an induction principle}
 \label{pi-lambda}
 The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
