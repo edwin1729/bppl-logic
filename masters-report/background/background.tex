@@ -1,4 +1,5 @@
 \chapter{Background}
+
 Probabilistic programming is a paradigm where we are defining statistical models using code. It is a means of describing
 complex distributions over some space in a structured way. Probabilistic programming language (PPL) also come with an interpreter
 (probabilistic inference engine) which allows the programmer to sample a term from the distribution denoted by a program
@@ -11,15 +12,25 @@ bayesian perspective underpinned by Baye's law which describes how we update a p
 
 A simple example taken from \cite{prob-semantics} is reproduced below to show how 
 
-\section{bayesian updates}
-\label{sec:bayes}
-This section can be skipped if the comparison between PPLs which support vs do not support the observe construct is not of interest. The logic being
-formalised in this project does not support the observe construct.
+% \section{Preliminaries}
+\subsection{Monads}
+The reader is assumed to have had been exposed to a monadic style of programming (for example Haskell). Mathematical/categorical perspective
+is not strictly necessary, and is thus omitted.
 
+Here we give a brief refresher on the computational perspective of monads It is relevant to understand the semantics of probabilistic
+programming (Giry Monad) and Leans metaprogramming library (MetaM monad).
 
-\Todo{example of bus frequency on weekends vs weekdays}
+Nevertheless the categorical/mathematical perspective on monads though not strictly necessary to understand this work, it's a valuable alternative
+ perspective. For example the justification for the semantics of higher order probabilistic programs being an open problem till 2017, if given 
+ naturally in categorical language (the category of measurable spaces in which types are interpreted is not Cartesian closed).
 
-\Todo{State Baye's law through the example}
+From the computational perspective,
+A monad can be understood as a map from type A to M A. It is additionally associated with two function Ret and bind, with the following your
+ signatures. Monads are actually monoids with Ret acting as unit and bind acting as the binary operation. The laws that Ret and bind obey are 
+ as follows which should remind one of the monoid laws.
+
+\subsection{Type Theory}
+Readers are also assumed to have some familiarity with type theory, in particular having seen inference rules.
 
 \section{Measure Theory}
 \label{sec:measure_theory}
@@ -325,160 +336,22 @@ In short topological transformations of these diagrams corresponding to the moti
 
 % \Todo{description of these constructs}
 
-\section{Lean and related formalisation projects}
 
-Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
-of mathematics. Here we are concerned with verification of software, so the theorems in question
-express properties of the software. The axioms of mathematics that we use is a dependent type theory.
-In this setting of dependent type theory, checking the correctness of proof is the same thing as
-checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
-Further the tool we use to for machine-checked proofs is an interactive theorem prover with support
-for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
-principles a person would use when writing pen-and-paper proofs. There are two proof assistants
-that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
-of required theorems in measure theory and the latter having the original implementation of the Iris framework.
-Lean was chosen since the front-end of the Iris proof mode (MoSeL, see \ref{MoSeL}) had been fully ported
-to Lean very recently.
-
-There has been an exciting amount of recent activity in formalisations related to this work, which has enabled
-the formalisation of Lilac (see, \ref{lilac}) in Lean to be a realistic goal. Most importantly, the formalisation of the 
-disintegration theorem in \cite{remy} is only available in Lean at the moment. Disintegration theorem also involved the
-formalisation of kernels which are actually available in several other proof assistants.
- Quasi-borel spaces \cite{quasi-borel} (in which higher order
-probabilistic programs are interpreted) have been formalised in Isabelle/HOL in \cite{quasi-borel-impl}, along with kernels.
-s-finite-kernels can also be found in rocq \cite{sfinite_kernel_rocq}.
-
-A lot of background in Lean was required to undertake this project.
-For example, we use the full expressivity of inductive types and inductive families.
-Also an understanding of propositional vs definitional
-equality which is related to Proof irrelevance \cite{theorem-proving-in-lean} and how that's implemented
-in Lean's type theory by special treatment of the lowest Universe \cite{mario}, is very helpful.
-
-\subsection{Inductive families in Lean}
-\subsection{Excerpt of Lean type theory bringing about proof irrelevance}
 
 % Various representations of formal languages particularly the problem of how
 % to represent variables in contexts, with strong guarantees from the types System.
 % [Cite chlipala, HOAS, and lean-lang.org]
 
 
-\section{Separation Logic}
-Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \cite{og_sl}.
-The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
-usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it: the most fundamental one being
-a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
-later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool toreason about imperative programs mutating heap based memory
-at a suitable level of abstraction. It then found success also in reasoning about concurrent programs \cite{csl}.
+% \subsection{bayesian updates}
+% \label{sec:bayes}
+% This section can be skipped if the comparison between PPLs which support vs do not support the observe construct is not of interest. The logic being
+% formalised in this project does not support the observe construct.
 
-\subsection{Reviewing Probabilistic Separation Logics}
-More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
-\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
-updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
-probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
 
-There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
-probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
-from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
-expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
-in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
-More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
+% \Todo{example of bus frequency on weekends vs weekdays}
 
-\subsection{Lilac}
-\label{lilac}
-The following are a few core intuitions behind Lilac. Lilac aims to reason about random variables, which is a higher level of abstraction that we generally
-reason in informally (as opposed to descending down into measure theory and lebesgue integrals). Since it's a separation logic, it is also compositional but
-along a different axis to compositionality of the denotational semantics. I call the compositionality of probabilistic separation logic a line-by-line compositionality
-(as opposed to term-wise compositionality). Each let binding creates a new "line" and we can compose our reasoning about each of line. In the denotational semantics
-we would instead reason compositionally about the arguments to the monadic bind operator (an s-finite measure and an s-finite-kernel). The former is a more natural way to reason
-about a sequencing operator.
+% \Todo{State Baye's law through the example}
 
-This reasoning style is acheived by defining a resource which gets carried through and composed and split according to the laws of separation logic. This resource or state is
-a canonical source of randomness, the Hilbert cube, along with a measure space structure over it. It can be argued that the Hilbert cube could be replaced with something else,
-and indeed the definitions are parametric over this choice of measure space for a while. Any distribution can be constructed from the Hilbert cube (which is like a uniform distribution)
-using the operations/terms of the language.
-
-\Todo{ownership as measurability}
-
-\Todo{independent combinations if probability spaces}
-
-% It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
-% from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
-% measure theory may hold some intuitions/inspiration or simplifications 
-
-% \section{Symbolic Execution tools}
-
-\section{Iris and MoSeL}
-\label{MoSeL}
-Iris \cite{iris} is a step-indexed modal separation logic partly designed as a framework for embedding other separation logics into,
-to take advantage of the Iris Proof Mode (IPM) \cite{ipm}. The Iris proof mode provides state of the art "tactical support", tactic
-based interactive theorem proving. More recently the front of the IPM was abstracted from Iris to any separation logic to
-create MoSeL \cite{mosel}. We aim to use MoSeL in this project for several reasons
-\begin{enumerate}
-\item Neither Lilac nor BaSL is step-indexed, so it is much cleaner to instantiate MoSeL rather than Iris
-\item Making Lilac compatible with Lilac's interface (instantiating an algebraic structure called CMRA \cite{iris}) is an
-unsolved problem (future work section \cite{lilac})
-\item MoSeL was completely ported to Lean, shortly before the start of this project! \cite{iris-lean}.
-\end{enumerate}
-
-MoSeL presents the interface of a "logic of Bunched Implications" which essentially contains all standard connectives of a first order
-logic and the separation logic connectives. The only addition MoSeL adds to this is a persistence modality (which can be instantiated in 
-a trivial way in exchange for defeating any automation it might achieve?).
-
-One of the key  generalisations that MoSeL makes over Iris is parametricity over linear and affine logics. Iris is an affine logic
-meaning separating conjuncts in a premise can be used 0 or 1 time in proving a goal; they can be thrown away if desired. In a linear
-logic however every conjunct must be used exactly once, as in the first separation logic by \citet{og_sl}.
-There is naturally quite an emphasis on describing whether a logic is affine or linear, since throwing away unwanted predicates
-when it is suitable to do so, is exactly the kind of thing a user wants automation for. In BaSL \cite{basl}, there is a short
-discussion stating BaSL is part affine and part linear. Precisely characterising the constructs which are affine and linear or under
-what conditions should be explored for better tactical support.
-
-MoSeL like IPM before it provides tactics mirroring the native Lean tactics, such as \texttt{iIntros} and \texttt{IAssumption}
-
-In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean right before the beginning of this project
-\cite{iris-lean-impl, iris-lean}. So the formalisation builds on this. The interface provided by MoSeL is quite general. The interface
-defines a pre-orderered Set  (PROP, Entails)
-\begin{leancode}
-class BIBase (PROP : Type u) where
-%   ⊢ : PROP → PROP → Prop -- Entails
-  pure : Prop → PROP
-  ∧ : PROP → PROP → PROP
-  → : PROP → PROP → PROP
-  * : PROP → PROP → PROP -- separating conjunct
-  -∗ : PROP → PROP → PROP -- magic wand
-  persistently : PROP → PROP
-  ...
-\end{leancode}
-
-The type class \texttt{BIBase} defines the interface for the "data" parts of the separation logic, while the axioms that these
-need to satisfy (the "proof" parts) are defined in an extension of this type class.  We are defining the separation logic, Lilac or BaSL, in the meta-logic, Lean. 
-So \texttt{BIBase} is parametrised by a type \texttt{PROP} which is a proposition in the separation logic (as opposed to \texttt{Prop} in lean).
-
-We draw the reader's attention to the \texttt{Entails} which allows us to provide the semantics of entailment. The soundness of MoSeL's
-syntactic entailments are established by the semantics provided when instantiating \texttt{Entails}. This gives us a little flexibility
-in how we'd like to instantiate \texttt{PROP}. For simpler logics we could have \texttt{PROP}, directly capture the semantis of that
-proposition, giving \texttt{PROP} this shape. 
-
-\begin{leancode}
-PROP := Store → Heap → Prop
-\end{leancode}
-
-My understanding is that this precisely encodes a relation: the satisfiability relation. An n-ary relation is encoded as a function
-from the n parameters to a Proposition. In other words it's a set of n-tuples. (Sets of type A are encoded as $A \rightarrow Prop$).
-Notice however that $s, h \vDash P$ should be of the form 
-
-\begin{leancode}
-PROP := Store → Heap → PROP → Prop
-\end{leancode}
-
-where did the $P$ (of type \texttt{PROP}) go? It's given implicitly through the inductive construction of a term of \texttt{PROP}
-through the constructors defined by \texttt{and}, \texttt{sep}, etc. Any term of \texttt{PROP} implicitly contains the tree of
-constructors used to create it.
-
-This is standard for the simple example instantiations of MoSeL (such as classical separation logic), but quite convoluted
-conceptuall. We may wish to split the representations of the separation logic assertions into syntax and
-semantics, which is what is done in non-trivial logics and this projects formalisation. There is a denotation function of type
-$Store \rightarrow Heap \rightarrow PROP \rightarrow Prop$ (exactly how the satisfiability relation should look) 
-used in the instantiation of Entails; much more natural!
-
-% \section{Related Work}
-% \Todo{List the quasi borel spaces formalisation and stuff}
+\input{background/sl.tex}
+\input{background/theorem_proving.tex}

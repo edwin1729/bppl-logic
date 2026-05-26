@@ -23,8 +23,11 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage{mathpartir}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{caption}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage[square]{natbib}
 \usepackage[normalem]{ulem}
@@ -32,6 +35,10 @@
 \newcommand{\rcite}{\textcolor{red}{CITE}}
 \newcommand{\Todo}[1]{\texttt{<insert: #1>}}
 \newcommand{\bind}{\mathbin{>\!\!>\mkern-6.7mu=}} % monadic bind
+\newcommand{\wand}{\mathbin{-\!*}}
+\newcommand{\denote}[2]{\llbracket #1 \rrbracket_{#2}}
+\newcommand{\bient}{\mathrel{\dashv\vdash}}
+\newcommand{\repo}[1]{\href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/#1.lean}{Bppl.Lilac.#1}}
 
 \title{Tools for Foundational Verification of Probabilistic Programs}
 \author{Edwin Fernando}
@@ -51,10 +58,10 @@
 % \listoffigures
 % \listoftables
 
-\input{introduction/introduction.tex}
+% \input{introduction/introduction.tex}
+\input{overview/overview.tex}
 \input{background/background.tex}
 % \input{project/project.tex}
-\input{overview/overview.tex}
 \input{lilac/lilac.tex}
 % \input{evaluation/evaluation.tex}
 % \input{ethical.tex}

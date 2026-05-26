@@ -96,3 +96,37 @@ in the formalisation of \citep{bluebell} to prove soundness of Zero Knowledge Pr
 
 % this paradigm code represents statistical models which are use for simulation and prediction in complex systems  
 % Some examples of such languages include Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican} 
+
+
+\section{Lean and related formalisation projects}
+
+Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
+of mathematics. Here we are concerned with verification of software, so the theorems in question
+express properties of the software. The axioms of mathematics that we use is a dependent type theory.
+In this setting of dependent type theory, checking the correctness of proof is the same thing as
+checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
+Further the tool we use to for machine-checked proofs is an interactive theorem prover with support
+for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
+principles a person would use when writing pen-and-paper proofs. There are two proof assistants
+that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
+of required theorems in measure theory and the latter having the original implementation of the Iris framework.
+Lean was chosen since the front-end of the Iris proof mode (MoSeL, see \ref{MoSeL}) had been fully ported
+to Lean very recently.
+
+There has been an exciting amount of recent activity in formalisations related to this work, which has enabled
+the formalisation of Lilac (see, \ref{lilac}) in Lean to be a realistic goal. Most importantly, the formalisation of the 
+disintegration theorem in \cite{remy} is only available in Lean at the moment. Disintegration theorem also involved the
+formalisation of kernels which are actually available in several other proof assistants.
+ Quasi-borel spaces \cite{quasi-borel} (in which higher order
+probabilistic programs are interpreted) have been formalised in Isabelle/HOL in \cite{quasi-borel-impl}, along with kernels.
+s-finite-kernels can also be found in rocq \cite{sfinite_kernel_rocq}.
+
+A lot of background in Lean was required to undertake this project.
+For example, we use the full expressivity of inductive types and inductive families.
+Also an understanding of propositional vs definitional
+equality which is related to Proof irrelevance \cite{theorem-proving-in-lean} and how that's implemented
+in Lean's type theory by special treatment of the lowest Universe \cite{mario}, is very helpful.
+
+
+% \section{Related Work}
+% \Todo{List the quasi borel spaces formalisation and stuff}

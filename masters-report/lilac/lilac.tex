@@ -73,12 +73,199 @@ standard techniques don't quite work for Appl, because of it's non-standard inte
 The final (Lean) representation of chosen for Appl follows a technique called Dependent De Brujin Indices
 \citep[prefix][see chap 17, Reasoning about programming language syntax]{cpdt}. Discussion on the alternatives are postponed to \ref{}.
 
+First we present the types of Appl along with its denotational semantics, taken from \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/Appl.lean}{Bppl.Lilac.Appl}.
+\begin{leancode}
+inductive Ty where
+  | prod : Ty → Ty → Ty
+  | bool
+  | real
+  | exp : ℕ → Ty → Ty -- Tyⁿ
+  | index
+  | G : Ty → Ty
+
+@[reducible] def Ty.den : Ty → MeasCat
+  | prod ty₁ ty₂ => .of (ty₁.den × ty₂.den)
+  | bool => .of Bool
+  | real => .of ℝ
+  | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
+  | index => .of ℕ
+  -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
+  | G ty => .of (ProbabilityMeasure (ty.den))
+\end{leancode}
+
+This mirrors the definition in the paper with no deviations. Note that the denotation of Appl types is \lean|MeasCat|, the category of
+MeasurableSpace, rather than \lean|Type| as for most other object languages. It is crucial to annotate \lean|@[reducible]|, which tells the
+typechecker to unfold \lean|Ty.den| when checking if two types are definitionally equal. The importance of this will be made clear once we describe
+the denotation of terms.
+
+First we describe the 
+De Brujin indices 
+
+Here is an excerpt of the definitions of terms, (omitted constructors can be found on Github).
+
+\begin{leancode}
+inductive Term : List Ty → Ty → Type
+  | var : Member ty ctx → Term ctx ty
+  | ret : Term ctx ty → Term ctx (.G ty)
+  | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
+  | pair : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
+  | fst : Term ctx (.prod ty₁ ty₂) → Term ctx ty₁
+  | snd : Term ctx (.prod ty₁ ty₂) → Term ctx ty₂
+  | T : Term ctx .bool
+  | F : Term ctx .bool
+  | ite : Term ctx .bool → Term ctx ty → Term ctx ty → Term ctx ty
+  | flip : (p : ℝ≥0) → (h : p ≤ 1) → Term ctx (.G .bool)
+  | r : ℝ → Term ctx .real
+  | arith : Arith → Term ctx .real → Term ctx .real → Term ctx .real
+  | cmp : Cmp → Term ctx .real → Term ctx .real → Term ctx .bool
+  | unif01 : Term ctx (.G .real)
+\end{leancode}
+
+\begin{leancode}
+/-- Takes the term and variable environment (which is a measurable function)
+to give an element of a measurable space -/
+@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
+  | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
+  | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
+      -- MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
+  -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
+  -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
+  -- to use its deep measure theoretic results for constructing measurable functions
+  | @bind _ ty₁ ty₂ M N =>
+    letI T := List.TProd (⟪·⟫) ctx
+    letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
+    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den -- need to provide type annotation for this
+    toDen (k₂ ∘ₖ k₁)
+  | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
+  | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
+  | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
+  | T => ⟨fun env ↦ true, measurable_const⟩
+  | F => ⟨fun env ↦ false, measurable_const⟩
+  | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
+      -- the function translating from bool to Prop is `Measurable`
+      -- by `measurableSet_singleton true`
+      Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
+  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
+  | r x => ⟨fun _ ↦ x, measurable_const⟩
+  | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
+    (op.den.2).comp (M.den.2.prod N.den.2)⟩
+  | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
+    (op.den.2).comp (M.den.2.prod N.den.2)⟩
+  | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
+\end{leancode}
+
+interesting because of the
+ \lean|theorem foo : True := by trivial|
+  Some things that are noteworthy are the fact 
+
+\section{Semantics of Lilac propositions}
+\subsection{Reviewing Probabilistic Separation Logics}
+More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
+\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
+updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
+probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
+
+There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
+probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
+from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
+expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
+in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
+More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
+
+\subsection{Lilac}
+\label{lilac}
+The following are a few core intuitions behind Lilac. Lilac aims to reason about random variables, which is a higher level of abstraction that we generally
+reason in informally (as opposed to descending down into measure theory and lebesgue integrals). Since it's a separation logic, it is also compositional but
+along a different axis to compositionality of the denotational semantics. I call the compositionality of probabilistic separation logic a line-by-line compositionality
+(as opposed to term-wise compositionality). Each let binding creates a new "line" and we can compose our reasoning about each of line. In the denotational semantics
+we would instead reason compositionally about the arguments to the monadic bind operator (an s-finite measure and an s-finite-kernel). The former is a more natural way to reason
+about a sequencing operator.
+
+This reasoning style is achieved by defining a resource which gets carried through and composed and split according to the laws of separation logic. This resource or state is
+a canonical source of randomness, the Hilbert cube, along with a measure space structure over it. It can be argued that the Hilbert cube could be replaced with something else,
+and indeed the definitions are parametric over this choice of measure space for a while. Any distribution can be constructed from the Hilbert cube (which is like a uniform distribution)
+using the operations/terms of the language.
+
+\Todo{ownership as measurability}
+
+\Todo{independent combinations of probability spaces}
+
+% It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
+% from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
+% measure theory may hold some intuitions/inspiration or simplifications 
 
 
-To see why representing a programming language formally is nontrivial, and the difficulty 
+\section{Instantiating Iris}
+Iris \cite{iris} is a step-indexed modal separation logic partly designed as a framework for embedding other separation logics into,
+to take advantage of the Iris Proof Mode (IPM) \cite{ipm}. The Iris proof mode provides state of the art "tactical support", tactic
+based interactive theorem proving. More recently the front of the IPM was abstracted from Iris to any separation logic to
+create MoSeL \cite{mosel}. We aim to use MoSeL in this project for several reasons
+\begin{enumerate}
+\item Neither Lilac nor BaSL is step-indexed, so it is much cleaner to instantiate MoSeL rather than Iris
+\item Making Lilac compatible with Lilac's interface (instantiating an algebraic structure called CMRA \cite{iris}) is an
+unsolved problem (future work section \cite{lilac})
+\item MoSeL was completely ported to Lean, shortly before the start of this project! \cite{iris-lean}.
+\end{enumerate}
 
-There is also an
-alternative 
+MoSeL presents the interface of a "logic of Bunched Implications" which essentially contains all standard connectives of a first order
+logic and the separation logic connectives. The only addition MoSeL adds to this is a persistence modality (which can be instantiated in 
+a trivial way in exchange for defeating any automation it might achieve?).
+
+One of the key  generalisations that MoSeL makes over Iris is parametricity over linear and affine logics. Iris is an affine logic
+meaning separating conjuncts in a premise can be used 0 or 1 time in proving a goal; they can be thrown away if desired. In a linear
+logic however every conjunct must be used exactly once, as in the first separation logic by \citet{og_sl}.
+There is naturally quite an emphasis on describing whether a logic is affine or linear, since throwing away unwanted predicates
+when it is suitable to do so, is exactly the kind of thing a user wants automation for. In BaSL \cite{basl}, there is a short
+discussion stating BaSL is part affine and part linear. Precisely characterising the constructs which are affine and linear or under
+what conditions should be explored for better tactical support.
+
+MoSeL like IPM before it provides tactics mirroring the native Lean tactics, such as \texttt{iIntros} and \texttt{IAssumption}
+
+In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean right before the beginning of this project
+\cite{iris-lean-impl, iris-lean}. So the formalisation builds on this. The interface provided by MoSeL is quite general. The interface
+defines a pre-orderered Set  (PROP, Entails)
+\begin{leancode}
+class BIBase (PROP : Type u) where
+%   ⊢ : PROP → PROP → Prop -- Entails
+  pure : Prop → PROP
+  ∧ : PROP → PROP → PROP
+  → : PROP → PROP → PROP
+  * : PROP → PROP → PROP -- separating conjunct
+  -∗ : PROP → PROP → PROP -- magic wand
+  persistently : PROP → PROP
+  ...
+\end{leancode}
+
+The type class \texttt{BIBase} defines the interface for the "data" parts of the separation logic, while the axioms that these
+need to satisfy (the "proof" parts) are defined in an extension of this type class.  We are defining the separation logic, Lilac or BaSL, in the meta-logic, Lean. 
+So \texttt{BIBase} is parametrised by a type \texttt{PROP} which is a proposition in the separation logic (as opposed to \texttt{Prop} in lean).
+
+We draw the reader's attention to the \texttt{Entails} which allows us to provide the semantics of entailment. The soundness of MoSeL's
+syntactic entailments are established by the semantics provided when instantiating \texttt{Entails}. This gives us a little flexibility
+in how we'd like to instantiate \texttt{PROP}. For simpler logics we could have \texttt{PROP}, directly capture the semantis of that
+proposition, giving \texttt{PROP} this shape. 
+
+\begin{leancode}
+PROP := Store → Heap → Prop
+\end{leancode}
+
+My understanding is that this precisely encodes a relation: the satisfiability relation. An n-ary relation is encoded as a function
+from the n parameters to a Proposition. In other words it's a set of n-tuples. (Sets of type A are encoded as $A \rightarrow Prop$).
+Notice however that $s, h \vDash P$ should be of the form 
+
+\begin{leancode}
+PROP := Store → Heap → PROP → Prop
+\end{leancode}
+
+where did the $P$ (of type \texttt{PROP}) go? It's given implicitly through the inductive construction of a term of \texttt{PROP}
+through the constructors defined by \texttt{and}, \texttt{sep}, etc. Any term of \texttt{PROP} implicitly contains the tree of
+constructors used to create it.
+
+This is standard for the simple example instantiations of MoSeL (such as classical separation logic), but quite convoluted
+conceptuall. We may wish to split the representations of the separation logic assertions into syntax and
+semantics, which is what is done in non-trivial logics and this projects formalisation. There is a denotation function of type
+$Store \rightarrow Heap \rightarrow PROP \rightarrow Prop$ (exactly how the satisfiability relation should look) 
+used in the instantiation of Entails; much more natural!
 
 \section{Pi-lambda-theorem as an induction principle}
 \label{pi-lambda}
