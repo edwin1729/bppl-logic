@@ -1,0 +1,221 @@
+\section{Separation Logic}
+Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \cite{og_sl}.
+The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
+usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it: the most fundamental one being
+a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
+later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool toreason about imperative programs mutating heap based memory
+at a suitable level of abstraction. It then found success also in reasoning about concurrent programs \cite{csl}.
+
+\subsection{Classical separation logic}
+The first separation logic was proposed by \cite{og_sl} for reasoning about programs which manipulate a heap. Before we move to probabilistic separation logic which is the main topic
+of the report, we first present separation logic in a simpler setting. Intuitively, separation logic is just first order logic with the
+additional connectives of the separating conjunction and separating implication (notation: $*$ and $\wand$). These separating connectives
+are defined with respect to a \emph{resource}. In the original separation logic we have a simple resource which is a finite partial function from some 
+a set denoted Locations to a set Values (fig \ref{fig:sla}). The notation $h_0 \star h_1$ is a partial binary operation denoting
+the union of $h_0$ and $h_1$ if they are disjoint. So we see that in order for a separating conjunct to hold we need to split the resource appropriately such
+that each part satisfies a conjunct. This is the principle behind all separation logics. Each proposition ``owns'' unique resources. One can imagine how each proposition
+makes assertions about parts of a program, and it is made explicit which parts of the heap, that part of the program ``owns'' and is thus able to modify. In short the logic allows
+reasoning in a resource-compositional manner. And specifically classical separation logic reasons about ``memory'' in languages like C, where the programmer
+must consciously manage the memory.
+
+The other two \emph{spatial connectives} are $\mathrm{emp}$ and $\wand$. $\mathrm{emp}$ denotes the heap is an empty mapping, acting as the identity element to a monoid formed with $*$. $\wand$ is to $*$ what $\to$ is to $\wedge$. Intuitively, $P \wand Q$ holds
+under a heap $q_-$ if $P$ holds under some heap $p$ for which the combined resource $q = p \star q_-$, satisfies the goal $Q$.
+
+Next observe the definitions of \emph{forall quantification}. We quantify over the set \texttt{Values} that the given variable used to define $P$ can take. Though we haven't
+introduced the programming language that this logic reasons about, note that the variables form the bridge between the language and logic, since these variables are shared between
+programs and assertions we make about the program. We do not go into the specifics of the introducing the programming language for this particular logic, since that takes us too far afield.
+
+
+\begin{figure}[htbp]
+  \label{fig:sl}
+    \centering
+    \begin{subfigure}[t]{0.95\textwidth}
+      \label{fig:sla}
+        \centering
+        \[
+        \begin{array}{rcl@{\qquad\qquad}rcl}
+        \text{Heaps} & \triangleq & \text{Locations} \rightharpoonup_{\mathrm{fin}} \text{Values}
+        & \text{Stores} & \triangleq & \text{Variables} \rightharpoonup_{\mathrm{fin}} \text{Values} \\[0.8em]
+        \end{array}
+        \]
+        \caption{Basic sets and structures}
+    \end{subfigure} 
+
+    \begin{subfigure}[t]{0.95\textwidth}
+        \centering
+        \[
+        \begin{array}{rcll}
+        B & ::= & True \mid False \\
+        E,F & ::= & \mathbb{N} \\
+        P,Q,R & ::= & B \mid E \mapsto F & \text{Atomic Formulae} \\[0.4em]
+              & \mid & \mathrm{false} \mid P \Rightarrow Q \mid \forall x.P & \text{Classical Logic} \\[0.4em]
+              & \mid & \mathrm{emp} \mid P * Q \mid P \wand Q & \text{Spatial Connectives}
+        \end{array}
+        \]
+        \caption{Syntax of separation logic}
+    \end{subfigure}
+
+    \vspace{1em}
+
+    \begin{subfigure}[t]{0.95\textwidth}
+        \centering
+        \[
+        \begin{array}{rcll}
+        s,h & \models & B & \text{iff } B \\[0.6em]
+        s,h & \models & E \mapsto F & \text{iff } \denote{E}{s} \in \mathrm{dom}(h) \text{ and } h(\denote{E}{s})=\denote{F}{s} \\[0.6em]
+        s,h & \models & \mathrm{false} & \text{never} \\[0.6em]
+        s,h & \models & P \Rightarrow Q & \text{iff if } s,h \models P \text{ then } s,h \models Q \\[0.6em]
+        s,h & \models & \forall x.P & \text{iff } \forall v \in \text{Values}.\ [s \mid x \mapsto v],h \models P \\[0.6em]
+        s,h & \models & \mathrm{emp} & \text{iff } h = [\,] \text{ is the empty heap} \\[0.6em]
+        s,h & \models & P * Q & \text{iff } \exists h_0,h_1.\ h_0 \star h_1 = h,\ s,h_0 \models P \text{ and } s,h_1 \models Q \\[0.6em]
+        s,h & \models & P \wand Q & \text{iff } \forall h'.\ \text{if } h' \star h \text{ exists and } s,h' \models P \text{ then } s,h \star h' \models Q
+        \end{array}
+        \]
+        \caption{Semantic interpretation}
+    \end{subfigure}
+
+    \caption{Definitions of separation logic}
+    \label{fig:sep-logic}
+\end{figure}
+
+\subsection{Zoo of separation logics}
+In this section we see increasingly abstract presentations of separation logic to spot patterns amongst them, and give definitions of characterstics that help classify separation logics.
+Identifying these characteristics and ``telling'' Iris about it, lets us effectively use the proof automation/engineering developed by the Iris framework for our probabilistic separation
+logic (which will be presented later).
+
+\subsubsection{Abstract resources}
+It was hinted in the previous section $\mathrm{emp}$ and $*$ is like a monoid. In general, what we mean by a ``resource'' can be modelled with some algebraic structure. The spatial connectives $*$ and $\wand$
+are both defined using the binary operation $\star$. At the core of a separation logic is the partial commutative monoid (PCM) formed by $\mathrm{emp}$ and $\star$. A partial monoid
+is just a monoid accounting to the fact that $\star$ is a partial operation. So we guard all the laws with existence checks. This turns out to be quite messy in a formalism, as seen for example in the \texttt{assoc}
+law. The below code shows the formalisation used taken from \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/Krm.lean}{Bppl.Lilac.Krm}.
+
+\begin{leancode}
+notation a:arg " ⋆ " b:arg => PcmBase.binop a b
+
+class Pcm (α : Type*) extends One α where
+  binop : α → α → Option α -- partial binary operation denoted `⋆`
+  one_mul : ∀ a : α, 1 ⋆ a = a
+  comm : ∀ a b, a ⋆ b = b ⋆ a
+  assoc : ∀ a b c : α,
+    ((⋆) <$> (a ⋆ b) <*> (some c)).join = ((⋆) <$> (some a) <*> (b ⋆ c)).join
+
+class Krm (α : Type*) extends Pcm α, Preorder α where
+  le_mul_mono : ∀ x x' y y' p' : α,
+    x ≤ x' → y ≤ y' →
+    (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
+\end{leancode}
+
+Lean follows a haskell like syntax. Above we define the typeclass representing PCM and KRM.
+\texttt{Pcm} extends \texttt{One}, which gives a ($1 : \alpha$) which we interpret as \texttt{emp}.
+\texttt{assoc} is using functor syntax (from haskell) and \lean{join : Option (Option α) → Option α}.
+This code is included to define precisely what is meant by partial monoid and krm, and to
+familiarise the reader with lean syntax. 
+
+The more interesting development is the order structure in the algebra. This can be motivated by wanting to model an affine separation logic (defined in the next section).
+Intuitively an affine separation logic always allows a larger heap to validate an assertion if a smaller heap does so too. This was not the case for the classical
+separation logic presented in the previous section which is a linear separation logic. Concretely only the single celled heap $\{1 \mapsto 42\}$ would validate the assertion $1 \mapsto 42$,
+and importantly $\{1 \mapsto 42, 2 \mapsto 42\}$ would not validate the same assertion. However, in an affine separation logic, any heap which contains $\{1 \mapsto 42\}$ would validate the assertion.
+Each of these flavours of separation logic are useful in different contexts. Classical separation logic is useful in a language with manual memory management while
+affine separation logic is used in a language with garbage collection.
+We see that we want an ordering in our algebra to express this ``contains'' relation or more generally how ``informative'' a resource is. So we introduce a preorder
+to the algebra, turning the PCM into a Kripke resource monoid (KRM) \citep{galmiche}. Note that KRMs also encompass PCMs/linear case, if we simply set the preorder to equality.
+For the affine heap-based separation logic, the preorder is subset inclusion on the domain of heaps. The standard connectives of separation logic
+(those connectives shared by all separation logics)
+can be
+generated from a KRM, which is the approach taken in the Lilac formalisation.
+
+\subsubsection{Logic of Bunched Implications}
+Abstracting even further, we would like to get rid of explicit mentions of the resource and the satisfiability relation ($s, h \models P$) and talk instead about
+entailments of the form $\vdash P$ or $P \vdash Q$. The \emph{logic of bunched implications} (BI) as presented by \cite{bi} was what classical separation logic was
+based on. It can be described as a logic in which the familiar ``intuitionistic'' connectives of first order logic are combined with $\mathrm{emp}$, $*$ and $\wand$ (called spatial connectives, alluding to heaps),
+in the same logic. We can recover the notion of resources by our interpretation of logical entailment: $P \vdash Q$ is defined as (using connectives in the meta-logic)
+$\forall s,h (s,h \models P \Rightarrow s, h \models Q)$. The definition of $\vdash$ is in general specific to each logic, but in practice (for separation logic) usually
+has the above shape. Having established this greater level of abstraction, we can more succinctly define some characteristics of different
+separation logics which will come in handy when instantiating the Iris framework. All subsequent figures in this section are reproduced from \citep{mosel}.
+
+First let's precisely define the relation between $*$ and $\wand$ (identical to $\wedge$ and $\to$)
+
+The rest of this section reproduces some figures from \citep{mosel}.
+
+\[
+\begin{array}{cccc}
+\begin{array}{c}
+\mathrm{emp} * P \dashv\vdash P \\[0.8em]
+P * Q \vdash Q * P \\[0.8em]
+(P * Q) * R \vdash P * (Q * R)
+\end{array}
+&
+\begin{array}{c}
+\text{\textsc{*-Mono}} \\[0.4em]
+\frac{P_1 \vdash Q_1 \qquad P_2 \vdash Q_2}{P_1 * P_2 \vdash Q_1 * Q_2}
+\end{array}
+&
+\begin{array}{c}
+\text{\textsc{*-Intro}} \\[0.4em]
+\frac{P * Q \vdash R}{P \vdash Q \mathbin{-\!*} R}
+\end{array}
+&
+\begin{array}{c}
+\text{\textsc{*-Elim}} \\[0.4em]
+\frac{P \vdash Q \mathbin{-\!*} R}{P * Q \vdash R}
+\end{array}
+\end{array}
+\]
+
+\Todo{If I add the one\_le, does the KRM become an affine logic generator?}
+% Going back to the KRMs, we can now define the standard recipe for constructing an affine separation logic out of a KRM. 
+
+Next we define the affine propositions: $P$ as any proposition satisfying for all Q $P * Q \vdash Q$. In other words $P$ can always be dropped. An affine 
+separation logic is one where all propositions are affine. Affine propositions can also be equivalently defined as $P * \mathrm{True} \bient P$ or $\mathrm{True} \bient \mathrm{emp}$.
+Another class of propositions is persistent propositions. Those propositions which may be duplicated to establish the goal. So for instance if $P$ is persistent than
+$P \vdash P * P$. \Todo{Why is this not the definition?}.
+Intuitionistic propositions are a final class of propositions which are both affine and persistent. Working with intuitionistic propositions in the premise
+feels like working with the familiar first order (intuitionistic) logic, since we don't at all need to keep track of how many times these propositions are used.
+Because of this Iris treats intuitionistic propositions specially, keep them separate from the rest of the ``spatial'' propositions in the premise. So a user
+of the iris proof-mode will see an ``intuitionistic context'', following rules familiar to them from using the host theorem prover (Rocq or Lean), and additionally
+the spatial context, which they will need to treat more carefully. Examples follow in the next section.
+
+\subsection{Iris and MoSeL}
+\label{MoSeL}
+Iris is a general framework for tactic based proofs in a separation logic. Iris (specifically MoSeL) can be understood according to the layers of abstraction it provides.
+
+\begin{verbatim}
+  
+KRM -> BI                               ->                   Iris Proof Mode
+    |_ Probability Specific connectives -> typeclass instances -|
+
+\end{verbatim}
+
+This is sort of the general structure of how Iris is meant to be used by someone instantiating it. You start with a KRM or similar algebraic structure which is the resource
+model, from which there is pre-determined construction of a BI (those connectives common to all separation logic). Given this Iris proof mode will be
+aware of the standard properties of a separation logic. For example, it is able to prove the following goal, note it has implicitly applied both commutativity 
+separating conjunct
+%  $\star$ and distributivity of $\star$ over $\and$.
+\Todo{example 1}
+We are also able to introduce both variables and premises with the same command, to build a context of everything we have to prove our goal.
+\Todo{example 2}
+What is unique about the Iris proof mode when compared to Lean or Rocq, is that it has an additional spatial context.
+\Todo{example with spatial context}
+In short it is engineered to provide an interface which mimics the natural reasoning style of user. The IPM understands separation logic and endeavours to automate common
+boring tasks.
+
+Though these seem like rather basic conveniences they are quite difficult to provide in a manner extensible to all separation logics. In order to understand how the
+proof mode works (as we will be instantiating Iris), it is first necessary to understand tactic based proofs in general.
+
+%move to main development.
+\subsection{Program logic and Weakest precondition}
+In order to reason about programs, the logic must be able to express facts about the program effectively. In other words the language and the logic need to 
+``communicate'' somehow. We would like to be very explicit here about how that happens, since:
+\begin{itemize}
+\item this is generally skipped from a first presentation of program logic since its an implementation
+detail. However, in a formalisation it is crucial as it forms the interface between two significant pieces of the project (the language in \repo{Appl} and the logic in \repo{Assertion})
+\item Lilac unlike any other separation logic I am aware of, does not have a one-to-one correspondence between its variables in the language and the logic.
+If in the language a variable has type $A$ then in the logic it has type of the random variable of $A$ (precise definitions will follow)
+\end{itemize}
+
+The link between the language and the logic is established using a connective in the logic, which takes the denotation of a program and some
+other assertions regarding it. Lilac is a functional language 
+
+Perhaps the more intuitive form of these connectives is the Hoare triple which takes 3 arguments, represented syntactically as $\{ P \} \llbracket M \rrbracket \{ Q \}$.
+$P$ (precondition) and $Q$ (postcondition) are both propositions and $\llbracket M \rrbracket$ is the denotation of some program $M$. But here
+we will present instead the weakest precondition (wp) connective, in terms of which Hoare triples can be defined. wp is more amenable to automation and since it only takes in a single proposition.
