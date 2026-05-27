@@ -13,7 +13,7 @@ noncomputable section
 
 open unitInterval ProbabilityTheory ProbabilityTheory.Kernel MeasureTheory MeasureTheory.Measure
 open LProp Appl
-open Iris.BI KrmHelper HC
+open Iris.BI Krm HC
 
 -- def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
 --   fun _ ↦ (bernoulli p hp).toMeasure
@@ -25,31 +25,9 @@ open Iris.BI KrmHelper HC
 --   -- let X : RV ⟪A⟫ := ⟨fun ω ↦ ω n, sorry⟩
 --   sorry
 
-/-- If `a ⋆ b = b ⋆ a` (from `Pcm.comm`), then `Option.get` yields equal values. -/
-lemma PSp.get_comm (a b : PSp) (hab : ✓'(a ⋆ b)) (hba : ✓'(b ⋆ a)) :
-    ↓hab = ↓hba := by
-  have h : a ⋆ b = b ⋆ a := Pcm.comm a b
-  set x := (a ⋆ b).get hab
-  set y := (b ⋆ a).get hba
-  have hax : a ⋆ b = some x := Option.some_get hab ▸ rfl
-  have hay : b ⋆ a = some y := Option.some_get hba ▸ rfl
-  exact Option.some_injective _ (hax.symm.trans (h.trans hay))
-
 def PSpace.mk'' {Ω : Type*} {ms ms' : MeasurableSpace Ω} (μ : @ProbabilityMeasure Ω ms)
     (ms'_le_ms : ms' ≤ ms) : PSpace Ω :=
-  ⟨⟨ms' , μ.1.trim ms'_le_ms⟩, sorry⟩
-
-/-- `MeasurableSpace.sum` (from MeasureOnSpace.lean) equals `⊔` (the lattice sup). -/
-private lemma sum_eq_sup {Ω : Type*} (m₁ m₂ : MeasurableSpace Ω) :
-    MeasurableSpace.sum m₁ m₂ = m₁ ⊔ m₂ := by
-  apply le_antisymm
-  · apply MeasurableSpace.generateFrom_le
-    rintro s (h | h)
-    · exact @le_sup_left _ _ m₁ m₂ s h
-    · exact @le_sup_right _ _ m₁ m₂ s h
-  · apply sup_le <;> intro s hs <;>
-    exact MeasurableSpace.measurableSet_generateFrom
-      (by first | left; exact hs | right; exact hs)
+  ⟨⟨ms', μ.1.trim ms'_le_ms⟩, sorry⟩
 
 -- Appendix B.21 from Lilac paper — "Uniform" proof rule.
 lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
@@ -72,7 +50,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
       have := PSp.psp_val_binop Ω_fr Ω
       rw [hsome] at this; simpa using this.symm
     exact (PSpace.le_of_isIndependentProduct_right
-      (PSpace.isIndependentProduct_of_binop_eq_some hval)).1
+      (PSpace.Krm.isIndependentProduct_of_binop_eq_some hval)).1
   let X : RV ⟪Ty.real⟫ := ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
   -- Step 2: Constructions that need default MeasurableSpace (before ms_k shadows it)
   let μ_k : ProbabilityMeasure (Fin n → I) :=
@@ -128,7 +106,8 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
     have hF_combined := coord_measurable_in_combined n ms_pre
       (show MeasurableSet[N_nil_I_borel n] _ from by
         rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
-    have h_r : r_pspace.μ ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) = μ'.1 ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) :=
+    have h_r : r_pspace.μ ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I)
+        = μ'.1 ((Prod.fst ∘ splitBi n) ⁻¹' A ∩ (· n) ⁻¹' B_I) :=
       trim_measurableSet_eq ms_pre_le_Inf_borel (hE_combined.inter hF_combined)
     -- (↓Ω_pre).μ E = μ.1 E via le_preserves_measure
     have h_pre : (↓Ω_pre).μ ((Prod.fst ∘ splitBi n) ⁻¹' A) =
@@ -137,7 +116,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
         rw [unSplitBi_eq_comap_fst]; exact ⟨A, hA_pre, rfl⟩)
     -- Ω_n.μ F = μ'.1 F via trim
     have h_n : Ω_n.μ ((· n) ⁻¹' B_I) = μ'.1 ((· n) ⁻¹' B_I) := by
-      show μ'.1.trim (N_nil_I_borel_le_Inf_borel n) _ = μ'.1 _
+      change μ'.1.trim (N_nil_I_borel_le_Inf_borel n) _ = μ'.1 _
       exact trim_measurableSet_eq (N_nil_I_borel_le_Inf_borel n)
         (by rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
     -- Core: μ'.1 (E ∩ F) = μ.1 E * leb.1 F
@@ -151,7 +130,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
       have h_univ := wp_unif_measure_product_core n μ
         (@MeasurableSet.univ _ MeasurableSpace.pi) hB_I
         (show @Set.univ HC = (Prod.fst ∘ splitBi n) ⁻¹' Set.univ from by simp) rfl
-      simp only [Set.univ_inter, Set.preimage_univ] at h_univ
+      simp only [Set.univ_inter] at h_univ
       rwa [show μ.1 (@Set.univ HC) = 1 from @measure_univ _ Inf_borel μ.1 μ.2, one_mul] at h_univ
     rw [h_r, h_core, h_pre]
     congr 1
@@ -163,7 +142,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
   -- We use PSpace.binop_eq_some_of_isIndependentProduct at the PSpace level,
   -- then lift to PSp via psp_val_binop.
   have h_pspace_binop : (↓Ω_pre).1 ⋆ Ω_n.1 = some r_pspace :=
-    PSpace.binop_eq_some_of_isIndependentProduct h_indep
+    PSpace.Krm.binop_eq_some_of_isIndependentProduct h_indep
   have Ω_post : ✓'(↓Ω_pre ⋆ Ω_n) := by
     have h_map := PSp.psp_val_binop (↓Ω_pre) Ω_n
     rw [h_pspace_binop] at h_map
@@ -219,7 +198,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
     -- LHS kernel is `const HC unif01_sem ×ₖ det D_ext`
     have h_lhs_kernel : toMK (Term.unif01.den ∘ᵣ D).toMeasurableFun =
         Kernel.const HC Appl.unif01_sem := by
-      ext ω s hs; simp [toMK, RV.comp, Term.den, Appl.unif01_sem, Kernel.const]; rfl
+      ext ω s hs; simp [toMK, Term.den, Appl.unif01_sem, Kernel.const]; rfl
     rw [h_lhs_kernel]
     -- LHS is `unif01_sem.prod (μ.map D_ext)`
     rw [const_prod_det_compMeasure]
@@ -234,7 +213,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
     have h_wand := lhs iprop(X ∼ unif01_sem -∗ Q X) ⟨X, rfl⟩
     have X_dist : unif01_sem = Measure.bind Ω_n.μ (fun ω ↦ Measure.dirac (X ω)) := by
       -- Unfold X to get (fun ω ↦ ↑(ω n)) and Ω_n.μ to μ'.1.trim
-      show unif01_sem = @Measure.bind _ _ (N_nil_I_borel n) _
+      change unif01_sem = @Measure.bind _ _ (N_nil_I_borel n) _
         (μ'.1.trim (N_nil_I_borel_le_Inf_borel n))
         (fun ω ↦ Measure.dirac (↑(ω n) : ℝ))
       rw [bind_dirac_trim_eq_map_orig (HC.coordProj_measurable n) μ'.1
@@ -247,7 +226,7 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
     have X_meas : @Measurable HC ⟪Ty.real⟫ Ω_n.ms _ X := HC.coordProj_measurable n
     have h_qx := h_wand Ω_n ((Pcm.comm Ω Ω_n) ▸ Ω') ⟨X_meas, X_dist⟩
     suffices h : ↓((Pcm.comm Ω Ω_n) ▸ Ω') = ↓Ω' by exact h ▸ h_qx
-    exact PSp.get_comm Ω_n Ω ((Pcm.comm Ω Ω_n) ▸ Ω') Ω'
+    exact Krm.get_comm Ω_n Ω ((Pcm.comm Ω Ω_n) ▸ Ω') Ω'
 
 end
 end WP

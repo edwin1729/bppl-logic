@@ -232,20 +232,16 @@ end Pcm
 
 namespace Krm
 
-/-
-Extract independent product condition from a successful `binop` call.
--/
+/- Extract independent product condition from a successful `binop` call.  -/
 lemma isIndependentProduct_of_binop_eq_some {p q r : PSpace α}
-    (h : @PcmBase.binop _ instPcmBase p q = some r) : r =ᵢ p ⊕ᵢ q := by
+    (h : p ⋆ q = some r) : r =ᵢ p ⊕ᵢ q := by
   contrapose! h;
   unfold instPcmBase;
   grind +splitImp
 
-/-
-Construct a successful `binop` result from an independent product proof.
--/
+/- Construct a successful `binop` result from an independent product proof.  -/
 lemma binop_eq_some_of_isIndependentProduct {p q r : PSpace α}
-    (h : r =ᵢ p ⊕ᵢ q) : @PcmBase.binop _ instPcmBase p q = some r := by
+    (h : r =ᵢ p ⊕ᵢ q) : p ⋆ q = some r := by
   unfold instPcmBase;
   have h_unique : ∃! r, r =ᵢ p ⊕ᵢ q := by
     have := @PSpace.uniqueness α;
@@ -253,7 +249,7 @@ lemma binop_eq_some_of_isIndependentProduct {p q r : PSpace α}
   grind
 
 /- If `p' =ᵢ x' ⊕ᵢ y'`, `x ≤ x'`, `y ≤ y'`, then the trim of `p'` to `x.ms.sum y.ms`
-    is an independent product of `x` and `y`.  -/
+is an independent product of `x` and `y`.  -/
 lemma trim_isIndependentProduct {x x' y y' p' : PSpace β}
     (x_le : x ≤ x') (y_le : y ≤ y') (h_p' : p' =ᵢ x' ⊕ᵢ y')
     (h_ms : x.1.ms.sum y.1.ms ≤ p'.1.ms) :
@@ -399,11 +395,22 @@ noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @Probabili
 
 end PSp
 
-/- ### TODO rename to just Krm, remove all the repetitions of this done separately for PSpace-/
-namespace KrmHelper
+/- Helper functions which re-interpret the Krm laws in terms of the `Option.is_some` and
+`Option.get` API, introduced using the notation `✓'` and `↓`. -/
+namespace Krm
 
 variable {α : Type*} [krm_α : Krm α]
 open PcmBase
+
+/-- If `a ⋆ b = b ⋆ a`, then `Option.get` yields equal values. -/
+lemma get_comm (a b : α) (hab : ✓'(a ⋆ b)) (hba : ✓'(b ⋆ a)) :
+    ↓hab = ↓hba := by
+  have h : a ⋆ b = b ⋆ a := Pcm.comm a b
+  set x := (a ⋆ b).get hab
+  set y := (b ⋆ a).get hba
+  have hax : a ⋆ b = some x := Option.some_get hab ▸ rfl
+  have hay : b ⋆ a = some y := Option.some_get hba ▸ rfl
+  exact Option.some_injective _ (hax.symm.trans (h.trans hay))
 
 lemma right {a b c : α}
     {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
@@ -493,4 +500,4 @@ lemma le_mul_mono_left' {x₁ x₂ y : α} (lex : x₁ ≤ x₂) (xy₂ : ✓'(x
 lemma le_mul_mono_right' {x y₁ y₂ : α} (ley : y₁ ≤ y₂) (xy₂ : ✓'(x ⋆ y₂)) :
   ∃ xy₁ : ✓'(x ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := le_mul_mono' x x y₁ y₂ (le_refl x) ley xy₂
 
-end KrmHelper
+end Krm

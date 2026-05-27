@@ -25,7 +25,7 @@ lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
   have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ := wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
   use X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, P_entails_Q X Ω' postcond
 
-open KrmHelper in
+open Krm in
 lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop(F ∗ (wp M Q) ⊢ wp M (fun X ↦ iprop(F ∗ Q X))) := by
   rintro Ω ⟨Ω_F, Ω_M, Ω_F_M, hΩ_F_M,  hF, wp_left⟩ Ω_fr Ω_fr_Ω μ hΩ_fr_Ω _ _ D_ext
