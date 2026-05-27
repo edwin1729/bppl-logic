@@ -302,13 +302,19 @@ lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : ∃ n, Fi
   obtain ⟨n₁, ff₁⟩ := hms₁
   obtain ⟨n₂, ff₂⟩ := hms₂
   use max n₁ n₂
-  sorry
+  obtain ⟨ms₁', hms₁⟩ := finite_footprint_of_ge (le_max_left n₁ n₂) ff₁
+  obtain ⟨ms₂', hms₂⟩ := finite_footprint_of_ge (le_max_right n₁ n₂) ff₂
+  use ms₁'.sum ms₂'
+  simp_all only [unSplitBi_eq_comap_fst, sum]
+  rw [comap_generateFrom, Set.image_union]
+  congr 1
 
 /-
 The unit PSpace has finite footprint (trivial σ-algebra depends on 0 coordinates).
 -/
 lemma ff_unit : ∃ n, FiniteFootprint n (PSpace.unit (Ω := HC)).ms := by
-  sorry
+  use 0, ⊥
+  simp [PSpace.unit, unSplitBi_eq_comap_fst]
 
 noncomputable instance : One PSp where
   one := ⟨PSpace.unit, ff_unit⟩
@@ -447,22 +453,44 @@ lemma assoc_left {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) 
     obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hbc
     simp_all
 
+/-- The result of reassociating `(a ⋆ b) ⋆ c` to `a ⋆ (b ⋆ c)` via `assoc_left`
+yields the same combined element. -/
 @[simp]
 lemma assoc_left_eq {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
-  ↓(assoc_left habc) = ↓habc := sorry
+    ↓(assoc_left habc) = ↓habc := by
+  apply Option.some_injective
+  rw [Option.some_get, Option.some_get]
+  have hassoc := krm_α.assoc a b c
+  conv at hassoc =>
+    lhs; rw [show a ⋆ b = some (↓(left habc)) from (Option.some_get _).symm]
+  conv at hassoc =>
+    rhs; rw [show b ⋆ c = some (↓hbc) from (Option.some_get _).symm]
+  convert hassoc using 1
 
+/-- The result of reassociating `a ⋆ (b ⋆ c)` to `(a ⋆ b) ⋆ c` via `assoc_right`
+yields the same combined element. -/
 @[simp]
 lemma assoc_right_eq {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
-  ↓(assoc_right habc) = ↓habc := sorry
+    ↓(assoc_right habc) = ↓habc := by
+  apply Option.some_injective
+  rw [Option.some_get, Option.some_get]
+  have hassoc := krm_α.assoc a b c
+  conv at hassoc =>
+    lhs; rw [show a ⋆ b = some (↓hab) from (Option.some_get _).symm]
+  conv at hassoc =>
+    rhs; rw [show b ⋆ c = some (↓(right habc)) from (Option.some_get _).symm]
+  convert hassoc.symm using 1
 
 lemma le_mul_mono' (x₁ x₂ y₁ y₂ : α)
     (lex : x₁ ≤ x₂) (ley : y₁ ≤ y₂)
-    (xy₂ : ✓'(x₂ ⋆ y₂)) : ∃ xy₁ : ✓'(x₁ ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry
+    (xy₂ : ✓'(x₂ ⋆ y₂)) : ∃ xy₁ : ✓'(x₁ ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by
+  obtain ⟨p, hp, hple⟩ := krm_α.le_mul_mono x₁ x₂ y₁ y₂ (↓xy₂) lex ley (Option.some_get xy₂).symm
+  exact ⟨hp ▸ rfl, by simp only [hp, Option.get_some]; exact hple⟩
 
-lemma le_mul_mono_left' {x₁ x₂ y : α} (lex : x₁ ≤ x₂)
-    (xy₂ : ✓'(x₂ ⋆ y)) : ∃ xy₁ : ✓'(x₁ ⋆ y), ↓xy₁ ≤ ↓xy₂ := by sorry
+lemma le_mul_mono_left' {x₁ x₂ y : α} (lex : x₁ ≤ x₂) (xy₂ : ✓'(x₂ ⋆ y)) :
+  ∃ xy₁ : ✓'(x₁ ⋆ y), ↓xy₁ ≤ ↓xy₂ := le_mul_mono' x₁ x₂ y y lex (le_refl y) xy₂
 
-lemma le_mul_mono_right' {x y₁ y₂ : α} (ley : y₁ ≤ y₂)
-    (xy₂ : ✓'(x ⋆ y₂)) : ∃ xy₁ : ✓'(x ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry
+lemma le_mul_mono_right' {x y₁ y₂ : α} (ley : y₁ ≤ y₂) (xy₂ : ✓'(x ⋆ y₂)) :
+  ∃ xy₁ : ✓'(x ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := le_mul_mono' x x y₁ y₂ (le_refl x) ley xy₂
 
 end KrmHelper
