@@ -5,7 +5,7 @@ Authors: Edwin Fernando
 -/
 
 import Bppl.Lilac.Assertion
-import Bppl.Lilac.WPUnifHelpers
+import Bppl.Lilac.ProofRules.WPUnifHelpers
 
 
 namespace WP
@@ -85,11 +85,11 @@ lemma wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs
   obtain ⟨ms_pre, h_ms_pre⟩ := ff_pre
 
   -- σ-algebra equality: the sum of the two sub-σ-algebras equals the combined one
-  -- Uses: .sum = ⊔ (sum_eq_sup), commutativity of ⊔, and commute_over_equiv4
+  -- Uses: .sum = ⊔ (sum_eq_sup), commutativity of ⊔, and commute_with_add_dim
   have h_sum_eq : (↓Ω_pre).1.ms.sum Ω_n.1.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil):= by
     show (↓Ω_pre).ms.sum Ω_n.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
     rw [h_ms_pre, sum_eq_sup, sup_comm]
-    exact commute_over_equiv4 ms_pre
+    exact commute_with_add_dim ms_pre
 
   have ms_pre_le_Inf_borel : unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := by
     have h_le : unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel := h_ms_pre ▸ hΩ_pre.1

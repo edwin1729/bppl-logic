@@ -15,29 +15,22 @@ set_option autoImplicit true
 set_option relaxedAutoImplicit true
 set_option linter.style.lambdaSyntax false
 
+open Appl
+abbrev mul (a b : RV ⟪Ty.real⟫) : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ a ω * b ω, sorry⟩, sorry⟩
+
 open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP
 /-! There is still the unsolved problem of the programs being expressed via de brujin indices.
 Maybe we can just have string based mapping somehow. -/
 noncomputable section
 -- Maybe use parametric abstract higher order syntax instead to make
+
+abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, sorry⟩
+
+namespace Unif1
 abbrev unif1 : Term [] Ty.real.G :=
   unif01.bind (
   ret (var head)
 )
-
-abbrev unif2 : Term [] (Ty.prod .real .real).G :=
-  unif01.bind (
-  unif01.bind (
-  ret (pair (var (tail head)) (var head))
-))
-
-abbrev half : Term [Ty.real] Ty.real.G :=
-  unif01.bind (
-    ret (.arith .mul (var (tail head)) (var head))
-  )
-
-
-abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, sorry⟩
 
 abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
 
@@ -51,6 +44,16 @@ theorem unif1_spec : iprop(⊢ post1) := by
   iapply wp_ret
   rw [hrw]
   iexact H
+
+end Unif1
+
+namespace Unif2
+
+abbrev unif2 : Term [] (Ty.prod .real .real).G :=
+  unif01.bind (
+  unif01.bind (
+  ret (pair (var (tail head)) (var head))
+))
 
 notation:10 D ".ₘ1" => (measurableFun_fst ∘ᵣ D)
 notation:10 D ".ₘ2" => (measurableFun_snd ∘ᵣ D)
@@ -75,3 +78,33 @@ theorem unif2_spec : iprop(⊢ post2) := by
   isplitl [HX]
   · iexact HX
   · iexact HY
+
+end Unif2
+
+namespace Half
+
+abbrev half : Term [Ty.real] Ty.real.G :=
+  unif01.bind (
+    ret (.arith .mul (var (tail head)) (var head))
+  )
+
+-- abbrev X : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ ω 0, sorry⟩, sorry⟩
+
+abbrev envX : RV (List.TProd (⟪·⟫) [Ty.real]) := ⟨⟨λ ω ↦ (ω 0, PUnit.unit), sorry⟩, sorry⟩
+
+abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ (Z : RV ℝ) ↦
+    iprop(∃ e, 𝔼[Z]=e/2 ∧ 𝔼[X]=e))
+
+lemma hrw (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul (var head.tail) (var head)).den ∘ᵣ Y ;; X ;; nil) = mul X Y := by rfl
+
+theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
+  iintro hX
+  rw [post_half]
+  iapply wp_bind
+  iapply wp_unif
+  iintro %Y HY
+  iapply wp_ret
+  rw [hrw]
+  sorry
+
+end Half

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 import Bppl.Lilac.Appl
-import Bppl.Lilac.MeasureProduct
+import Bppl.Lilac.ProofRules.MeasureProduct
 
 /-! # Helper lemmas for `wp_unif` (B.21)
 

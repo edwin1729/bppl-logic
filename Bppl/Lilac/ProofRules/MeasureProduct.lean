@@ -20,22 +20,22 @@ lemma inter_measurable_in_combined (n : ℕ)
     (hF : MeasurableSet[N_nil_I_borel n] F) :
     MeasurableSet[unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)] (E ∩ F) := by
   apply MeasurableSet.inter
-  · exact (commute_over_equiv4 ms_pre ▸ le_sup_right : unSplitBi _ ≤ _) _ hE
-  · exact (commute_over_equiv4 ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
+  · exact (commute_with_add_dim ms_pre ▸ le_sup_right : unSplitBi _ ≤ _) _ hE
+  · exact (commute_with_add_dim ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
 
 lemma pre_measurable_in_combined (n : ℕ)
     (ms_pre : MeasurableSpace (Fin n → I))
     {E : Set HC}
     (hE : MeasurableSet[unSplitBi (ms_pre ×ₘ Inf_nil)] E) :
     MeasurableSet[unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)] E :=
-  (commute_over_equiv4 ms_pre ▸ le_sup_right : unSplitBi _ ≤ _) _ hE
+  (commute_with_add_dim ms_pre ▸ le_sup_right : unSplitBi _ ≤ _) _ hE
 
 lemma coord_measurable_in_combined (n : ℕ)
     (ms_pre : MeasurableSpace (Fin n → I))
     {F : Set HC}
     (hF : MeasurableSet[N_nil_I_borel n] F) :
     MeasurableSet[unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)] F :=
-  (commute_over_equiv4 ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
+  (commute_with_add_dim ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
 
 /-! ### Helper lemmas for the product factorization -/
 
@@ -50,17 +50,11 @@ lemma splitTri_snd_fst (n : ℕ) (ω : HC) : (splitTri n ω).2.1 = ω n := by
         Equiv.natEquivNatSumPUnit, Equiv.sumComm, MeasurableEquiv.prodCongr,
         Equiv.piCongrLeft, Equiv.sumPiEquivProdPi]
 
-/-
-`N_nil_I_borel n` is the comap of `I_borel` through `(· n)`.
--/
+/-- `N_nil_I_borel n` is the comap of `I_borel` through `(· n)`. -/
 lemma N_nil_I_borel_eq_comap_coord (n : ℕ) :
     N_nil_I_borel n = (inferInstance : MeasurableSpace I).comap (· n : HC → I) := by
-  -- By definition of `splitTri`, we know that `splitTri n` is the composition of `splitBi n` and `splitOne`.
-  have h_splitTri : splitTri n = (splitBi n).trans ((MeasurableEquiv.refl (Fin n → I)).prodCongr splitOne) := by
-    -- By definition of `splitTri`, we have `splitTri n = (splitBi n).trans ((MeasurableEquiv.refl (Fin n → I)).prodCongr splitOne)`.
-    simp [splitTri];
-  unfold N_nil_I_borel;
-  simp +decide [ h_splitTri, MeasurableSpace.prod ];
+  simp only [N_nil_I_borel, unSplitTri, splitTri, MeasurableSpace.prod, N_nil,
+    MeasurableSpace.comap_bot, MeasurableSpace.comap_comp, bot_sup_eq, sup_bot_eq]
   congr! 1
 
 /-
@@ -69,19 +63,17 @@ If `unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel`, then `ms_pre ≤ pi`.
 lemma ms_pre_le_pi_of_le_Inf_borel (n : ℕ) (ms_pre : MeasurableSpace (Fin n → I))
     (h : unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel) :
     ms_pre ≤ (MeasurableSpace.pi : MeasurableSpace (Fin n → I)) := by
-  contrapose! h;
-  simp_all +decide [ MeasurableSpace.comap_le_iff_le_map ];
-  intro H;
-  refine' h _;
-  intro s hs;
-  convert H _ ( MeasurableSet.prod hs MeasurableSet.univ ) using 1;
-  constructor <;> intro h;
-  · exact MeasurableSet.prod h MeasurableSet.univ;
-  · convert h.preimage _;
-    rotate_left;
-    exact fun x => ( x, fun _ => 0 );
-    · exact measurable_id.prodMk measurable_const;
-    · aesop
+  contrapose! h
+  simp_all +decide only [comap_le_iff_le_map, MeasurableEquiv.map_eq]
+  intro H
+  refine h ?_
+  intro s hs
+  convert H _ (MeasurableSet.prod hs MeasurableSet.univ) using 1
+  constructor <;> intro h
+  · exact MeasurableSet.prod h MeasurableSet.univ
+  · convert h.preimage (f := fun x : Fin n → I => (x, fun _ : ℕ => (0 : I)))
+      (measurable_id.prodMk measurable_const) using 1
+    aesop
 
 /-- `(splitBi n).symm ⁻¹' ((Prod.fst ∘ splitBi n) ⁻¹' A) = Prod.fst ⁻¹' A`. -/
 lemma splitBi_symm_preimage_fst (n : ℕ) (A : Set (Fin n → I)) :
@@ -89,37 +81,41 @@ lemma splitBi_symm_preimage_fst (n : ℕ) (A : Set (Fin n → I)) :
   rw [Set.preimage_comp]
   exact (splitBi n).symm_preimage_preimage _
 
-/-
-`(splitBi n).symm ⁻¹' ((· n) ⁻¹' B) = Prod.snd ⁻¹' ((· 0) ⁻¹' B)`.
--/
+/-- `(splitBi n).symm ⁻¹' ((· n) ⁻¹' B) = Prod.snd ⁻¹' ((· 0) ⁻¹' B)`. -/
 lemma splitBi_symm_preimage_coord_n (n : ℕ) (B : Set I) :
     (splitBi n).symm ⁻¹' ((· n : HC → I) ⁻¹' B) =
     Prod.snd ⁻¹' ((· 0 : HC → I) ⁻¹' B) := by
-  ext ⟨a, b⟩; simp [splitBi];
-  unfold MeasurableEquiv.sumPiEquivProdPi MeasurableEquiv.piCongrLeft;
-  unfold MeasurableEquiv.trans; simp +decide [ Equiv.symm_apply_eq ] ;
-  unfold Equiv.piCongrLeft; simp +decide [ Equiv.piCongrLeft ] ;
+  ext ⟨a, b⟩
+  simp only [Set.mem_preimage]
+  unfold splitBi MeasurableEquiv.sumPiEquivProdPi MeasurableEquiv.piCongrLeft
+    MeasurableEquiv.trans Equiv.piCongrLeft
+  simp +decide
 
-/-
-For the i.i.d. product measure, the k-th marginal equals `volume`.
--/
+/-- For the i.i.d. product measure, the k-th marginal equals `volume`. -/
 lemma infinitePiNat_coord_marginal (k : ℕ) (B : Set I) (hB : MeasurableSet B) :
     Measure.infinitePiNat (fun _ => (volume : Measure I)) ((· k : HC → I) ⁻¹' B) =
     volume B := by
-  have h_restrict : (Measure.infinitePiNat fun _ => volume).map (Finset.restrict {k} : HC → ({k} : Finset ℕ) → I) = Measure.pi (fun _ : ({k} : Finset ℕ) => volume) := by
-    exact?;
-  convert congr_arg ( fun μ => μ ( ( fun x => x ⟨ k, by simp +decide ⟩ ) ⁻¹' B ) ) h_restrict using 1;
-  · rw [ Measure.map_apply ];
-    · congr! 1;
-    · fun_prop;
-    · exact measurable_pi_apply _ hB;
-  · erw [ show ( fun x : ( { k } : Finset ℕ ) → I => x ⟨ k, by simp +decide ⟩ ) ⁻¹' B = ( Set.pi Set.univ fun _ => B ) from ?_ ];
-    · erw [ MeasureTheory.Measure.pi_pi ] ; aesop;
-    · grind
+  have hk : k ∈ ({k} : Finset ℕ) := Finset.mem_singleton.mpr rfl
+  have h_preimage :
+      ((· k : HC → I) ⁻¹' B) =
+        (({k} : Finset ℕ).restrict (π := fun _ => I)) ⁻¹' ((fun x => x ⟨k, hk⟩) ⁻¹' B) := rfl
+  have h_pi :
+      (fun x : ({k} : Finset ℕ) → I => x ⟨k, hk⟩) ⁻¹' B = Set.univ.pi (fun _ => B) := by
+    ext x
+    constructor
+    · rintro h ⟨val, property⟩ -
+      obtain rfl : val = k := Finset.mem_singleton.mp property
+      exact h
+    · intro h
+      exact h ⟨k, hk⟩ (Set.mem_univ _)
+  rw [h_preimage,
+    ← Measure.map_apply (Finset.measurable_restrict _) (measurable_pi_apply _ hB),
+    Measure.infinitePiNat_map_restrict, h_pi, Measure.pi_pi]
+  simp
 
 /-! ### The main factorization -/
 
-/-
+/--
 Core computation for `wp_unif_measure_product`, separated to avoid instance conflicts
 with `ms_pre`. Here `A` and `B_I` are measurable in the standard (pi/Borel) instances.
 -/
@@ -132,14 +128,19 @@ lemma wp_unif_measure_product_core
     ((μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable |>.prod
       lebHC).map (HC.splitBi n).symm.measurable.aemeasurable).1 (E ∩ F) =
     μ.1 E * lebHC.toMeasure F := by
-  simp_all +decide [ ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_prod, Measure.map_apply, MeasurableEquiv.map_apply ];
-  rw [ show ( splitBi n ).symm ⁻¹' ( Prod.fst ∘ ⇑ ( splitBi n ) ⁻¹' A ) ∩ ( splitBi n ).symm ⁻¹' ( ( fun x => x n ) ⁻¹' B_I ) = A ×ˢ ( ( fun x => x 0 ) ⁻¹' B_I ) from ?_ ];
-  · rw [ Measure.prod_prod, Measure.map_apply ];
-    · rw [ infinitePiNat_coord_marginal, infinitePiNat_coord_marginal ];
-      · exact hB_I;
-      · exact hB_I;
-    · fun_prop;
-    · exact hA_pi;
-  · ext ⟨x, y⟩; simp [splitBi_symm_preimage_fst, splitBi_symm_preimage_coord_n]
+  subst hE_eq hF_eq
+  change ((μ.toMeasure.map _).prod
+      (Measure.infinitePiNat (fun _ => (volume : Measure I)))).map (splitBi n).symm
+      ((Prod.fst ∘ ⇑(splitBi n) ⁻¹' A) ∩ ((fun x => x n) ⁻¹' B_I)) = _
+  rw [Measure.map_apply (splitBi n).symm.measurable
+        (hA_pi.preimage (by fun_prop) |>.inter (hB_I.preimage (by fun_prop))),
+    show (splitBi n).symm ⁻¹' (Prod.fst ∘ ⇑(splitBi n) ⁻¹' A ∩ (fun x => x n) ⁻¹' B_I) =
+      A ×ˢ ((fun x => x 0) ⁻¹' B_I) from by
+      ext ⟨x, y⟩; simp [splitBi_symm_preimage_fst, splitBi_symm_preimage_coord_n],
+    Measure.prod_prod,
+    Measure.map_apply (by fun_prop) hA_pi,
+    infinitePiNat_coord_marginal _ _ hB_I]
+  change _ = μ.toMeasure _ * Measure.infinitePiNat (fun _ => (volume : Measure I)) _
+  rw [infinitePiNat_coord_marginal _ _ hB_I]
 
 end

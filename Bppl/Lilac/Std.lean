@@ -114,6 +114,7 @@ noncomputable abbrev lebHC : @MeasureTheory.ProbabilityMeasure HC HC.Inf_borel :
 
 -- this should be refactored into a type class, or use the `fun_prop` style, where
 -- lemmas constructing the `ff` property are annotated with `fun_prop`
+/-- A measurable function from `HC` with finite footprint. -/
 structure RV (β : Type*) [msβ : MeasurableSpace β] extends MeasurableFun HC β where
   /-- Finite footprint -/
   ff : ∃ n, HC.FiniteFootprint n (msβ.comap toFun)

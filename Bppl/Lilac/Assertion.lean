@@ -20,10 +20,6 @@ import Bppl.Lilac.BI
 set_option autoImplicit true
 set_option relaxedAutoImplicit true
 
-
-/-!
--/
-
 open Appl MeasureTheory MeasureTheory.Measure ProbabilityTheory ProbabilityTheory.Kernel
 open List (TProd)
 
@@ -40,7 +36,7 @@ namespace LProp
 -- ds: deterministic context, rs: random variable context
 variable {ds : List Ty} {rs : List Ty} {A : Ty}
 
-def own [MeasurableSpace α] (E : RV α) : LProp :=
+def own (E : RV ⟪A⟫) : LProp :=
   ⟨fun Ω ↦ Measurable[Ω.ms] E, by
     intro σ₁ σ₂ hle hm
     exact hm.mono hle.1 le_rfl ⟩
@@ -61,10 +57,8 @@ def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
     rfl
   ⟩
 
--- TODO
--- | expectation -- skip this for now becase TyRand doesn't claim to have a type whose
--- denotation is ℝ
-
+def expectation (E : RV ⟪Ty.real⟫) (e : ℝ) : LProp :=
+  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ ∫ ω, E ω ∂(Ω.μ) = e, sorry⟩
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
@@ -127,6 +121,14 @@ syntax:54 term:53 " ≗ " term:53 : term
 
 macro_rules
   | `(iprop($E₁ ≗ $E₂)) => `(eq $E₁ $E₂)
+
+delab_rule eq
+  | `($_ $E₁ $E₂) => do ``(iprop($(← unpackIprop E₁) ≗ $(← unpackIprop E₂)))
+
+syntax:53 " 𝔼[ " term:52 " ]= " term:54 : term
+
+macro_rules
+  | `(iprop(𝔼[$E]=$e)) => `(expectation $E $e)
 
 delab_rule eq
   | `($_ $E₁ $E₂) => do ``(iprop($(← unpackIprop E₁) ≗ $(← unpackIprop E₂)))

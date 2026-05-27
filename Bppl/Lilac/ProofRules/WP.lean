@@ -5,8 +5,8 @@ Authors: Edwin Fernando
 -/
 
 import Bppl.Lilac.Assertion
-import Bppl.Lilac.MeasureProduct
-import Bppl.Lilac.WPUnifHelpers
+import Bppl.Lilac.ProofRules.MeasureProduct
+import Bppl.Lilac.ProofRules.WPUnifHelpers
 
 namespace WP
 open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel MeasureTheory.Measure
@@ -21,8 +21,9 @@ abbrev ret [MeasurableSpace α] (a : α) := dirac a
 -- Appendix B.20
 lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
     (P_entails_Q : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
-  intro Ω wp_l Ω_fr μ hΩ
-  sorry
+  intro Ω wp_l Ω_fr Ω_pre μ Ω_pre_le_μ  _ msα D_ext
+  have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ := wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
+  use X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, P_entails_Q X Ω' postcond
 
 open KrmHelper in
 lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :

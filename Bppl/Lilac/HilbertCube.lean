@@ -25,38 +25,25 @@ lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) :
       sup_eq_right.mpr (MeasurableSpace.comap_mono le_α),
       sup_eq_left.mpr (MeasurableSpace.comap_mono le_β)]
 
--- notation:25 α " ≃ᵐ[ " msα " , " msβ  " ] " β => @MeasurableEquiv α β msα msβ
-
--- noncomputable def split (n : ℕ) (ms₂ : MeasurableSpace ((Fin n → I) × (ℕ → I))) :
---     (ℕ → I) ≃ᵐ[ms₂.comap (splitEquiv n), ms₂] ((Fin n → I) × (ℕ → I)) where
---   toEquiv := (splitEquiv n).toEquiv
---   measurable_toFun := comap_measurable _
---   measurable_invFun := Measurable.of_comap_le (by
---     rw [comap_comp, show (splitEquiv n : (ℕ → I) → _) ∘ (splitEquiv n).symm = id from
---       funext (splitEquiv n).apply_symm_apply, comap_id])
-
-
--- now we look at some lemmas of the shape we want. Specifically
--- (borel, nil, nil) ⊔ (nil, borel, nil) = (borel, borel, nil)
-
-lemma commute_over_equiv3 {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+private lemma commute_over_tri {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
     : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil) = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by
   have le_β : I_nil ×ₘ Inf_nil ≤ I_borel ×ₘ Inf_nil := sup_le_sup_right (comap_mono bot_le) _
   rw [← comap_sup, commute bot_le le_β]
 
-lemma eq_N_ms {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+private lemma eq_N_ms {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
     : unSplitBi (N_ms ×ₘ Inf_nil) = unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil) := by
   simp only [prod, comap_bot, bot_le, sup_of_le_left, comap_comp, le_refl]
   congr 1
 
-lemma commute_over_equiv4 {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+/-- Used in the construction for wp_unif, where a single dimension gets added between at the
+separation index separatiing the finite part with interesting MeasureSpace and the infinite part
+with boring MeasurableSpace. -/
+lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
     : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitBi (N_ms ×ₘ Inf_nil)
       = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by
   rw [eq_N_ms N_ms]
-  exact commute_over_equiv3 N_ms
--- it looks like Mathlib has a pain point with being explicitly parametric over the measurable space.
--- what we will do for this instead is to deal with this by hoping that any one point the inferred
--- type is unambiguous? Lets see....
+  exact commute_over_tri N_ms
+
 abbrev N_nil_I_borel (N : ℕ) := unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil)
 abbrev N_borel_I_borel (N : ℕ) := unSplitTri ((N_borel N) ×ₘ I_borel ×ₘ Inf_nil)
 

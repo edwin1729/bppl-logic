@@ -32,9 +32,12 @@ class Krm (α : Type*) extends Pcm α, Preorder α where
 
 namespace PSpace
 open Classical PcmBase PSpace
+
 variable {α : Type*} [Inhabited α]
 noncomputable instance instPcmBase : PcmBase (PSpace α) where
   binop p q := if h: ∃! r, r =ᵢ p ⊕ᵢ q then some h.choose else none
+
+namespace Pcm
 
 @[grind =]
 lemma one_mul (p : PSpace α) : binop 1 p = p := by
@@ -155,7 +158,7 @@ lemma assoc (p q r : PSpace α) :
       · -- (5) lhs = some _    so contradiction
         obtain ⟨s, h_s⟩ := h_pq_r
         have : ∃ qr, qr =ᵢ q ⊕ᵢ r := by
-          obtain ⟨qr, h_qr, _⟩  := independentProduct_assoc h_pq.1 h_s
+          obtain ⟨qr, h_qr, _⟩ := independentProduct_assoc h_pq.1 h_s
           exact ⟨qr, h_qr⟩
         contradiction
       · -- (6) lhs = none
@@ -184,7 +187,7 @@ lemma assoc (p q r : PSpace α) :
       · -- (7) rhs = some _     so contradiction
         obtain ⟨s, h_s⟩ := h_p_qr
         have : ∃ pq, pq =ᵢ p ⊕ᵢ q := by
-          obtain ⟨pq, h_pq, _⟩  := independentProduct_assoc_right h_qr.1 h_s
+          obtain ⟨pq, h_pq, _⟩ := independentProduct_assoc_right h_qr.1 h_s
           exact ⟨pq, h_pq⟩
         contradiction
       · -- (8) rhs = none
@@ -220,6 +223,15 @@ lemma assoc (p q r : PSpace α) :
         rfl
       rw [none_left, none_right]
 
+noncomputable instance instPcm : Pcm (PSpace α) where
+  one_mul := one_mul
+  comm := comm
+  assoc := assoc
+
+end Pcm
+
+namespace Krm
+
 /-
 Extract independent product condition from a successful `binop` call.
 -/
@@ -237,24 +249,22 @@ lemma binop_eq_some_of_isIndependentProduct {p q r : PSpace α}
   unfold instPcmBase;
   have h_unique : ∃! r, r =ᵢ p ⊕ᵢ q := by
     have := @PSpace.uniqueness α;
-    exact ⟨ r, h, fun r' hr' => this _ _ _ _ hr' h ⟩;
+    exact ⟨r, h, fun r' hr' => this _ _ _ _ hr' h⟩;
   grind
 
-/-
-If `p' =ᵢ x' ⊕ᵢ y'`, `x ≤ x'`, `y ≤ y'`, then the trim of `p'` to `x.ms.sum y.ms`
-    is an independent product of `x` and `y`.
--/
-lemma trim_isIndependentProduct {x x' y y' p' : PSpace α}
+/- If `p' =ᵢ x' ⊕ᵢ y'`, `x ≤ x'`, `y ≤ y'`, then the trim of `p'` to `x.ms.sum y.ms`
+    is an independent product of `x` and `y`.  -/
+lemma trim_isIndependentProduct {x x' y y' p' : PSpace β}
     (x_le : x ≤ x') (y_le : y ≤ y') (h_p' : p' =ᵢ x' ⊕ᵢ y')
     (h_ms : x.1.ms.sum y.1.ms ≤ p'.1.ms) :
     (p'.trim h_ms) =ᵢ x ⊕ᵢ y := by
   constructor;
   · rfl;
   · intro E hE F hF;
-    convert h_p'.2 E ( x_le.1 _ hE ) F ( y_le.1 _ hF ) using 1;
+    convert h_p'.2 E (x_le.1 _ hE) F (y_le.1 _ hF) using 1;
     · convert MeasureOnSpace.trim_eq h_ms _;
-      exact?;
-    · rw [ MeasureOnSpace.le_preserves_measure x_le hE, MeasureOnSpace.le_preserves_measure y_le hF ]
+      exact mem_sum_inter x.ms y.ms hE hF;
+    · rw [MeasureOnSpace.le_preserves_measure x_le hE, MeasureOnSpace.le_preserves_measure y_le hF]
 
 def le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
     (ex_ge_mul : x' ⋆ y' = some p') : ∃ p, (x ⋆ y = some p) ∧ p ≤ p' := by
@@ -266,15 +276,11 @@ def le_mul_mono (x x' y y' p' : PSpace α) (x_le : x ≤ x') (y_le : y ≤ y')
   have h_p : p =ᵢ x ⊕ᵢ y := trim_isIndependentProduct x_le y_le h_p' h_ms
   exact ⟨p, binop_eq_some_of_isIndependentProduct h_p, PSpace.trim_le h_ms⟩
 
-noncomputable instance instPcm : Pcm (PSpace α) where
-  one_mul := PSpace.one_mul
-  comm := PSpace.comm
-  assoc := PSpace.assoc
-
 noncomputable instance instKrm : Krm (PSpace α) where
-  one_le a := PSpace.le_of_isIndependentProduct_left PSpace.indepenendentProduct_identity
-  le_mul_mono := PSpace.le_mul_mono
+  one_le _ := PSpace.le_of_isIndependentProduct_left PSpace.indepenendentProduct_identity
+  le_mul_mono := le_mul_mono
 
+end Krm
 end PSpace
 
 open HC
@@ -297,33 +303,12 @@ lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : ∃ n, Fi
   obtain ⟨n₂, ff₂⟩ := hms₂
   use max n₁ n₂
   sorry
-  -- intro F hF
-  -- induction' hF with F hF ih₁ ih₂ ih₃;
-  -- · cases' hF with hF hF;
-  --   · obtain ⟨ F', hF' ⟩ := ff₁ F hF;
-  --     use (fun f => f ∘ Fin.castLE (by
-  --     exact le_max_left _ _)) ⁻¹' F'
-  --     generalize_proofs at *;
-  --     congr! 1;
-  --   · obtain ⟨ F', hF' ⟩ := ff₂ F hF;
-  --     use (fun x => x ∘ Fin.castLE (by
-  --     exact le_max_right _ _)) ⁻¹' F'
-  --     generalize_proofs at *;
-  --     convert hF' using 1;
-  -- · exact ⟨ ∅, by simp +decide ⟩;
-  -- · obtain ⟨ F', hF' ⟩ := ih₃; use F'ᶜ; simp +decide [ hF', Set.preimage_compl ] ;
-  --   ext; simp [Set.mem_compl_iff, Set.mem_preimage];
-  -- · choose! F' hF' using ‹∀ n, ∃ F', _›;
-  --   use ⋃ n, F' n; ext; simp +decide [ hF' ] ;
 
 /-
 The unit PSpace has finite footprint (trivial σ-algebra depends on 0 coordinates).
 -/
 lemma ff_unit : ∃ n, FiniteFootprint n (PSpace.unit (Ω := HC)).ms := by
   sorry
-  -- use 0; simp +decide [ PSpace.unit ] ; (
-  -- intro F hF; use if F = Set.univ then Set.univ else ∅; split_ifs <;> simp_all +decide [ Set.ext_iff ] ;
-  -- rw [ MeasurableSpace.measurableSet_bot_iff ] at hF ; aesop);
 
 noncomputable instance : One PSp where
   one := ⟨PSpace.unit, ff_unit⟩
@@ -340,70 +325,56 @@ noncomputable instance instPcmBase : PcmBase (PSp) where
     some ⟨h.choose, ff_of_isIndependentProduct h.choose_spec.1 p.2 q.2⟩
   else none
 
-/-
-The original `closed_subtype_Krm` signature requires additional hypotheses
-    (injectivity and value-level preservation of binop) to be provable.
-    We provide a corrected version with the necessary hypotheses.
--/
+/- This proof uses proof irrelevance in lean and shows that if in a subspace of a Krm,
+the binary operation is closed, then the subspace is a KRM as well. -/
 def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
     (f_inj : Function.Injective f)
     (f_one : f 1 = 1)
     (f_binop : ∀ x y : β, (x ⋆ y).map f = (f x) ⋆ (f y)) : Krm β where
-  one_mul a := by
-    have h1 : ((1 : β) ⋆ a).map f = some (f a) := by
-      rw [f_binop, f_one, Pcm.one_mul]
-    cases hab : (1 : β) ⋆ a with
-    | none => simp [hab] at h1
-    | some b =>
-      simp [hab] at h1
-      congr; exact f_inj h1
-  comm a b := Option.map_injective f_inj (by rw [f_binop, f_binop, Pcm.comm])
+  one_mul a := Option.map_injective f_inj <| by
+    rw [Option.map_some, f_binop, f_one, Pcm.one_mul]
+  comm a b := Option.map_injective f_inj <| by
+    rw [f_binop, f_binop, Pcm.comm]
   assoc a b c := by
-    cases' ‹PcmBase β› with binop;
-    cases' ‹Krm α› with binop;
-    rename_i h₁ h₂ h₃ h₄;
-    have := @binop.assoc;
-    convert Option.map_injective f_inj _ using 1;
-    convert this ( f a ) ( f b ) ( f c ) using 1;
-    · cases h : h₁ a b <;> simp +decide [ ← f_binop, h ];
-      rfl;
-    · cases h : h₁ b c <;> simp +decide [ ← f_binop, h ];
-      simp +decide [ h, Option.map ];
-      rfl
+    apply Option.map_injective f_inj
+    convert Pcm.assoc (f a) (f b) (f c) using 1
+    · cases h : a ⋆ b <;> simp [← f_binop, h]; rfl
+    · cases h : b ⋆ c <;> simp [← f_binop, h]; rfl
   le x y := f x ≤ f y
   le_refl x := le_refl (f x)
-  le_trans := fun {_ _ _} h₁ h₂ => @le_trans α _ _ _ _ h₁ h₂
+  le_trans _ _ _ h₁ h₂ := le_trans h₁ h₂
   one_le a := f_one ▸ Krm.one_le (f a)
   le_mul_mono x x' y y' p' hx hy hp := by
-    have := ‹Krm α›.le_mul_mono ( f x ) ( f x' ) ( f y ) ( f y' ) ( f p' ) hx hy ( by
-      rw [ ← f_binop, hp, Option.map_some ] );
-    -- Since $f$ is injective, we can conclude that $x \star y = some p$.
-    have h_binop_eq : Option.map f (‹PcmBase β›.binop x y) = some this.choose := by
-      exact this.choose_spec.1 ▸ f_binop x y ▸ rfl;
-    rw [ Option.map_eq_some_iff ] at h_binop_eq;
-    exact ⟨ h_binop_eq.choose, h_binop_eq.choose_spec.1, h_binop_eq.choose_spec.2.symm ▸ this.choose_spec.2 ⟩
+    obtain ⟨q, hq, hqle⟩ := Krm.le_mul_mono (f x) (f x') (f y) (f y') (f p') hx hy
+      (by rw [← f_binop, hp]; rfl)
+    rw [← f_binop, Option.map_eq_some_iff] at hq
+    obtain ⟨p, hp_xy, rfl⟩ := hq
+    exact ⟨p, hp_xy, hqle⟩
 
 /-- The map `PSp → PSpace HC` given by `Subtype.val` preserves the unit. -/
 lemma psp_val_one : (1 : PSp).1 = (1 : PSpace HC) := rfl
 
-/-
-The map `PSp → PSpace HC` given by `Subtype.val` preserves `binop` values.
--/
+/- The map `PSp → PSpace HC` given by `Subtype.val` preserves `binop` values.  -/
 lemma psp_val_binop (x y : PSp) : (x ⋆ y).map (·.1) = (x.1 ⋆ y.1) := by
   rw [instPcmBase, PSpace.instPcmBase]
   grind
 
+/-- PSp is a Krm using `closed_subtype_Krm`. -/
 noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
-  (by rintro ⟨a, ha⟩  ⟨b, hb⟩ c; simpa only [mk.injEq])
+  (by rintro ⟨a, ha⟩ ⟨b, hb⟩ c; simpa only [mk.injEq])
   rfl
   psp_val_binop
 
 /-- The PSpace-level binop is also defined when the PSp binop is. -/
-lemma psp_isSome_val (x y : PSp) (h : ✓'(x ⋆ y)) : (x.1 ⋆ y.1).isSome := by
+lemma psp_isSome_val (x y : PSp) (h : ✓'(x ⋆ y)) : ✓'(x.1 ⋆ y.1) := by
   have hv := psp_val_binop x y
   cases hxy : x ⋆ y with
   | none => simp [hxy] at h
-  | some v => simp [hxy] at hv; rw [← hv]; exact rfl
+  | some v =>
+    simp only [hxy, Option.map_some] at hv
+    rw [← hv]
+    rfl
+
 /-
 If PSp binop is defined, the underlying PSpace value equals the PSpace-level binop value.
 -/
@@ -414,58 +385,51 @@ lemma psp_val_get (x y : PSp) (h : ✓'(x ⋆ y)) :
       · unfold instPcmBase;
         grind;
       · grind
+
 open MeasureTheory in
 noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @ProbabilityMeasure HC ms)
     (ms'_le_ms : ms' ≤ ms) (ff : ∃ n, FiniteFootprint n ms') : PSp :=
   ⟨⟨⟨ms', μ.1.trim ms'_le_ms⟩, Measure.trim_preserves_prob ms' ms ms'_le_ms μ.2⟩, ff⟩
-
--- lemma pspace_le_of_psp_le {x y : PSp} {}
 
 end PSp
 
 /- ### TODO rename to just Krm, remove all the repetitions of this done separately for PSpace-/
 namespace KrmHelper
 
-
 variable {α : Type*} [krm_α : Krm α]
 open PcmBase
 
--- @[grind]
--- lemma exists_right (p q r : α) :
---     (binop <$> (binop p q) <*> (some r)).join.isSome → (binop q r).isSome := by
---   cases hq : ‹Krm α›.binop q r <;> simp_all +decide;
---   have := ‹Krm α›.assoc p q r; aesop;
-
--- lemma exists_left (p q r : α) :
---     (binop <$> (some p) <*> (binop q r)).join.isSome → (binop p q).isSome := by
---   rename_i K;
---   have := K.assoc p q r;
---   cases h : K.binop p q <;> simp_all +decide;
---   exact this.symm
-
-/-! ### Derived associativity helpers for `isSome`-based API
-  These use `binop` explicitly rather than `⋆` notation to avoid parsing issues
-  with `(a ⋆ b).get hab` as a first argument to `⋆`. -/
-/-
-Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `b ⋆ c`.
--/
 lemma right {a b c : α}
     {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
     ✓'(b ⋆ c) := by
-      cases' ‹Krm α› with binop;
-      cases' h : binop.binop a b with x <;> simp_all +decide;
-      · grind;
-      · have := binop.assoc a b c;
-        cases' h' : binop.binop b c with y <;> simp_all +decide;
-        cases habc
+      have assoc_lhs: ((krm_α.binop) <$> (a ⋆ b) <*> (some c)).join = (↓hab ⋆ c) := by
+        conv_lhs => rw [← Option.some_get hab]
+        rfl
+      have assoc := assoc_lhs ▸ krm_α.assoc a b c
+      rw [assoc] at habc
+      by_cases h: ✓'(b ⋆ c)
+      · exact h
+      · exfalso
+        have : b ⋆ c = none := by exact Option.not_isSome_iff_eq_none.mp h
+        rw [this] at habc
+        contradiction
 
 lemma left {a b c : α}
     {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
-    ✓'(a ⋆ b) := by sorry
+    ✓'(a ⋆ b) := by
+      have assoc_rhs: (binop <$> (some a) <*> (b ⋆ c)).join = (a ⋆ ↓hbc) := by
+        conv_lhs => rw [← Option.some_get hbc]
+        rfl
+      have assoc := assoc_rhs ▸ krm_α.assoc a b c
+      rw [← assoc] at habc
+      by_cases h: ✓'(a ⋆ b)
+      · exact h
+      · exfalso
+        have : a ⋆ b = none := by exact Option.not_isSome_iff_eq_none.mp h
+        rw [this] at habc
+        contradiction
 
-/-
-Given `a ⋆ b` and `↓hab ⋆ c` are defined, so is `a ⋆ ↓hbc`.
--/
+/- Given `↓hab ⋆ c` is defined, so is `a ⋆ ↓hbc`.  -/
 lemma assoc_right {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
   ✓'(a ⋆ ↓(right habc)) := by
     have hassoc := ‹Krm α›.assoc a b c
@@ -474,6 +438,7 @@ lemma assoc_right {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c))
     obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp <| right habc
     simp_all
 
+/- Given `a ⋆ ↓hbc` is defined, so is `↓hab ⋆ c`.  -/
 lemma assoc_left {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc)) :
   ✓'(↓(left habc) ⋆ c) := by
     have hassoc := ‹Krm α›.assoc a b c
@@ -489,25 +454,7 @@ lemma assoc_left_eq {a b c : α} {hbc : ✓'(b ⋆ c)} (habc : ✓'(a ⋆ ↓hbc
 @[simp]
 lemma assoc_right_eq {a b c : α} {hab : ✓'(a ⋆ b)} (habc : ✓'(↓hab ⋆ c)) :
   ↓(assoc_right habc) = ↓habc := sorry
-/-
-The PCM assoc identity at the `get` level: `↓habc = ↓ha_bc`.
--/
-lemma get_assoc_eq' (a b c : α)
-    (hab : ✓'(a ⋆ b)) (habc : (binop ((binop a b).get hab) c).isSome)
-    (hbc : (binop b c).isSome := right habc)
-    (ha_bc : (binop a ((binop b c).get hbc)).isSome :=
-      assoc_right habc) :
-    (binop ((binop a b).get hab) c).get habc =
-    (binop a ((binop b c).get hbc)).get ha_bc := by
-      unfold Option.get at *;
-      obtain ⟨x, hx⟩ := Option.isSome_iff_exists.mp hab
-      obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp habc
-      obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hbc
-      obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp ha_bc;
-      have := krm_α.assoc a b c; aesop;
 
-/-- This seems more useful in all situations. Consider changing it to be the
-definition. -/
 lemma le_mul_mono' (x₁ x₂ y₁ y₂ : α)
     (lex : x₁ ≤ x₂) (ley : y₁ ≤ y₂)
     (xy₂ : ✓'(x₂ ⋆ y₂)) : ∃ xy₁ : ✓'(x₁ ⋆ y₁), ↓xy₁ ≤ ↓xy₂ := by sorry

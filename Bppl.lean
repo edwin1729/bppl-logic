@@ -4,7 +4,8 @@ import Bppl.Lilac.KRM
 import Bppl.Lilac.BI
 import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.WP
+import Bppl.Lilac.ProofRules.WPUnif
+import Bppl.Lilac.ProofRules.WPUnifHelpers
+import Bppl.Lilac.ProofRules.MeasureProduct
 import Bppl.Lilac.Examples
 import Bppl.Lilac.HilbertCube
-import Bppl.Lilac.WPUnifHelpers
-import Bppl.Lilac.MeasureProduct
