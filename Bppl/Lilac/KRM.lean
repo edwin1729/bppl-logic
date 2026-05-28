@@ -362,10 +362,14 @@ lemma psp_val_binop (x y : PSp) : (x ⋆ y).map (·.1) = (x.1 ⋆ y.1) := by
   grind
 
 /-- PSp is a Krm using `closed_subtype_Krm`. -/
-noncomputable instance : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
+noncomputable instance instKrmPSp : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
   (by rintro ⟨a, ha⟩ ⟨b, hb⟩ c; simpa only [mk.injEq])
   rfl
   psp_val_binop
+
+@[simp]
+lemma le_of_le {x y : PSp} (x_le_y : x ≤ y) : x.ms ≤ y.ms := x_le_y.1
+
 
 /-- The PSpace-level binop is also defined when the PSp binop is. -/
 lemma psp_isSome_val (x y : PSp) (h : ✓'(x ⋆ y)) : ✓'(x.1 ⋆ y.1) := by
@@ -377,16 +381,21 @@ lemma psp_isSome_val (x y : PSp) (h : ✓'(x ⋆ y)) : ✓'(x.1 ⋆ y.1) := by
     rw [← hv]
     rfl
 
-/-
-If PSp binop is defined, the underlying PSpace value equals the PSpace-level binop value.
--/
+/- If PSp binop is defined, the underlying PSpace value equals the PSpace-level binop value.  -/
 lemma psp_val_get (x y : PSp) (h : ✓'(x ⋆ y)) :
-    (↓h).1 = (x.1 ⋆ y.1).get (psp_isSome_val x y h) := by
+    (↓h).1 = ↓(psp_isSome_val x y h) := by
       convert Option.some_inj.mp _;
       convert psp_val_binop x y using 1;
       · unfold instPcmBase;
         grind;
       · grind
+
+@[simp]
+lemma sum_ms_of_prod {x y : PSp} (xy : ✓'(x ⋆ y)) : (↓xy).ms = x.ms.sum y.ms := by
+  have hval : x.1 ⋆ y.1 = some (↓xy).1 := by
+    rw [psp_val_get x y xy, Option.some_get]
+  exact (PSpace.Krm.isIndependentProduct_of_binop_eq_some hval).1
+
 
 open MeasureTheory in
 noncomputable def PSpace.mk''_psp {ms ms' : MeasurableSpace HC} (μ : @ProbabilityMeasure HC ms)

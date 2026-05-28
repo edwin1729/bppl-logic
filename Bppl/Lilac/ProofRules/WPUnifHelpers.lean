@@ -19,30 +19,20 @@ open HC MeasureTheory unitInterval Appl
 
 noncomputable section
 
-/-! ### `Measure.bind ∘ dirac` on a trimmed measure equals `Measure.map` on the original -/
+/-! ### `Measure.map` on a trimmed measure equals `Measure.map` on the original -/
 
 /-
-For a function `f` that is `ms'`-measurable, `Measure.bind (μ.trim h) (dirac ∘ f)` equals
-`Measure.map f μ`, where both sides produce a `Measure β`. The key point is that the bind
-uses the trimmed σ-algebra `ms'`, but the result agrees with `map f μ` (using `ms`).
+For a function `f` that is `ms'`-measurable, `Measure.map f (μ.trim h)` equals
+`Measure.map f μ`. The trimmed and original measures agree on `ms'`-measurable sets, and
+preimages under `f` are `ms'`-measurable, so the pushforwards coincide.
 -/
-lemma bind_dirac_trim_eq_map_orig {α β : Type*}
+lemma map_trim_eq_map {α β : Type*}
     {ms ms' : MeasurableSpace α} [MeasurableSpace β]
     {f : α → β} (hf : @Measurable α β ms' _ f) (μ : @Measure α ms) (h : ms' ≤ ms) :
-    @Measure.bind α β ms' _ (μ.trim h) (fun ω ↦ Measure.dirac (f ω)) =
-      @Measure.map α β ms _ f μ := by
-        ext s hs;
-        -- Apply the lemma that the bind of a Dirac measure is the map of the function.
-        have h_bind_dirac : (μ.trim h).bind (fun ω => Measure.dirac (f ω)) = Measure.map f (μ.trim h) := by
-          apply Measure.bind_dirac_eq_map;
-          grind;
-        rw [ h_bind_dirac, Measure.map_apply, Measure.map_apply ];
-        · rw [ MeasureTheory.trim_measurableSet_eq h ];
-          exact hf hs;
-        · exact hf.mono h le_rfl;
-        · exact hs;
-        · exact hf;
-        · exact hs
+    @Measure.map α β ms' _ f (μ.trim h) = @Measure.map α β ms _ f μ := by
+  ext s hs
+  rw [Measure.map_apply hf hs, Measure.map_apply (hf.mono h le_rfl) hs,
+      MeasureTheory.trim_measurableSet_eq h (hf hs)]
 
 /-! ### The `n`-th coordinate marginal of the infinite product measure -/
 
@@ -77,28 +67,6 @@ lemma coord_val_eq_comp (n : ℕ) :
     (fun ω : ℕ → I ↦ (↑(ω n) : ℝ)) = Subtype.val ∘ (· n) := by
   ext; rfl
 
-/-- The `bind ∘ dirac` of the trimmed product measure under `fun ω ↦ ↑(ω n)` equals
-`unif01_sem`. -/
-lemma WP.X_dist_helper (n : ℕ)
-    (leb : @ProbabilityMeasure (ℕ → I) Inf_borel)
-    (h_leb : leb.1 = Measure.infinitePiNat (fun _ =>
-      (MeasureTheory.MeasureSpace.volume : Measure I))) :
-    let μ_trim := leb.1.trim (N_nil_I_borel_le_Inf_borel n)
-    unif01_sem =
-      @Measure.bind (ℕ → I) ℝ (N_nil_I_borel n) _
-        μ_trim (fun ω ↦ Measure.dirac (↑(ω n) : ℝ)) := by
-  intro μ_trim
-  rw [bind_dirac_trim_eq_map_orig (HC.coordProj_measurable n) leb.1
-    (N_nil_I_borel_le_Inf_borel n)]
-  -- Now: unif01_sem = @Measure.map ... Inf_borel _ (fun ω ↦ ↑(ω n)) leb.1
-  show unif01_sem = @Measure.map (ℕ → I) ℝ Inf_borel _ (fun ω ↦ (↑(ω n) : ℝ)) leb.1
-  rw [coord_val_eq_comp]
-  rw [show @Measure.map (ℕ → I) ℝ Inf_borel _ (Subtype.val ∘ (· n)) leb.1 =
-    Measure.map Subtype.val (@Measure.map (ℕ → I) I Inf_borel _ (· n) leb.1) from
-    (Measure.map_map measurable_subtype_coe (measurable_pi_apply n)).symm]
-  rw [h_leb, infinitePiNat_coord_map n]
-  rfl
-
 end
 
 /-
@@ -115,8 +83,8 @@ The composition `(fun ω => (↑(ω n) : ℝ)) ∘ (splitBi n).symm`
 equals `(fun p => (↑(p.2 0) : ℝ))`.
 -/
 lemma coord_comp_splitBi_symm (n : ℕ) :
-    (fun ω : ℕ → I => (↑(ω n) : ℝ)) ∘ (splitBi n).symm =
-    (fun p : (Fin n → I) × (ℕ → I) => (↑(p.2 0) : ℝ)) := by
+    (fun ω : ℕ → I ↦ ω n) ∘ (splitBi n).symm =
+    (fun p : (Fin n → I) × (ℕ → I) => p.2 0) := by
   exact funext fun p => splitBi_symm_apply_self n p.1 p.2 ▸ rfl
 /-
 The 0th marginal of an infinite product of identical probability measures
@@ -141,43 +109,26 @@ lemma map_eval_zero_infinitePiNat {X : Type*} [MeasurableSpace X]
         · exact measurable_pi_apply _;
         · exact measurable_id;
   · exact MeasurableEquiv.measurable _
-/-
-The map of the n-th coordinate projection under the product measure
-`(μ_k.prod leb).map (splitBi n).symm` equals `Measure.map Subtype.val volume`.
-This is the core measure-theoretic fact for the `bind_eq` case of `wp_unif`.
--/
+
+/- The map of the n-th coordinate projection under the product measure
+`(μ_k.prod leb).map (splitBi n).symm` equals `lebI`.
+This is the core measure-theoretic fact for the `bind_eq` case of `wp_meas`.  -/
 lemma unif01_eq_map_coord_prod (n : ℕ)
     (μ_k : ProbabilityMeasure (Fin n → I))
     (μ' : ProbabilityMeasure (ℕ → I))
-    (hμ' : (↑μ' : Measure (ℕ → I)) =
-      Measure.map (↑(splitBi n).symm) ↑(μ_k.prod lebHC)) :
-    Measure.map Subtype.val (volume : Measure I) =
-      Measure.map (fun ω : ℕ → I => (↑(ω n) : ℝ)) ↑μ' := by
-  rw [ hμ', Measure.map_map ];
-  · rw [ coord_comp_splitBi_symm ];
-    have h_volume : Measure.map (fun p : (Fin n → I) × (ℕ → I) => p.2 0)
-        (μ_k.prod lebHC).toMeasure =
-        Measure.map (fun p : ℕ → I => p 0) lebHC.toMeasure := by
-      ext s hs;
-      rw [ Measure.map_apply, Measure.map_apply ];
-      · rw [ ProbabilityMeasure.toMeasure_prod ];
-        rw [ MeasureTheory.Measure.prod_apply ];
-        · simp +decide [ Set.preimage ];
-        · exact measurable_pi_apply 0 hs |> MeasurableSet.preimage <| measurable_snd;
-      · exact measurable_pi_apply 0;
-      · exact hs;
-      · exact measurable_pi_apply 0 |> Measurable.comp <| measurable_snd;
-      · exact hs;
-    convert congr_arg ( fun m => Measure.map Subtype.val m ) h_volume.symm using 1;
-    · have h_leb : (lebHC.toMeasure : Measure (ℕ → I)) =
-        Measure.infinitePiNat (fun _ => volume) := rfl
-      rw [ h_leb, map_eval_zero_infinitePiNat ];
-    · rw [ Measure.map_map ];
-      · rfl;
-      · exact measurable_subtype_coe;
-      · fun_prop;
-  · fun_prop;
-  · exact MeasurableEquiv.measurable _
+    (hμ' : (↑μ' : Measure (ℕ → I)) = Measure.map (↑(splitBi n).symm) ↑(μ_k.prod lebHC))
+    : lebI = Measure.map (λ ω : ℕ → I ↦ ω n) ↑μ' := by
+  rw [hμ', Measure.map_map (by fun_prop) (MeasurableEquiv.measurable _)]
+  rw [coord_comp_splitBi_symm]
+  have h_volume : (μ_k.prod lebHC).toMeasure.map (fun p : (Fin n → I) × (ℕ → I) => p.2 0)
+      = lebHC.1.map (fun p : ℕ → I => p 0) := by
+    ext s hs
+    rw [Measure.map_apply (measurable_pi_apply 0) hs, Measure.map_apply (by fun_prop) hs]
+    rw [ProbabilityMeasure.toMeasure_prod, MeasureTheory.Measure.prod_apply (by measurability)]
+    simp [Set.preimage]
+  rw [h_volume]
+  change lebI = (Measure.infinitePiNat (fun _ => lebI)).map (fun p : ℕ → I ↦ p 0)
+  rw [map_eval_zero_infinitePiNat]
 
 open ProbabilityTheory ProbabilityTheory.Kernel
 
@@ -228,50 +179,9 @@ lemma ff_preimage_form (D : RV α) {n : ℕ} (hn : D.n ≤ n)
   · convert hA using 1
 
 /-- The n-th coordinate marginal of the i.i.d. product under `Subtype.val` preimage
-equals `unif01_sem`. -/
+equals `lebI`. -/
 lemma leb_coord_preimage_eq_unif01
-    (n : ℕ) (E : Set ℝ) (hE : MeasurableSet E) :
-    lebHC.toMeasure ((· n : HC → I) ⁻¹' (Subtype.val ⁻¹' E)) = Appl.unif01_sem E := by
-  rw [Appl.unif01_sem, MeasureTheory.Measure.map_apply]
-  · convert infinitePiNat_coord_marginal n (Subtype.val ⁻¹' E) _ using 1
-    exact measurable_subtype_coe hE
-  · exact measurable_subtype_coe
-  · exact hE
-
-/-- The pushforward of μ' under `(X, D_ext)` equals `unif01_sem.prod (μ.map D_ext)`. -/
-lemma map_X_Dext_eq_prod
-    (μ : @ProbabilityMeasure HC Inf_borel)
-    (D : RV α)
-    {n : ℕ} (hn : D.n ≤ n)
-    (μ_k : ProbabilityMeasure (Fin n → I))
-    (hμ_k : μ_k = μ.map (measurable_fst.comp (splitBi n).measurable).aemeasurable)
-    (μ' : @ProbabilityMeasure HC Inf_borel)
-    (hμ' : μ' = (μ_k.prod lebHC).map (splitBi n).symm.measurable.aemeasurable) :
-    μ'.1.map (fun ω => ((↑(ω n) : ℝ), D.toFun ω)) =
-    Appl.unif01_sem.prod (μ.1.map D.toFun) := by
-  have : IsProbabilityMeasure (μ.1.map D.toFun) :=
-    @Measure.isProbabilityMeasure_map _ _ _ _ μ.1 μ.2 _ D.meas.aemeasurable
-  symm; apply Measure.prod_eq
-  intro E F hE hF
-  -- Reduce to the rectangle case via `fp_preimage_form`, then apply the measure-product core.
-  obtain ⟨A, hA⟩ := ff_preimage_form D hn F hF
-  have hE' : MeasurableSet (Subtype.val ⁻¹' E : Set I) := measurable_subtype_coe hE
-  refine .trans
-    ?lhs_eq (
-    (wp_unif_measure_product_core n μ (E := (Prod.fst ∘ splitBi n) ⁻¹' A)
-      (F := (· n) ⁻¹' (Subtype.val ⁻¹' E)) hA.1 hE' rfl rfl).trans
-    ?rhs_eq)
-  case lhs_eq =>
-    -- `μ'.1.map (X, D_ext) (E ×ˢ F)` is `μ'.1` of the preimage rectangle.
-    convert Measure.map_apply _ _ using 2
-    · simp [hμ', hμ_k]
-    · grind
-    · exact Measurable.prodMk (measurable_subtype_coe.comp (measurable_pi_apply n)) D.meas
-    · exact hE.prod hF
-  case rhs_eq =>
-    -- `μ.1 (preimage A) = (μ.map D_ext) F` and `infinitePiNat (coord ⁻¹' …) = unif01_sem E`.
-    rw [← hA.2, Measure.map_apply]
-    · rw [mul_comm, leb_coord_preimage_eq_unif01]
-      exact hE
-    · exact D.meas
-    · exact hF
+    (n : ℕ) (E : Set I) (hE : MeasurableSet E) :
+    lebHC.toMeasure ((· n : HC → I) ⁻¹' E) = lebI E := by
+  convert infinitePiNat_coord_marginal n E _ using 1
+  exact hE

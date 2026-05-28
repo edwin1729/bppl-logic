@@ -41,20 +41,24 @@ def own (E : RV ⟪A⟫) : LProp :=
     intro σ₁ σ₂ hle hm
     exact hm.mono hle.1 le_rfl ⟩
 
-def dist (E : RV ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
-  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = Measure.bind Ω.μ (fun ω ↦ Measure.dirac (E ω)),
+/-- We depart from the convention of using `RV` for for the variable `E` here.
+The measurability of `E : RV ⟪A⟫` would be given as `HC.Inf_borel` on the domain
+and this is unnessecary info. So we instead take a simple function E. Measurability is
+asserted as part of the resource in the original defintion. -/
+def dist (E : HC → ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
+  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = @Measure.map _ _ Ω.ms _ E Ω.μ,
   -- monotonicity proof
-  by
-    intro σ₁ σ₂ hle ⟨hm, hbind⟩
-    change σ₁.toPSpace ≤ σ₂.toPSpace at hle
-    obtain ⟨hms, hmu⟩ := hle
-    refine ⟨hm.mono hms le_rfl, ?_⟩
-    rw [hbind, hmu,
-        Measure.bind_dirac_eq_map _ (hm.mono hms le_rfl),
-        Measure.bind_dirac_eq_map _ hm,
-        Measure.cast_eq_self,
-        Measure.map_map hm (measurable_id.mono hms le_rfl)]
-    rfl
+  by sorry
+    -- intro σ₁ σ₂ hle ⟨hm, hbind⟩
+    -- change σ₁.toPSpace ≤ σ₂.toPSpace at hle
+    -- obtain ⟨hms, hmu⟩ := hle
+    -- refine ⟨hm.mono hms le_rfl, ?_⟩
+    -- rw [hbind, hmu,
+    --     Measure.bind_dirac_eq_map _ (hm.mono hms le_rfl),
+    --     Measure.bind_dirac_eq_map _ hm,
+    --     Measure.cast_eq_self,
+    --     Measure.map_map hm (measurable_id.mono hms le_rfl)]
+    -- rfl
   ⟩
 
 def expectation (E : RV ⟪Ty.real⟫) (e : ℝ) : LProp :=

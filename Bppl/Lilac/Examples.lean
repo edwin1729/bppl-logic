@@ -7,7 +7,6 @@ Authors: Edwin Fernando
 import Bppl.Lilac.Appl
 import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.WP
-import Bppl.Lilac.ProofRules.WPUnif
 
 import Iris.ProofMode
 
@@ -32,7 +31,7 @@ abbrev unif1 : Term [] Ty.real.G :=
   ret (var head)
 )
 
-abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
+abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X lebI')
 
 lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ᵣ (X ;; nil)) = X := by rfl
 
@@ -59,7 +58,7 @@ notation:10 D ".ₘ1" => (measurableFun_fst ∘ᵣ D)
 notation:10 D ".ₘ2" => (measurableFun_snd ∘ᵣ D)
 
 abbrev post2 : LProp := wp (unif2.den ∘ᵣ nil) (λ (Z : RV ⟪Ty.prod .real .real⟫) ↦
-  iprop((Z.ₘ1) ∼ unif01_sem ∗ (Z.ₘ2) ∼ unif01_sem))
+  iprop((Z.ₘ1) ∼ lebI' ∗ (Z.ₘ2) ∼ lebI'))
 
 lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_fst ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = X := by rfl
 lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_snd ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = Y := by rfl

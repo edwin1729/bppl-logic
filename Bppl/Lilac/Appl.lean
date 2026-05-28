@@ -164,35 +164,6 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
     | Ty.real => default
     | Ty.bool => default
 
--- Sadly Classes can't be annotate without reducible to. So the notation `⟪⟫` can't
--- may used through a type class and still be made reducible? Investigate
--- and at the same time I struggle to get type class inference to notice the M
-
-/-- The semantic (native lean) uniform distribution in the interval [0,1].
-This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
-via the subtype coercion `↑ : I → ℝ`. -/
-def unif01_sem : Measure ℝ :=
-  Measure.map Subtype.val (MeasureTheory.MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
-
-namespace Kernel
-
--- instance instCoeKernel {α : Type*} [MeasurableSpace α] {ty : Ty}
---     : Coe (α -m→ ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
---   coe f := ⟨λ a ↦ f.1, f.2⟩
-
--- instance {α : Type*} [MeasurableSpace α] {ty : Ty}
---     : Coe (Kernel α ⟪ty⟫) (α -m→ ⟪Ty.G ty⟫) where
---   coe f := ⟨f.1, f.2⟩
-
--- instance {α : Type*} [MeasurableSpace α] {ty : Ty}
---     : Coe (RV ⟪Ty.G ty⟫) (Kernel α ⟪ty⟫) where
---   coe f := ⟨f.1, f.2⟩
-
-end Kernel
-
-instance : IsProbabilityMeasure unif01_sem :=
-  isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
-
 abbrev toMK {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
     (f : α -m→ ProbabilityMeasure β) : Kernel α β :=
   ⟨fun a ↦ (f a : Measure _), measurable_subtype_coe.comp f.2⟩
@@ -241,7 +212,7 @@ to give an element of a measurable space -/
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
+  | unif01 => ⟨fun _ ↦ ⟨lebI', inferInstance⟩, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
   | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩

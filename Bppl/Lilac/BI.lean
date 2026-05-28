@@ -27,7 +27,8 @@ variable {Env Resource : Type*} [Krm Resource]
 directly providing the semantics.
 In this subtype the data part, `sem`, defines the satisfiability relation, and we add the
 monotonicity constraint: any `IProp` satisfied by a "less informative" resource is also satisfied
-by a more informative resource. -/
+by a more informative resource.
+Note: Consider automation of monotonicity proof by `@[mono]` annotations? -/
 abbrev IProp (Resource : Type*) [Krm Resource]
   := {sem : Resource → Prop // ∀ σ₁ σ₂, σ₁ ≤ σ₂ → sem σ₁ → sem σ₂}
 

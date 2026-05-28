@@ -61,7 +61,8 @@ lemma unSplitTri_eq_unSplitBi_succ {N : ℕ}
         MeasurableSpace.comap
           (fun f => f (Fin.last N)) ms_I) ×ₘ
         Inf_nil) := by
-          simp +decide [ unSplitTri, unSplitBi, MeasurableSpace.prod ];
+          simp +decide only [unSplitTri, prod, comap_bot, bot_le, sup_of_le_left, comap_comp,
+            comap_sup, unSplitBi];
           congr! 2
 
 /-- `FiniteFootprint` for an arbitrary sub-σ-algebra on the first `N` coordinates
@@ -112,10 +113,13 @@ The `n`-th coordinate projection `fun ω ↦ ↑(ω n) : HC → ℝ` is measurab
     with respect to `N_nil_I_borel n`, since this σ-algebra includes `I_borel`
     on coordinate `n`.
 -/
-lemma coordProj_measurable (n : ℕ) :
+lemma coordProj_measurable' (n : ℕ) :
     @Measurable (ℕ → I) ℝ (N_nil_I_borel n) _ (fun ω ↦ (↑(ω n) : ℝ)) :=
   (Measurable.comp (Measurable.subtype_val measurable_snd.fst)) (comap_measurable _)
 
+lemma coordProj_measurable (n : ℕ) :
+    @Measurable (ℕ → I) I (N_nil_I_borel n) _ (fun ω ↦ ω n) :=
+  (Measurable.comp (measurable_snd.fst)) (comap_measurable _)
 
 end
 

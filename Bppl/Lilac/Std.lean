@@ -74,7 +74,7 @@ lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn
 end
 end HC
 
-open MeasureTheory (Measure)
+open MeasureTheory MeasureTheory.Measure unitInterval
 open ProbabilityTheory (Kernel)
 variable {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
 
@@ -108,16 +108,30 @@ instance : Inhabited HC where
 
 /-- The Lebesgue measure on the Hilbert cube: the infinite product of uniform measures
 on the unit interval. -/
-noncomputable abbrev lebHC : @MeasureTheory.ProbabilityMeasure HC HC.Inf_borel :=
+noncomputable abbrev lebHC : @ProbabilityMeasure HC HC.Inf_borel :=
   ⟨Measure.infinitePiNat (fun _ => (MeasureTheory.volume : Measure unitInterval)),
    inferInstance⟩
+
+noncomputable abbrev lebI : Measure I := volume
+
+/-- The semantic (native lean) uniform distribution in the interval [0,1].
+This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
+via the subtype coercion `↑ : I → ℝ`. -/
+noncomputable def lebI' : Measure ℝ :=
+  Measure.map Subtype.val (MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
+
+instance : IsProbabilityMeasure lebI' :=
+  isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
+
 
 -- this should be refactored into a type class, or use the `fun_prop` style, where
 -- lemmas constructing the `ff` property are annotated with `fun_prop`
 /-- A measurable function from `HC` with finite footprint. -/
-structure RV (β : Type*) [msβ : MeasurableSpace β] extends MeasurableFun HC β where
+structure RV (β : Type*) [msβ : MeasurableSpace β] extends @MeasurableFun HC β MeasurableSpace.pi _ where
   /-- Finite footprint -/
   ff : ∃ n, HC.FiniteFootprint n (msβ.comap toFun)
+
+namespace RV
 
 instance instFunLikeRV {β : Type*} [MeasurableSpace β] : FunLike (RV β) HC β where
   coe D := D.toFun
@@ -128,7 +142,7 @@ instance instFunLikeRV {β : Type*} [MeasurableSpace β] : FunLike (RV β) HC β
 instance instCoeRV {β : Type*} [MeasurableSpace β] : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
 
-abbrev RV.prod [MeasurableSpace α] [MeasurableSpace β]
+abbrev prod [MeasurableSpace α] [MeasurableSpace β]
     (f : RV α) (g : RV β) : RV (α × β) :=
   ⟨⟨fun (r : HC) ↦ ((f r : α), (g r : β)), Measurable.prod f.meas g.meas⟩, by
     obtain ⟨n₁, h₁⟩ := f.ff
@@ -139,15 +153,27 @@ abbrev RV.prod [MeasurableSpace α] [MeasurableSpace β]
   ⟩
 notation x " ;; " xs => RV.prod x xs
 
-abbrev RV.comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
+abbrev comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
   ⟨⟨g ∘ f, Measurable.comp g.meas f.meas⟩, sorry⟩
 notation g " ∘ᵣ " f => RV.comp g f
 
 abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
 notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g
 
-namespace MeasurableFunc
-variable {α β γ : Type*} [MeasurableSpace α]
+-- instance foo : Unique (Fin 0 → φ) := inferInstance
 
+abbrev ff_const [msβ : MeasurableSpace β] (constVal : β)
+    : ∃ n, HC.FiniteFootprint n (msβ.comap (λ _a : HC ↦ constVal)) := by
+  use 0, ⊥
+  rw [MeasurableSpace.comap_const]
+  unfold HC.unSplitBi
+  rw [MeasurableSpace.comap_prodMk]
+  simp
 
-end MeasurableFunc
+/-- The constant function is an RV. This is useful for representing the dentotation
+of programs like `unif01` or `flip` where the `constVal` is the advertised measure,
+and the ignored parameters are the random variable context. -/
+abbrev const (constVal : β) [MeasurableSpace β] : RV β :=
+  ⟨⟨λ _a : HC ↦ constVal, measurable_const⟩, ff_const constVal⟩
+
+end RV

@@ -56,6 +56,17 @@ end MeasureTheory
 def MeasurableSpace.sum (m₁ : MeasurableSpace Ω) (m₂ : MeasurableSpace Ω) : MeasurableSpace Ω :=
   MeasurableSpace.generateFrom (MeasurableSet[m₁] ∪ MeasurableSet[m₂])
 
+lemma sum_eq_sup {Ω : Type*} (m₁ m₂ : MeasurableSpace Ω) :
+    MeasurableSpace.sum m₁ m₂ = m₁ ⊔ m₂ := by
+  apply le_antisymm
+  · apply MeasurableSpace.generateFrom_le
+    rintro s (h | h)
+    · exact @le_sup_left _ _ m₁ m₂ s h
+    · exact @le_sup_right _ _ m₁ m₂ s h
+  · apply sup_le <;> intro s hs <;>
+    exact MeasurableSpace.measurableSet_generateFrom
+      (by first | left; exact hs | right; exact hs)
+
 def MeasurableSpace.cast
   (m₁ m₂ : MeasurableSpace Ω) (p : m₁ = m₂) (E : Set Ω) (h : MeasurableSet[m₁] E) :
   MeasurableSet[m₂] E := by

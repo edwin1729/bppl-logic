@@ -6,7 +6,7 @@ Authors: Edwin Fernando
 
 import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.MeasureProduct
-import Bppl.Lilac.ProofRules.WPUnifHelpers
+import Bppl.Lilac.ProofRules.WPMeas
 
 namespace WP
 open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel MeasureTheory.Measure
@@ -19,14 +19,14 @@ noncomputable section
 abbrev ret [MeasurableSpace α] (a : α) := dirac a
 
 -- Appendix B.20
-lemma wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
+theorem wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
     (P_entails_Q : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
   intro Ω wp_l Ω_fr Ω_pre μ Ω_pre_le_μ  _ msα D_ext
   have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ := wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
   use X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, P_entails_Q X Ω' postcond
 
 open Krm in
-lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
+theorem wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop(F ∗ (wp M Q) ⊢ wp M (fun X ↦ iprop(F ∗ Q X))) := by
   rintro Ω ⟨Ω_F, Ω_M, Ω_F_M, hΩ_F_M,  hF, wp_left⟩ Ω_fr Ω_fr_Ω μ hΩ_fr_Ω _ _ D_ext
   -- all the shuffling paranthesis needed to feed arguments into `wp_left`
@@ -45,13 +45,13 @@ lemma wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasur
   case post_right_wp =>
     use Ω_F, Ω_M', (right Ω_fr_F_M')
 
-lemma wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
+theorem wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
     iprop((wp M P) ∨ (wp M Q) ⊢ wp M (fun X ↦ iprop(P X ∨ Q X))) := sorry
 
 -- Appendix B.22 from Lilac paper
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
 
-lemma wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term rs A) :
+theorem wp_ret (Q : RV ⟪A⟫ → LProp) (D : RV (TProd (⟪·⟫) rs)) (M : Term rs A) :
     iprop((Q (M.den ∘ᵣ D)) ⊢ wp ((Term.ret M).den ∘ᵣ D) Q) := by
   rintro Ω wp Ω_fr Ω_pre μ Ω_pre_le_μ _ _ D_ext
   use (M.den ∘ᵣ D), Ω, Ω_pre, μ, Ω_pre_le_μ
@@ -62,7 +62,7 @@ variable [MeasurableSpace α] [MeasurableSpace β]
 lemma h_det_prod (f : RV α) (g : RV β) : det f ×ₖ det g = det (f ;; g) :=
           Kernel.deterministic_prod_deterministic f.meas g.meas
 
-lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
+theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     (M : Term rs A.G) (N : Term (A::rs) B.G)
     : wp (M.den ∘ᵣ D) (fun X ↦ (wp (N.den ∘ᵣ (X ;; D)) Q)) ⊢ wp ((M.bind N).den ∘ᵣ D) Q := by
   rintro Ω wp_outer Ω_fr Ω_pre μ Ω_pre_le_μ _ _ D_ext
@@ -117,6 +117,11 @@ lemma wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
           = toMK (N.den ∘ᵣ X ;; D).toMeasurableFun
         rw [Kernel.deterministic_prod_deterministic X.meas D.meas]
         exact Kernel.comp_deterministic_eq_comap (toMK N.den) (X ;; D).meas
+
+theorem wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
+    iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ lebI' -∗ Q X))
+    ⊢ wp (Term.unif01.den ∘ᵣ D) Q :=
+  wp_meas Ty.real ⟨λ i ↦ (i : ℝ), by fun_prop⟩ Q D
 
 end
 end WP
