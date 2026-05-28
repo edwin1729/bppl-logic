@@ -8,6 +8,20 @@ import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.MeasureProduct
 import Bppl.Lilac.ProofRules.WPMeas
 
+/-! # WP proof rules
+
+Appendic B.20 in Lilac paper
+
+These are the main tools for reasoning about programs in Appl on top of the Iris instantiation.
+
+## Main Statements
+- `wp_cons`: The rule of rule of consequence standard in program logics.
+- `wp_frame`: The frame rule standard in separation logics.
+- `wp_ret`: Eliminating `wp` in an assertion
+- `wp_bind`: The monadic `bind` is like the let construct, and this rule unrolls the program line by line
+- `wp_unif`: Converting a syntactic `X ← unif01` program to an LProp `X ~ Unif[0,1]`
+-/
+
 namespace WP
 open Appl PMF NNReal List ProbabilityTheory ProbabilityTheory.Kernel MeasureTheory.Measure
 open Iris.BI.BIBase LProp Iris.BI

@@ -6,10 +6,10 @@ Authors: Edwin Fernando
 import Bppl.Lilac.Appl
 import Bppl.Lilac.ProofRules.MeasureProduct
 
-/-! # Helper lemmas for `wp_unif` (B.21)
+/-! # Helper lemmas for WP Meas
 
-These lemmas are placed in a separate file to avoid circular dependencies with
-the Iris proof mode imports used in `ProofRules.lean`.
+To be consolidated into `WPMeas.lean`
+
 -/
 
 set_option autoImplicit true
@@ -17,15 +17,9 @@ set_option relaxedAutoImplicit true
 
 open HC MeasureTheory unitInterval Appl
 
-noncomputable section
-
-/-! ### `Measure.map` on a trimmed measure equals `Measure.map` on the original -/
-
-/-
-For a function `f` that is `ms'`-measurable, `Measure.map f (μ.trim h)` equals
+/- For a function `f` that is `ms'`-measurable, `Measure.map f (μ.trim h)` equals
 `Measure.map f μ`. The trimmed and original measures agree on `ms'`-measurable sets, and
-preimages under `f` are `ms'`-measurable, so the pushforwards coincide.
--/
+preimages under `f` are `ms'`-measurable, so the pushforwards coincide.  -/
 lemma map_trim_eq_map {α β : Type*}
     {ms ms' : MeasurableSpace α} [MeasurableSpace β]
     {f : α → β} (hf : @Measurable α β ms' _ f) (μ : @Measure α ms) (h : ms' ≤ ms) :
@@ -34,81 +28,28 @@ lemma map_trim_eq_map {α β : Type*}
   rw [Measure.map_apply hf hs, Measure.map_apply (hf.mono h le_rfl) hs,
       MeasureTheory.trim_measurableSet_eq h (hf hs)]
 
-/-! ### The `n`-th coordinate marginal of the infinite product measure -/
-
-/-
-The pushforward of `infinitePiNat (fun _ => volume)` under `(· n)` equals `volume`.
-This is the standard marginal property of product measures.
--/
-lemma infinitePiNat_coord_map (n : ℕ) :
-    @Measure.map (ℕ → I) I Inf_borel _ (· n)
-      (Measure.infinitePiNat (fun _ => (MeasureTheory.MeasureSpace.volume : Measure I))) =
-    MeasureTheory.MeasureSpace.volume := by
-      ext T hT;
-      -- The measure of the preimage of T under the projection map is the same as the measure of T because the projection map is just picking out the nth coordinate.
-      have h_preimage : (Measure.infinitePiNat (fun _ => volume)) (Set.preimage (fun x : ℕ → I => x n) T) = (Measure.pi (fun _ : Fin 1 => volume)) (Set.pi Set.univ (fun _ : Fin 1 => T)) := by
-        have := @Measure.infinitePiNat_map_restrict;
-        specialize @this ( fun _ => I ) ( fun _ => inferInstance ) ( fun _ => volume ) ( by infer_instance ) { n } ; simp_all +decide [ Set.preimage ] ;
-        convert congr_arg ( fun m => m ( Set.pi Set.univ fun _ => T ) ) this using 1;
-        · rw [ Measure.map_apply ];
-          · congr with x ; simp +decide [ Set.preimage ];
-          · exact measurable_pi_lambda _ fun _ => measurable_pi_apply _;
-          · exact MeasurableSet.univ_pi fun _ => hT;
-        · erw [ MeasureTheory.Measure.pi_pi ] ; aesop;
-      rw [ MeasureTheory.Measure.map_apply ];
-      · aesop;
-      · exact measurable_pi_apply n;
-      · exact hT
-
-/-! ### `Measure.map` factors through `Subtype.val` and coordinate projection -/
-
-/-- `fun ω ↦ ↑(ω n)` factors as `Subtype.val ∘ (· n)`. -/
-lemma coord_val_eq_comp (n : ℕ) :
-    (fun ω : ℕ → I ↦ (↑(ω n) : ℝ)) = Subtype.val ∘ (· n) := by
-  ext; rfl
-
-end
-
-/-
-The n-th coordinate of `(splitBi n).symm (a, b)` equals `b 0`.
--/
+/- The n-th coordinate of `(splitBi n).symm (a, b)` equals `b 0`.  -/
 lemma splitBi_symm_apply_self (n : ℕ) (a : Fin n → I) (b : ℕ → I) :
     ((splitBi n).symm (a, b)) n = b 0 := by
-  unfold splitBi;
-  simp +decide [ MeasurableEquiv.sumPiEquivProdPi, finSumNatEquiv ];
-  simp +decide [ MeasurableEquiv.piCongrLeft, Equiv.sumPiEquivProdPi ];
-  simp +decide [ MeasurableEquiv.trans, Equiv.piCongrLeft ]
-/-
-The composition `(fun ω => (↑(ω n) : ℝ)) ∘ (splitBi n).symm`
-equals `(fun p => (↑(p.2 0) : ℝ))`.
--/
+  unfold splitBi
+  simp [MeasurableEquiv.sumPiEquivProdPi, finSumNatEquiv, MeasurableEquiv.piCongrLeft,
+    Equiv.sumPiEquivProdPi, MeasurableEquiv.trans, Equiv.piCongrLeft]
+
+/- Splitting then projecting is projecting then splitting. -/
 lemma coord_comp_splitBi_symm (n : ℕ) :
-    (fun ω : ℕ → I ↦ ω n) ∘ (splitBi n).symm =
-    (fun p : (Fin n → I) × (ℕ → I) => p.2 0) := by
-  exact funext fun p => splitBi_symm_apply_self n p.1 p.2 ▸ rfl
-/-
-The 0th marginal of an infinite product of identical probability measures
-is the factor measure.
--/
+    (fun ω : ℕ → I ↦ ω n) ∘ (splitBi n).symm = (fun p : (Fin n → I) × (ℕ → I) => p.2 0) :=
+  funext fun p => splitBi_symm_apply_self n p.1 p.2
+
+/- The 0th marginal of an infinite product of identical probability measures
+is one of those measures. -/
 lemma map_eval_zero_infinitePiNat {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsProbabilityMeasure μ] :
     Measure.map (fun f : ℕ → X => f 0) (Measure.infinitePiNat (fun _ => μ)) = μ := by
-  convert MeasurePreserving.map_eq ( measurePreserving_funUnique μ ( { 0 } : Finset ℕ ) ) using 1;
-  convert Measure.map_map ?_ ?_ using 1;
-  convert Measure.infinitePiNat_map_restrict ( fun _ => μ ) { 0 } using 1;
-  any_goals exact measurable_id;
-  · constructor <;> intro h;
-    · convert Measure.infinitePiNat_map_restrict ( fun _ => μ ) { 0 } using 1;
-    · convert congr_arg ( Measure.map ( fun f : { x : ℕ // x ∈ { 0 } } → X => f ⟨ 0, by simp +decide ⟩ ) ) h using 1;
-      · rw [ Measure.map_map ];
-        · congr! 1;
-        · exact measurable_pi_apply _;
-        · exact measurable_pi_lambda _ fun _ => measurable_pi_apply _;
-      · rw [ Measure.map_map ];
-        · congr! 1;
-        · exact measurable_pi_apply _;
-        · exact measurable_id;
-  · exact MeasurableEquiv.measurable _
+  change Measure.map (MeasurableEquiv.funUnique _ _ ∘ ({0} : Finset ℕ).restrict)
+    (Measure.infinitePiNat fun _ => μ) = μ
+  rw [← Measure.map_map (f := ({0} : Finset ℕ).restrict (π := fun _ => X))
+        (MeasurableEquiv.measurable _) (Finset.measurable_restrict _),
+      Measure.infinitePiNat_map_restrict, (measurePreserving_funUnique μ _).map_eq]
 
 /- The map of the n-th coordinate projection under the product measure
 `(μ_k.prod leb).map (splitBi n).symm` equals `lebI`.
@@ -134,18 +75,12 @@ open ProbabilityTheory ProbabilityTheory.Kernel
 
 /-! ### General kernel-measure lemmas -/
 variable {α β γ : Type*} [msα : MeasurableSpace α] [MeasurableSpace β] [MeasurableSpace γ]
-/-- Composing a deterministic kernel with a measure gives the pushforward. -/
-lemma det_compMeasure_eq_map {f : α → γ} (hf : Measurable f)
-    (μ : Measure α) [SFinite μ] :
-    (deterministic f hf) ∘ₘ μ = μ.map f := Measure.deterministic_comp_eq_map hf
 
 /-- Product of two deterministic kernels composed with a measure gives a pushforward. -/
-lemma det_prod_det_compMeasure
-    (g : α → β) (hg : Measurable g) (f : α → γ) (hf : Measurable f)
+lemma det_prod_det_compMeasure (g : α → β) (hg : Measurable g) (f : α → γ) (hf : Measurable f)
     (μ : Measure α) [SFinite μ] :
-    (deterministic g hg ×ₖ deterministic f hf) ∘ₘ μ =
-    μ.map (fun a => (g a, f a)) := by
-  convert (det_compMeasure_eq_map (hg.prodMk hf) μ)
+    (deterministic g hg ×ₖ deterministic f hf) ∘ₘ μ = μ.map (fun a => (g a, f a)) := by
+  convert (Measure.deterministic_comp_eq_map (hg.prodMk hf))
   ext; simp [deterministic_prod_deterministic]
 
 /-- Composing `(const ν ×ₖ det f)` with a measure gives a product measure. -/
@@ -178,10 +113,3 @@ lemma ff_preimage_form (D : RV α) {n : ℕ} (hn : D.n ≤ n)
   · exact hms_n ▸ D.meas.comap_le
   · convert hA using 1
 
-/-- The n-th coordinate marginal of the i.i.d. product under `Subtype.val` preimage
-equals `lebI`. -/
-lemma leb_coord_preimage_eq_unif01
-    (n : ℕ) (E : Set I) (hE : MeasurableSet E) :
-    lebHC.toMeasure ((· n : HC → I) ⁻¹' E) = lebI E := by
-  convert infinitePiNat_coord_marginal n E _ using 1
-  exact hE

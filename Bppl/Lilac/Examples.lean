@@ -10,9 +10,16 @@ import Bppl.Lilac.ProofRules.WP
 
 import Iris.ProofMode
 
-set_option autoImplicit true
-set_option relaxedAutoImplicit true
-set_option linter.style.lambdaSyntax false
+/-! # Examples of proofs using the Iris proof mode instantiated to Lilac
+
+- `unif1`: which samples from `unif01` in the language and shows the
+corresponding result in the logic.
+- `unif2`: like `unif1` but takes 2 independent samples `X` an `Y` and demonstrates
+construction of a separating conjunct
+- `half`: Given a random variable `X` in context and a uniform sample in [0,1], `Y`
+  shows 𝔼[XY] = 𝔼[X]/2
+
+-/
 
 open Appl
 abbrev mul (a b : RV ⟪Ty.real⟫) : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ a ω * b ω, sorry⟩, sorry⟩

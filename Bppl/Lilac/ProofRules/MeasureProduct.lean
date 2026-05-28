@@ -1,27 +1,24 @@
 /-
-Helper lemmas for the measure product condition in wp_unif.
-This file is separated to avoid Iris dependencies.
+Copyright (c) 2026 Edwin Fernando. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Edwin Fernando
 -/
-import Mathlib
-import Bppl.Lilac.KRM
+
+import Bppl.Lilac.HilbertCube
+import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
+import Mathlib.MeasureTheory.Measure.RegularityCompacts
+import Mathlib.Topology.EMetricSpace.Paracompact
+import Mathlib.Topology.UniformSpace.Uniformizable
+
+/-!
+Helper lemmas for the measure product condition in `wp_meas`. Yet to be refactored
+-/
 
 open MeasureTheory MeasurableSpace HC unitInterval
 
 noncomputable section
 
-set_option autoImplicit true
-
 /-! ### Measurability sub-lemmas -/
-
-lemma inter_measurable_in_combined (n : ℕ)
-    (ms_pre : MeasurableSpace (Fin n → I))
-    {E F : Set HC}
-    (hE : MeasurableSet[unSplitBi (ms_pre ×ₘ Inf_nil)] E)
-    (hF : MeasurableSet[N_nil_I_borel n] F) :
-    MeasurableSet[unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)] (E ∩ F) := by
-  apply MeasurableSet.inter
-  · exact (commute_with_add_dim ms_pre ▸ le_sup_right : unSplitBi _ ≤ _) _ hE
-  · exact (commute_with_add_dim ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
 
 lemma pre_measurable_in_combined (n : ℕ)
     (ms_pre : MeasurableSpace (Fin n → I))
@@ -38,17 +35,6 @@ lemma coord_measurable_in_combined (n : ℕ)
   (commute_with_add_dim ms_pre ▸ le_sup_left : N_nil_I_borel n ≤ _) _ hF
 
 /-! ### Helper lemmas for the product factorization -/
-
-/-- `splitBi n` second component at index `k` gives `ω (n + k)`. -/
-lemma splitBi_snd_apply (n : ℕ) (ω : HC) (k : ℕ) : (splitBi n ω).2 k = ω (n + k) := by
-  simp [splitBi, MeasurableEquiv.piCongrLeft, MeasurableEquiv.sumPiEquivProdPi]
-
-/-- The middle component of `splitTri n ω` is `ω n`. -/
-lemma splitTri_snd_fst (n : ℕ) (ω : HC) : (splitTri n ω).2.1 = ω n := by
-  simp [splitTri, splitBi, splitOne, MeasurableEquiv.piCongrLeft,
-        MeasurableEquiv.sumPiEquivProdPi, MeasurableEquiv.funUnique,
-        Equiv.natEquivNatSumPUnit, Equiv.sumComm, MeasurableEquiv.prodCongr,
-        Equiv.piCongrLeft, Equiv.sumPiEquivProdPi]
 
 /-- `N_nil_I_borel n` is the comap of `I_borel` through `(· n)`. -/
 lemma N_nil_I_borel_eq_comap_coord (n : ℕ) :
@@ -93,7 +79,7 @@ lemma splitBi_symm_preimage_coord_n (n : ℕ) (B : Set I) :
 
 /-- For the i.i.d. product measure, the k-th marginal equals `volume`. -/
 lemma infinitePiNat_coord_marginal (k : ℕ) (B : Set I) (hB : MeasurableSet B) :
-    Measure.infinitePiNat (fun _ => (volume : Measure I)) ((· k : HC → I) ⁻¹' B) =
+    Measure.infinitePiNat (fun _ => lebI) ((· k : HC → I) ⁻¹' B) =
     volume B := by
   have hk : k ∈ ({k} : Finset ℕ) := Finset.mem_singleton.mpr rfl
   have h_preimage :

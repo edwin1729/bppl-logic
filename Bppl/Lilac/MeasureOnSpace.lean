@@ -12,7 +12,10 @@ The first half of above file has been copied. It has since been golfed.
 import Mathlib.Probability.Independence.Conditional
 import Mathlib.Data.Set.Basic
 
-/-! ## Independent product of probability measures -/
+/-! ## Independent product of probability measures
+
+The common foundation shared by Lilac and Bluebell (the project from which this file was adapted)
+-/
 
 open ProbabilityTheory MeasureTheory
 

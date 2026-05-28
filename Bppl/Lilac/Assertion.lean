@@ -4,26 +4,36 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 
-import Mathlib.MeasureTheory.Category.MeasCat
-import Mathlib.MeasureTheory.MeasurableSpace.Constructions
-
-import Iris.BI.BIBase
-import Iris.BI
-import Iris.Algebra.OFE
-import Iris.Std.Equivalence
-import Iris.ProofMode
-
--- import Bppl.Lilac.KRM
 import Bppl.Lilac.Appl
 import Bppl.Lilac.BI
 
-set_option autoImplicit true
-set_option relaxedAutoImplicit true
+/-! # Probability-specific connectives of Lilac
+
+On top of the generic separation logic connectives provided by the `BI` instance, Lilac introduces
+probability-specific assertions: ownership of random variables, distribution assertions, almost-sure
+equality, expectations, and the weakest precondition for APPL programs. These are defined as
+predicates over `PSp` (probability spaces with finite footprint) and bundled with their
+monotonicity proofs into `LProp`.
+
+The notations `∼`, `≗`, and `𝔼[ ]= ` are registered for use inside the `iprop(...)` proof mode.
+
+## Main Definitions
+- `LProp`: Lilac propositions, i.e. `IProp PSp`
+- `LProp.own`: Ownership of a random variable, asserting `E` is measurable w.r.t. the resource's
+σ-algebra
+- `LProp.dist`: Distribution assertion `E ∼ μ`, asserting the pushforward of the resource's measure
+along `E` equals `μ`
+- `LProp.expectation`: Expectation assertion `𝔼[E]= e`, asserting the integral of `E` equals `e`
+- `LProp.eq`: Almost-sure equality `E₁ ≗ E₂`, with the additional closure condition required by
+Lilac's semantics
+- `LProp.wp`: Weakest precondition for APPL programs, quantifying over frame resources and
+extension variables in the style of Lilac's frame-preserving semantics
+-/
 
 open Appl MeasureTheory MeasureTheory.Measure ProbabilityTheory ProbabilityTheory.Kernel
 open List (TProd)
 
-open Iris.Instances.Intuitionistic Iris.Instances.Intuitionistic.instBIBase
+open Iris.Instances Iris.Instances.instBIBase
 
 /-- Lilac propositions -/
 abbrev LProp := IProp PSp

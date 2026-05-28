@@ -9,8 +9,12 @@ import Mathlib.Topology.UnitInterval
 
 import Bppl.Lilac.Std
 
+/- # Fundamental transofrmations on Hilbert Cubes
+
+May merge this file with `Std.lean`
+-/
+
 namespace HC
--- equivalence of generated-σ-algebras
 
 open unitInterval MeasurableSpace
 noncomputable section

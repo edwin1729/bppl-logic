@@ -4,11 +4,35 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 
-import Mathlib
 import Bppl.Lilac.MeasureOnSpace
-import Bppl.Lilac.HilbertCube
+import Bppl.Lilac.Std
 
-/- Instantiating the Kripke Resource Monoid according to  Lilac -/
+/-! # KRMs on Probability Spaces and Probability Spaces with Finite Footprint
+
+Here we define a Kripke Resource Monoid (KRM), instantiate it to with probability spaces and
+instantiate it again with the subspaces of probability spaces with finite footprint.
+
+In this file the decision to use a KRM as is, without further building an Ordered Unital Resource
+Algebra. The latter introduces some more structure to the latter to avoid working with `Option`
+types. In restrospect after witnessing the messiness of the `Option` type, perhaps the project
+should be refactored to using Order Unital Resource Algebras afterall.
+
+## Main Definitions
+- `Krm`: Extends `Pcm` (Partial Commutative Monoid) with a `Preorder` and imposes some additional
+laws. Note that we add the law `one_le` which is an optional law which turns the `Krm` into a
+generator of only Affine separatin logics.
+- `PSpace.Krm.instKrm`: `PSpace` (Probability Spaces) form a `Krm`
+- `PSp`: A subtype of `PSpace` which additionally enforces `FiniteFootprint` on its
+`MeasurableSpace`
+- `PSp.instKrm`: Using `closed_subtype_Krm` to show that `PSp` is also a `Krm`
+
+## Main Statements
+- `closed_subtype_Krm`: If in a subspace of an existing `Krm`, the binary operation is closed, then
+the subspace is a `Krm`
+
+The namespace `Krm` at the end of the file provides various helpers to form an API of
+lemmas derived from the Krm laws.
+-/
 
 open MeasureTheory MeasurableSpace
 -- set_option quotPrecheck false
@@ -19,10 +43,10 @@ class PcmBase (α : Type*) extends One α where
 notation a:arg " ⋆ " b:arg => PcmBase.binop a b
 
 class Pcm (α : Type*) extends PcmBase α where
-  one_mul : ∀ a : α, binop 1 a = a
-  comm : ∀ a b, binop a b = binop b a
-  assoc : ∀ a b c : α,
-    (binop <$> (binop a b) <*> (some c)).join = (binop <$> (some a) <*> (binop b c)).join
+  one_mul (a : α) : 1 ⋆ a = a
+  comm (a b : α) : a ⋆ b = b ⋆ a
+  assoc (a b c : α) :
+    (binop <$> (a ⋆ b) <*> (some c)).join = (binop <$> (some a) <*> (b ⋆ c)).join
 
 class Krm (α : Type*) extends Pcm α, Preorder α where
   one_le : ∀ (a : α), 1 ≤ a
@@ -284,6 +308,33 @@ open HC
 structure PSp extends (PSpace HC) where
   finite_footprint : ∃ n, FiniteFootprint n ms
 
+/- This proof uses proof irrelevance in lean and shows that if in a subspace of a Krm,
+the binary operation is closed, then the subspace is a KRM as well. -/
+def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
+    (f_inj : Function.Injective f)
+    (f_one : f 1 = 1)
+    (f_binop : ∀ x y : β, (x ⋆ y).map f = (f x) ⋆ (f y)) : Krm β where
+  one_mul a := Option.map_injective f_inj <| by
+    rw [Option.map_some, f_binop, f_one, Pcm.one_mul]
+  comm a b := Option.map_injective f_inj <| by
+    rw [f_binop, f_binop, Pcm.comm]
+  assoc a b c := by
+    apply Option.map_injective f_inj
+    convert Pcm.assoc (f a) (f b) (f c) using 1
+    · cases h : a ⋆ b <;> simp [← f_binop, h]; rfl
+    · cases h : b ⋆ c <;> simp [← f_binop, h]; rfl
+  le x y := f x ≤ f y
+  le_refl x := le_refl (f x)
+  le_trans _ _ _ h₁ h₂ := le_trans h₁ h₂
+  one_le a := f_one ▸ Krm.one_le (f a)
+  le_mul_mono x x' y y' p' hx hy hp := by
+    obtain ⟨q, hq, hqle⟩ := Krm.le_mul_mono (f x) (f x') (f y) (f y') (f p') hx hy
+      (by rw [← f_binop, hp]; rfl)
+    rw [← f_binop, Option.map_eq_some_iff] at hq
+    obtain ⟨p, hp_xy, rfl⟩ := hq
+    exact ⟨p, hp_xy, hqle⟩
+
+
 namespace PSp
 open Classical
 
@@ -327,32 +378,6 @@ noncomputable instance instPcmBase : PcmBase (PSp) where
     some ⟨h.choose, ff_of_isIndependentProduct h.choose_spec.1 p.2 q.2⟩
   else none
 
-/- This proof uses proof irrelevance in lean and shows that if in a subspace of a Krm,
-the binary operation is closed, then the subspace is a KRM as well. -/
-def closed_subtype_Krm (α : Type*) [Krm α] (β : Type*) [PcmBase β] (f : β → α)
-    (f_inj : Function.Injective f)
-    (f_one : f 1 = 1)
-    (f_binop : ∀ x y : β, (x ⋆ y).map f = (f x) ⋆ (f y)) : Krm β where
-  one_mul a := Option.map_injective f_inj <| by
-    rw [Option.map_some, f_binop, f_one, Pcm.one_mul]
-  comm a b := Option.map_injective f_inj <| by
-    rw [f_binop, f_binop, Pcm.comm]
-  assoc a b c := by
-    apply Option.map_injective f_inj
-    convert Pcm.assoc (f a) (f b) (f c) using 1
-    · cases h : a ⋆ b <;> simp [← f_binop, h]; rfl
-    · cases h : b ⋆ c <;> simp [← f_binop, h]; rfl
-  le x y := f x ≤ f y
-  le_refl x := le_refl (f x)
-  le_trans _ _ _ h₁ h₂ := le_trans h₁ h₂
-  one_le a := f_one ▸ Krm.one_le (f a)
-  le_mul_mono x x' y y' p' hx hy hp := by
-    obtain ⟨q, hq, hqle⟩ := Krm.le_mul_mono (f x) (f x') (f y) (f y') (f p') hx hy
-      (by rw [← f_binop, hp]; rfl)
-    rw [← f_binop, Option.map_eq_some_iff] at hq
-    obtain ⟨p, hp_xy, rfl⟩ := hq
-    exact ⟨p, hp_xy, hqle⟩
-
 /-- The map `PSp → PSpace HC` given by `Subtype.val` preserves the unit. -/
 lemma psp_val_one : (1 : PSp).1 = (1 : PSpace HC) := rfl
 
@@ -362,7 +387,7 @@ lemma psp_val_binop (x y : PSp) : (x ⋆ y).map (·.1) = (x.1 ⋆ y.1) := by
   grind
 
 /-- PSp is a Krm using `closed_subtype_Krm`. -/
-noncomputable instance instKrmPSp : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
+noncomputable instance instKrm : Krm PSp := closed_subtype_Krm (PSpace HC) PSp (·.1)
   (by rintro ⟨a, ha⟩ ⟨b, hb⟩ c; simpa only [mk.injEq])
   rfl
   psp_val_binop

@@ -8,6 +8,12 @@ import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.WPUnifHelpers
 import Bppl.Lilac.MeasureOnSpace
 
+/-!
+# Generalalised WP rules about introducing random variables which are primitive measures
+
+Specifically `wp_meas` is instantiated to `wp_unif` and `wp_flip`.
+-/
+
 namespace WP
 noncomputable section
 
@@ -17,13 +23,6 @@ open Iris.BI Krm HC
 
 -- def ber_sem (p : ℝ≥0) (hp : p ≤ 1) : TProd (⟪·⟫) ds → Measure Bool :=
 --   fun _ ↦ (bernoulli p hp).toMeasure
-
--- lemma wp_meas {A : Ty} (Q : RV ⟪A⟫ → LProp) (μ : Measure ⟪A⟫) :
---     iprop(∀ (X : RV ⟪A⟫), iprop(X ∼ μ -∗ Q X))
---     ⊢ wp ⟨fun _ ↦ μ, measurable_const⟩ Q := by
---   rintro ⟨⟨⟨ℱ, μ⟩, is_prob⟩, n, ff⟩ lhs Ω_fr Ω_pre μ hΩ_pre
---   -- let X : RV ⟪A⟫ := ⟨fun ω ↦ ω n, sorry⟩
---   sorry
 
 /-- The pushforward of μ' under `(X, D_ext)` equals `lebI.prod (μ.map D_ext)`. -/
 def PSpace.mk'' {Ω : Type*} {ms ms' : MeasurableSpace Ω} (μ : @ProbabilityMeasure Ω ms)
@@ -62,18 +61,14 @@ lemma map_X_Dext_eq_prod [MeasurableSpace α]
   case rhs_eq =>
     -- `μ.1 (preimage A) = (μ.map D_ext) F` and `infinitePiNat (coord ⁻¹' …) = lebI E`.
     rw [← hA.2, Measure.map_apply]
-    · rw [mul_comm, leb_coord_preimage_eq_unif01]
-      exact hE
+    · have heq : lebHC.toMeasure ((· n : HC → I) ⁻¹' E) = lebI E := by
+        convert infinitePiNat_coord_marginal n E hE using 1
+      rw [mul_comm, heq]
     · exact D.meas
     · exact hF
 
 abbrev μX {ty : Ty} (X_glue : I -m→ ⟪ty⟫) : ProbabilityMeasure ⟪ty⟫ :=
   ⟨lebI.map X_glue, isProbabilityMeasure_map X_glue.meas.aemeasurable⟩
-
-abbrev coordProj (n : ℕ) (ω : HC) : I := ω n
-
-@[fun_prop]
-lemma measurable_coordProj (n : ℕ) : Measurable (coordProj n) := (by fun_prop)
 
 -- Appendix B.21 from Lilac paper — "Uniform" proof rule.
 lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
@@ -91,8 +86,10 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
   have hΩ_le_pre : Ω.ms ≤ (↓Ω_pre).ms := by rw [PSp.sum_ms_of_prod]; exact subset_sum_r Ω_fr.ms Ω.ms
   let X : RV ⟪ty⟫ := X_glue ∘ᵣ ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
   -- Construct μ' and Ω_n which are relevant to after the program runs
-  let μ_k : ProbabilityMeasure (Fin n → I) := μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable
-  let μ' : @ProbabilityMeasure HC Inf_borel := (μ_k.prod lebHC).map (HC.splitBi n).symm.measurable.aemeasurable
+  let μ_k : ProbabilityMeasure (Fin n → I) :=
+    μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable
+  let μ' : @ProbabilityMeasure HC Inf_borel :=
+    (μ_k.prod lebHC).map (HC.splitBi n).symm.measurable.aemeasurable
   -- could have equiavalently also used `leb` instead of `μ'`. This makes the proof easier though
   let Ω_n : PSp := ⟨PSpace.mk'' μ' (N_nil_I_borel_le_Inf_borel n), ff_N_nil_I_borel⟩
   -- Now extract ms_pre (after μ_k/μ' definitions to avoid instance shadowing)
@@ -240,7 +237,7 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
           = (const HC (lebI.map X_glue) ×ₖ det D_ext) ∘ₘ μ := by
             ext ω s; simp [toMK, Kernel.const]; rfl
         _ = (((deterministic _ X_glue.meas) ∘ₖ const HC lebI) ×ₖ det D_ext) ∘ₘ μ := by
-            rw [Kernel.comp_const, det_compMeasure_eq_map]; rfl
+            rw [Kernel.comp_const, Measure.deterministic_comp_eq_map]; rfl
         _ = (((deterministic _ X_glue.meas) ∥ₖ Kernel.id) ∘ₖ (const HC lebI ×ₖ det D_ext)) ∘ₘ μ :=
             by rw [Kernel.parallelComp_comp_prod, Kernel.id_comp]
         _ = ((deterministic _ X_glue.meas) ∥ₖ Kernel.id) ∘ₘ (const HC lebI ×ₖ det D_ext) ∘ₘ μ :=
@@ -254,16 +251,8 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
         _ = (det X ×ₖ det D_ext) ∘ₘ ↑μ' := by
             rw [Kernel.deterministic_comp_deterministic]; rfl
 
-    -- LHS kernel is `const HC lebI ×ₖ det D_ext`
-    have h_lhs_kernel : toMK (RV.const (μX X_glue)).toMeasurableFun =
-        Kernel.const HC (lebI.map X_glue) := by
-      ext ω s hs; simp [toMK, Kernel.const]; rfl
-
-    -- rw [h_lhs_kernel]
-
     -- LHS is `lebI.prod (μ.map D_ext)`
     rw [const_prod_det_compMeasure]
-
     -- RHS is `μ'.map (fun ω => (X ω, D_ext ω))`
     rw [det_prod_det_compMeasure]
     -- `μ'.map (fun ω => (X ω, D_ext ω)) = lebI.prod (μ.map D_ext)`
@@ -283,7 +272,6 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
       have X_toFun : ⇑X = X_glue.toFun ∘ (λ ω ↦ ω n) := rfl
       rw [X_toFun]
       rw [← Measure.map_map (X_glue.meas) (HC.coordProj_measurable n)]
-      have measurable_coordProj (n : ℕ) : Measurable (coordProj n) := (by fun_prop)
       apply congrArg (Measure.map ⇑X_glue)
       rw [unif01_eq_map_coord_prod n μ_k μ' hμ']
       exact (map_trim_eq_map (HC.coordProj_measurable n) ↑μ' (N_nil_I_borel_le_Inf_borel n)).symm

@@ -8,9 +8,16 @@ import Mathlib
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Bppl.Lilac.HilbertCube
 
-/-! The probabilistic programming language without the observe/score primitive.
-As defined in Lilac.
+/-! # APPL probabilistic programming language syntax and semantics
 
+This is language which Lilac reasons about
+
+## Main Definitions
+- `Ty`: Types in APPL
+- `Term`: Terms in APPL. We reserve the word `program` for `term : Ty.G ty` for some `ty : Ty`
+- `Ty.den`: The denotation of types as `MeasurableSpace`s
+- `Term.den`: The denotation of terms as measurable functions from a context.
+Denotation of a `program` is a `Kernel`
 -/
 
 set_option autoImplicit true

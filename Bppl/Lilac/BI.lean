@@ -4,20 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 
+import Bppl.Lilac.KRM
+
 import Iris.BI.Extensions
 import Iris.Std.Equivalence
 
-import Bppl.Lilac.KRM
+/-! # Generating instance of BI (logic of Bunched Implications) given a KRM (Kripke Resource Monoid)
+This file instantiates MoSeL, the frontend  of Iris offering a proofmode for general separatin
+logics. We also prove that the Lilac is an affine logic, which is guaranteed by our defintion
+of the Krm along with the following standard recipe for constructing a BI out of it.
 
-set_option autoImplicit true
-set_option relaxedAutoImplicit true
+## Main Definitions
+- `Iris.Instances.instBIBase`: Semantics of the standard separation logic connectives given a `Krm`
+- `Iris.Instances.instBI`: Proof that the instantiation satisfies the axioms of separaiton logic
+- `Iris.Instances.instKrmBIAffine`: Such an instantiation of BI with `Krm` is affine.
 
-/-!
-This file instantiates MoSeL (the Iris frontend) to obtain an intuitionistic separation logic
-from a KRM (Kripke Resource Monoid).
 -/
 
-namespace Iris.Instances.Intuitionistic
+namespace Iris.Instances
 
 open Iris.BI
 
@@ -36,6 +40,8 @@ abbrev IProp (Resource : Type*) [Krm Resource]
 
 instance instBIBase : BIBase (IProp Resource) where
   Entails P Q    := ∀ σ, P.1 σ → Q.1 σ
+  -- technically `emp` accepts any resource `Ω` such that `1 ≤ Ω`. But this is a tautology
+  -- by `Krm.one_le`. So we just mark `emp` as `True` to make auxilliary proofs easier.
   emp            := ⟨fun _ ↦ True, fun _ _ _ _ ↦ trivial⟩
   pure φ         := ⟨fun _ ↦ φ, fun _ _ _ hσ₁ ↦ hσ₁⟩
   and P Q        := ⟨fun σ ↦ P.1 σ ∧ Q.1 σ, by
@@ -210,19 +216,9 @@ instance instBI : BI (IProp Resource) where
   later_persistently := ⟨fun _ => id, fun _ => id⟩
   later_false_em := by dsimp only [Entails, later, BI.or, BI.imp, BI.pure]; grind
 
--- Intuitionistic is supposed to mean a proposition can be freely duplicated or dropped,
--- ie, persistent + affine (according to the MoSeL paper).
-
--- But my understanding of what the ordering relation in a KRM allows is
--- `Affine` not `Intuitionistic`. Clear up this confusion and clarify the
--- terminology for the report.
-
--- For now I assume:
-
 /-- A KRM generates a separation logic where every proposition is
-affine (may be dropped in a proof).
-NB: This instance is **incorrect** in general and is left as `sorry`. -/
-instance KRM_BIAffine : BIAffine (IProp Resource) where
-  affine P := sorry
+affine (may be dropped in a proof). -/
+instance instKrmBIAffine : BIAffine (IProp Resource) where
+  affine P := ⟨by intro Ω _; trivial⟩
 
-end Iris.Instances.Intuitionistic
+end Iris.Instances
