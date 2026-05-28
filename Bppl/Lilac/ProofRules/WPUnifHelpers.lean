@@ -49,7 +49,8 @@ lemma map_eval_zero_infinitePiNat {X : Type*} [MeasurableSpace X]
     (Measure.infinitePiNat fun _ => μ) = μ
   rw [← Measure.map_map (f := ({0} : Finset ℕ).restrict (π := fun _ => X))
         (MeasurableEquiv.measurable _) (Finset.measurable_restrict _),
-      Measure.infinitePiNat_map_restrict, (measurePreserving_funUnique μ _).map_eq]
+      Measure.infinitePiNat_map_restrict]
+  exact (measurePreserving_funUnique μ ({0} : Finset ℕ)).map_eq
 
 /- The map of the n-th coordinate projection under the product measure
 `(μ_k.prod leb).map (splitBi n).symm` equals `lebI`.
@@ -112,4 +113,3 @@ lemma ff_preimage_form (D : RV α) {n : ℕ} (hn : D.n ≤ n)
   apply ms_pre_le_pi_of_le_Inf_borel n ms_n
   · exact hms_n ▸ D.meas.comap_le
   · convert hA using 1
-

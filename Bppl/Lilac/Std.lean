@@ -71,7 +71,7 @@ lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn
   convert h_ms_n using 1
   convert unSplitBi_eq_comap_fst n' _
   convert unSplitBi_eq_comap_fst n ms_n
-  ext; simp [splitBi]
+  exact comap_comp
 
 end
 end HC

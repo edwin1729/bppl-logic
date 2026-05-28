@@ -354,7 +354,8 @@ lemma ff_closed_under_sum (ms₁ ms₂ : MeasurableSpace HC) (hms₁ : ∃ n, Fi
   use ms₁'.sum ms₂'
   simp_all only [unSplitBi_eq_comap_fst, sum]
   rw [comap_generateFrom, Set.image_union]
-  congr 1
+  subst hms₁ hms₂
+  rfl
 
 /-
 The unit PSpace has finite footprint (trivial σ-algebra depends on 0 coordinates).

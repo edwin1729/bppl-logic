@@ -271,7 +271,7 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
         rw [ProbabilityMeasure.toMeasure_map]
       have X_toFun : ⇑X = X_glue.toFun ∘ (λ ω ↦ ω n) := rfl
       rw [X_toFun]
-      rw [← Measure.map_map (X_glue.meas) (HC.coordProj_measurable n)]
+      rw [← Measure.map_map (X_glue.meas) (HC.coordProj_measurable n) (μ := Ω_n.μ)]
       apply congrArg (Measure.map ⇑X_glue)
       rw [unif01_eq_map_coord_prod n μ_k μ' hμ']
       exact (map_trim_eq_map (HC.coordProj_measurable n) ↑μ' (N_nil_I_borel_le_Inf_borel n)).symm

@@ -704,7 +704,7 @@ theorem PSpace.independentProduct_assoc [Inhabited Ω] {pq p q s r : PSpace Ω}
             _ = p.1.μ u * qr.1.μ (⋃ i, us i) := by
                 congr 1; exact (@qr.1.μ.m_iUnion us hus hdis).symm
         · have := @MeasurableSpace.generateFrom_sumGenerator_eq_sum Ω q.1.ms r.1.ms
-          grind
+          exact Eq.symm MeasureOnSpace.generateFrom_generator_eq_sum
       aesop
   exact h_p_qr
 
