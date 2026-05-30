@@ -139,13 +139,13 @@ macro_rules
 delab_rule eq
   | `($_ $E₁ $E₂) => do ``(iprop($(← unpackIprop E₁) ≗ $(← unpackIprop E₂)))
 
-syntax:53 " 𝔼[ " term:52 " ]= " term:54 : term
+syntax:53 " 𝔼[" term:52 "]=" term:54 : term
 
 macro_rules
   | `(iprop(𝔼[$E]=$e)) => `(expectation $E $e)
 
-delab_rule eq
-  | `($_ $E₁ $E₂) => do ``(iprop($(← unpackIprop E₁) ≗ $(← unpackIprop E₂)))
+delab_rule expectation
+  | `($_ $E₁ $E₂) => do ``(iprop(𝔼[$(← unpackIprop E₁)]=$(← unpackIprop E₂)))
 
 -- Why am I needing to use nested iprop when using this notation??
 -- My delab rules are naive, they need to use unpack?

@@ -2,6 +2,7 @@
 .github
 .claude
 .mcp.json
+.vscode
 
 Bppl/Lilac/scratch.lean
 masters-report/build/*

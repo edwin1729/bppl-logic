@@ -219,7 +219,7 @@ to give an element of a measurable space -/
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | unif01 => ⟨fun _ ↦ ⟨lebI', inferInstance⟩, measurable_const⟩
+  | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
   | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩

@@ -119,10 +119,10 @@ noncomputable abbrev lebI : Measure I := volume
 /-- The semantic (native lean) uniform distribution in the interval [0,1].
 This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
 via the subtype coercion `↑ : I → ℝ`. -/
-noncomputable def lebI' : Measure ℝ :=
+noncomputable def unif01_sem : Measure ℝ :=
   Measure.map Subtype.val (MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
 
-instance : IsProbabilityMeasure lebI' :=
+instance : IsProbabilityMeasure unif01_sem :=
   isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
 
 

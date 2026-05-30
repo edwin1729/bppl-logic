@@ -133,7 +133,7 @@ theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
         exact Kernel.comp_deterministic_eq_comap (toMK N.den) (X ;; D).meas
 
 theorem wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
-    iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ lebI' -∗ Q X))
+    iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
     ⊢ wp (Term.unif01.den ∘ᵣ D) Q :=
   wp_meas Ty.real ⟨λ i ↦ (i : ℝ), by fun_prop⟩ Q D
 
