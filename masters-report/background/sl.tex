@@ -125,6 +125,7 @@ can be
 generated from a KRM, which is the approach taken in the Lilac formalisation.
 
 \subsubsection{Logic of Bunched Implications}
+\label{sec:bi}
 Abstracting even further, we would like to get rid of explicit mentions of the resource and the satisfiability relation ($s, h \models P$) and talk instead about
 entailments of the form $\vdash P$ or $P \vdash Q$. The \emph{logic of bunched implications} (BI) as presented by \cite{bi} was what classical separation logic was
 based on. It can be described as a logic in which the familiar ``intuitionistic'' connectives of first order logic are combined with $\mathrm{emp}$, $*$ and $\wand$ (called spatial connectives, alluding to heaps),
@@ -201,21 +202,3 @@ boring tasks.
 
 Though these seem like rather basic conveniences they are quite difficult to provide in a manner extensible to all separation logics. In order to understand how the
 proof mode works (as we will be instantiating Iris), it is first necessary to understand tactic based proofs in general.
-
-%move to main development.
-\subsection{Program logic and Weakest precondition}
-In order to reason about programs, the logic must be able to express facts about the program effectively. In other words the language and the logic need to 
-``communicate'' somehow. We would like to be very explicit here about how that happens, since:
-\begin{itemize}
-\item this is generally skipped from a first presentation of program logic since its an implementation
-detail. However, in a formalisation it is crucial as it forms the interface between two significant pieces of the project (the language in \repo{Appl} and the logic in \repo{Assertion})
-\item Lilac unlike any other separation logic I am aware of, does not have a one-to-one correspondence between its variables in the language and the logic.
-If in the language a variable has type $A$ then in the logic it has type of the random variable of $A$ (precise definitions will follow)
-\end{itemize}
-
-The link between the language and the logic is established using a connective in the logic, which takes the denotation of a program and some
-other assertions regarding it. Lilac is a functional language 
-
-Perhaps the more intuitive form of these connectives is the Hoare triple which takes 3 arguments, represented syntactically as $\{ P \} \llbracket M \rrbracket \{ Q \}$.
-$P$ (precondition) and $Q$ (postcondition) are both propositions and $\llbracket M \rrbracket$ is the denotation of some program $M$. But here
-we will present instead the weakest precondition (wp) connective, in terms of which Hoare triples can be defined. wp is more amenable to automation and since it only takes in a single proposition.

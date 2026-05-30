@@ -1,0 +1,190 @@
+% Here will go sections about the semantics of APPL, De brujin indices as well
+
+\section{Instantiating Iris}
+Theorem proving, can be split into two activities: writing definitions and proving theorems. The former doesn't seem difficult or time-consuming. It sounds reasonably
+easy to come up with a skeleton for the codebase, based on a paper. After a while working on this project I have realised this is not true, and indeed this is well known
+by both the theorem proving community, also true for professional mathematics and software engineering. Let's elaborate on the latter. Writing computer code is parallel
+to writing definitions (of data and algorithms). So definitions are indeed important and time-consuming in Lean as well. There is no parallel to writing theorems though, programs just need to convince themselves of the correctness.
+
+A milestone was reached when the definitions of the language and logic were written down, with a set of abstractions to convince myself this development was sound.
+These definitions were composed of a separate syntax and semantics for both the language and the logic, using dependent de brujin indices for both. These definitions
+would have sufficed to prove formally the correctness of all the proofs in the paper. However, of the project is not only to validate the soundness of the logic,
+but also to create a usable tool for proving properties of actual probabilistic programs ergonomically (using tactics). The best way to do so is to instantiate the Iris
+framework. And the interface provided by Iris was not compatible with current definitions. Below we explain why it wasn't compatible and how Iris' interface is motivated.
+
+\subsection{Deep vs Shallow Embeddings}
+When defining a language or logic, within a meta-language (lean in our case), we are presented with 2 choices. A deep embedding; inductively define the syntax,
+and the denotational semantics becomes an inductive definition over the syntax. For clarity, here is an excerpt from a deep embedding of the Lilac logic:
+
+
+\Todo{complete this (code from c3ca63f)}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}{0.9\linewidth}
+\begin{leancode}
+inductive Assertion : List Ty → List Ty → Type
+  | top : Assertion ds rs -- ds: deterministic context, rs: random variable context
+  | and  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | sep  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | forall (d : Ty) : Assertion (d :: ds) rs → Assertion ds rs
+  | forall_rv (r : Ty) : Assertion ds (r :: rs) → Assertion ds rs
+  | exists_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
+  ...
+
+def Assertion.denote {ds : List TyDet} {rs : List TyRand}
+    (P : Assertion ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+  match P with
+  | top  => True
+  | and P Q => P.denote γ D φ ∧ Q.denote γ D φ
+  | sep P Q => ∃ φ₁ φ₂ : PSp HC, φ₁ ⋆ φ₂ ≤ some φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | forall d P => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | forall_rv r P => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+  | exists_rv r P => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+\end{leancode}
+  \end{minipage}
+  \caption{Excerpt of Deep Embedding of Lilac}
+  \label{fig:deep-embedding}
+\end{figure}
+
+
+On the other hand a shallow embedding where we fuse inductive structure of the syntax and the semantic denotation function together to simply. The denotations of terms
+in our object language get expressed directly in the meta language, and we lose the ability to distinguish entities in the object language from the meta-language. The previous
+point, in concrete terms is that we loose the ability to do induction over the object language now. Here is an excerpt of Lilac as a shallow embedding:
+
+\begin{leancode}
+
+\end{leancode}
+
+The shallow embedding had a much smaller surface and generally allowed the logic to piggyback on the forall and exists quantifiers of the meta language. 
+
+\subsection{BI in Iris}
+Remember that in \ref{sec:bi} we explained that BI (logic of bunched implications) is just abstraction which defining the standard connectives
+shared by every separation logic. Here is the definition of BI as a typeclass in 
+\href{https://github.com/leanprover-community/iris-lean/blob/bb24268a8a9b5ddb23224a8c1db66eadd4b9beb7/Iris/Iris/BI/BIBase.lean#L21-L36}{iris-lean} (a dependency of this project).
+
+\begin{leancode}
+/--
+Require the definitions of the separation logic connectives and units on a carrier type `PROP`.
+-/
+class BIBase (PROP : Type u) where
+  Entails : PROP → PROP → Prop
+  emp : PROP
+  pure : Prop → PROP
+  and : PROP → PROP → PROP
+  or : PROP → PROP → PROP
+  imp : PROP → PROP → PROP          -- implies
+  sForall : (PROP → Prop) → PROP
+  sExists : (PROP → Prop) → PROP
+  sep : PROP → PROP → PROP          -- separating conjunct
+  wand : PROP → PROP → PROP         -- magic wand
+  persistently : PROP → PROP
+  later : PROP → PROP
+\end{leancode}
+
+Firstly \lean{Prop} is the universe of propositions, part of Lean's syntax. While \lean{PROP} denotes the proposition in the object logic (Lilac in our case). The
+typeclass is called \lean{BIBase} since there is another typeclass \lean{BI} extending \lean{BIBase} which states the axioms of BI. As
+explained in \ref{sec:bi}, the instantiation of \lean{Entails} can interpret a BI as a separation logic. \lean{Entails} says what it means for a \lean{PROP} to be true
+by translating into the meta language's \lean{Prop}. \lean{persistently} and \lean{later} is omitted since the former
+is an orthogonal concern and the latter is irrelevant. \lean{emp} can be understood as the unit of the monoid with which we will instantiate BI. There are several binary
+operators. The most important connectives are  \lean{sForall} and \lean{sExists}. The original defintion from iris-rocq is more straightforward:
+
+\begin{leancode}
+  iForall : ∀ A : Type u', (A → PROP) → PROP
+  iExists : ∀ A : Type u',  (A → PROP) → PROP
+\end{leancode}
+
+We quantify over the type A of variables that we want to quantify over, since iris can't know what type a variables a specific logic may want to quantify over, and indeed
+as in Lilac there may be multiple types (Lilac has two of each quantifier). We have named the above quantifier \texttt{iForall}, with \texttt{i} short
+for indexed, since when quantifying over types we refer to the types (like \texttt{A}) as \emph{type indices}. \lean{iForall} and \lean{iExists} is impredicative
+(see \ref{sec:predicativity}), meaning we
+quantify in universes larger than that of the type being constructed. \texttt{u'} is universe level, a natural number. Indeed, impredicativity is required here to provide complete flexibility in
+what variables an instantiating logic can then quantify over.  
+
+Now lets look at \lean{sForall} and \lean{sExists}, with \texttt{s} short for \emph{set}.  
+Note that in theorem provers, Sets (say \lean{Set A}) are represented as \lean{A → Prop}. So the signature for the quantifiers says that given a set
+of \lean{PROP} we construct a \lean{PROP}. The reason for this less intuitive version of quantification is that iForall (iExists) can be defined in terms of sForall
+(sExists). And the quantified types are not restricted to a predetermined universe \texttt{u'}.
+
+
+\subsection{First Attempt: Deeply embedded logic instantiation}
+There is a result in Lilac \cite[see Appendix B.10]{lilac} called the substitution lemma which uses induction over the syntax of Lilac propositions. Supposing
+that induction over the syntax of the logic is important/necessary, a next step is to try to instantiate \lean{BIBase} above with the deep embedding from Fig 
+\ref{fig:deep-embedding}. We may try something like so:
+
+\begin{leancode}
+instance (ds rs: List Ty) : BIBase (Assertion ds rs) where
+  Entails P Q    := ∀ γ D φ, P.denote γ D φ → Q.denote γ D φ
+  and            := Assertion.and
+  ...
+\end{leancode}
+
+Where we simply instantiate each of the constructors with syntax, and called the denotation function in \lean{Entails}. This works nicely until we get to the instantiation
+of the quantifiers. We now need some syntactic version of \lean{sForall} and not just the 
+\lean{forall}/\lean{forall_rv} from Fig \ref{fig:deep-embedding}. Though the latter is all we need for our logic instantiating
+iris demands the flexibility to quantify over any type, not just the object language types. Let's introduce the following syntax into our
+language:
+
+\begin{leancode}
+inductive Assertion' : List TyDet → List TyRand → Type
+  | sForall : (Assertion' ds rs → Prop) → Assertion' ds rs
+  ...
+\end{leancode}
+
+This looks like a valid lean definition, but it is not, since it fails a syntactic requirement of inductive types called \emph{strict positivity}.
+The type being defined inductively may only appear in \emph{postiive} locations, which means they are not allowed to occur in the input of an arrow
+type. Even if we suppose the \lean{iForall} definition was used in BI, we still end up with nuanced problems with mixing semantics into the syntax
+because of the quantifiers. We spare further details, but the conclusion is that the impredicativity of quantifiers in \lean{BI}
+disallows usage of a deep embedding of the logic.
+
+\subsection{Shallow embedding of the logic}
+
+
+\section{Deparametrisation of LProp}
+
+The development got quite far with the \lean{LProp} being parametrised with the type of the deterministic context. However, that started causing
+serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
+in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.
+
+
+
+\section{Weakest precondition}
+In order to reason about programs, the logic must be able to express facts about the program effectively. In other words the language and the logic need to 
+``communicate'' somehow. We would like to be very explicit here about how that happens, since:
+\begin{itemize}
+\item this is generally skipped from a first presentation of program logic since its an implementation
+detail. However, in a formalisation it is crucial as it forms the interface between two significant pieces of the project (the language in \repo{Appl} and the logic in \repo{Assertion})
+\item Lilac unlike any other separation logic I am aware of, does not have a one-to-one correspondence between its variables in the language and the logic.
+If in the language a variable has type $A$ then in the logic it has type of the random variable of $A$ (precise definitions will follow)
+\end{itemize}
+
+The link between the language and the logic is established using a connective in the logic, which takes the denotation of a program and some
+other assertions regarding it. Lilac is a functional language 
+
+Perhaps the more intuitive form of these connectives is the Hoare triple which takes 3 arguments, represented syntactically as $\{ P \} \llbracket M \rrbracket \{ Q \}$.
+$P$ (precondition) and $Q$ (postcondition) are both propositions and $\llbracket M \rrbracket$ is the denotation of some program $M$. But here
+we will present instead the weakest precondition (wp) connective, in terms of which Hoare triples can be defined. wp is more amenable to automation and since it only takes in a single proposition.
+
+\section{Deparametrisation of LProp}
+\Todo{Give examples of how the old LProp caused serious issues}
+
+\section{Variables}
+An insightful aspect of Lilac is to consider how it treats variables. Unlike usual program logics, Lilac does not have a one-to-one correspondence between
+variables in the language and the logic. And this  is a reflection of the perspectives taken probabilistic reasoning.
+One thinks about random variables as being a fixed quantity in a specific \emph{run} of the program, i.e. when thinking locally about what happens in a specific
+line of code or specific operation. But there is also the global perspective of considering all possible values a random variable can take, i.e. the distribution
+over its values. This is perspective the logic offers.
+When thinking of defining variables in Lean, both the language and the logic, the types are different in the two cases! Say in the language, a variable has type $A$,
+then in the logic, it is given type $RV A$ for a type constructor $RV$ (random variable). This causes technical challenges in defining and connecting the language
+and logic in lean and particularly in the instantiating in Iris, since there is no previous instantiation (as far as I am aware) of the variables not being the same across language and logic.
+
+Note that ``global'' reasoning tends to conflate the variables  does not mean non-compositional still enjoy a form of compositional reasoning using
+the logic, which is the independence of random variables. Thus, the compositionality offered by the semantics of the language, the line-by-line compositionality since
+each term/line is given a denotation which composes cleanly, may be understood as horizontal compositionality. The logic on the other hand, allows us to simultaneously
+talk about the variables introduced in every line of the program through the sequencing (monadic  bind) of programs. However, the structure of assertions implicitly
+inform us of the independence between the variables where present, which can be understood as a \emph{vertical} compositionality.
+
+\Todo{revise the above into talking about this compositionality stuff elsewhere}
+
+\subsection{Substitution inconsistency}
+Lilac
