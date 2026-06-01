@@ -142,49 +142,75 @@ disallows usage of a deep embedding of the logic.
 
 \section{Deparametrisation of LProp}
 
+A major concern throughout the mechanisation was the definition of \texttt{LProp}, and how amenable it might be to variable substitution. Remember that we were forced to forego
+the convenience of an induction principle over the lilac connectives (or constructors in this context). This was indeed due to the generality of iris without which we wouldn't
+be able to use it in the first place.
+This seemingly insignificant issue tended to
+have a significant effect on the decisions made. We explain below,
+why the notion of substitution as defined in the paper, is incompatible with iris. % even though iris doesn't have particularly strong requirements on this matter. 
+
+% Then present parts of the paper, that were
+% not followed in this mechanisation, and the justification for the definition of LProp chosen after this deliberation.
+
+Lilac has two contexts, the random and deterministic contexts. The latter is only required when the logic supports reasoning about conditioning. Remember that conditioning takes random variable
+and fixes its values, i.e. makes it deterministic. And only for that deterministic value do we need the deterministic context and otherwise, every variable in our language corresponds to a random variable.
+So we will focus on the random contexts. Take the quantifier $\forall_{rv}$:
+
+\[
+\gamma, D, \mathcal{P} \vDash \forall_{rv} X : A.\ P \qquad iff \qquad \text{for all } X : RV A (\gamma, (D, X), \mathcal{P}) \vDash P 
+\]
+
+We are quantifying over $RV A$, which means variables in Lilac are defined to have this type. Remember $RV A$ means $HC \xrightarrow{m} A$ (with additional finite footprint property not relevant here).
+Substitution is the process of transforming from one LProp to another by specifying a mapping from one variable to another. However, definition of substitution given in the paper looks like this:
+
+\[
+S \in \llbracket \Delta' \rrbracket \to \llbracket \Delta\rrbracket 
+\]
+
+\[
+\begin{aligned}
+\top[S] &= \top \\
+\bot[S] &= \bot \\
+(P \wedge Q)[S] &= (P[S] \wedge Q[S]) \\
+(P \vee Q)[S] &= (P[S] \vee Q[S]) \\
+(P \to Q)[S] &= (P[S] \to Q[S]) \\
+(P * Q)[S] &= (P[S] * Q[S]) \\
+(P -* Q)[S] &= (P[S] \wand Q[S]) \\
+(\forall_{\mathrm{rv}} X:A.\,P)[S] &= \forall_{\mathrm{rv}} X:A.\,P[S \times 1_A] \\
+(\exists_{\mathrm{rv}} X:A.\,P)[S] &= \exists_{\mathrm{rv}} X:A.\,P[S \times 1_A] \\
+...
+\end{aligned}
+\]
+
+It is helpful to have the following mental picture of the meaning of an LProp as a function $HC \xrightarrow{m} \llbracket \Delta \rrbracket \xrightarrow{m} A$, pick an element $\omega$ of HC
+(which is like sampling a random number). Once we do this the randomness is gone and the maps forward are deterministic. $\omega$ maps to values of variables, $\llbracket \Delta \rrbracket$,
+as an intermediate step. Then these variables deterministically map to some expression of type A. With this in mind note that there's a mismatch in what we would like substitution to be, replacing
+$X : HC \xrightarrow{m} A$ with $Y : HC \xrightarrow{m} A$ which is used in an LProp, with the above definition of substitution, which only starts at the intermediate $\llbracket \Delta \rrbracket$ step.
+
+At a high level the Iris proof mode (indeed any proof mode) works by splitting an LProp into a context of premises and variables, and a goal. The variables are of type $RV A$ and if the substitutions are
+not with $RV A$ as domain, the types just won't line up.
+
+% To make things more concrete observe the substitution rule above for $\forall_{rv}$. Thi
+% Let's give a more concrete reason for why this is problematic. The iris proof mode proves an LProp by splitting it into the context which contains premises and universally quantified
+% variables and the goal. The user tries maintains a contact of premises and universally quantified variables When using the iris proof mode we generally attempt to bring ``intro'' (using the intro tactic) 
+
+% entails fixing an arbitrary value for that variable and 
+% from the random context, converts the random variable to a deterministic
+
+In order to explain further we need an example of where substitution needs to be used. One canonical usage of substitution is in the proof rule \texttt{wp\_ret}:
+\[
+Q[[M]/X] \vdash \mathrm{wp}([[ret M]], X.Q)
+\]
+
+saying that the random variable obtained by sampling the program \( \llbracket ret M \rrbracket \) is just always the denotation of M, \( \llbracket M \rrbracket \). \( \llbracket M \rrbracket \) substitutes the
+variables X which is free in the LProp $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \llbracket \Delta \rrbracket \)
+level, but this led to a painfully convoluted system before finally hitting a dead end with this approach. We try to outline the old design with the old definitions of LProp. At a high level, the above
+notion of substitution can be made to work 
+
 The development got quite far with the \lean{LProp} being parametrised with the type of the deterministic context. However, that started causing
 serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
 in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.
 
-
-
-\section{Weakest precondition}
-In order to reason about programs, the logic must be able to express facts about the program effectively. In other words the language and the logic need to 
-``communicate'' somehow. We would like to be very explicit here about how that happens, since:
-\begin{itemize}
-\item this is generally skipped from a first presentation of program logic since its an implementation
-detail. However, in a formalisation it is crucial as it forms the interface between two significant pieces of the project (the language in \repo{Appl} and the logic in \repo{Assertion})
-\item Lilac unlike any other separation logic I am aware of, does not have a one-to-one correspondence between its variables in the language and the logic.
-If in the language a variable has type $A$ then in the logic it has type of the random variable of $A$ (precise definitions will follow)
-\end{itemize}
-
-The link between the language and the logic is established using a connective in the logic, which takes the denotation of a program and some
-other assertions regarding it. Lilac is a functional language 
-
-Perhaps the more intuitive form of these connectives is the Hoare triple which takes 3 arguments, represented syntactically as $\{ P \} \llbracket M \rrbracket \{ Q \}$.
-$P$ (precondition) and $Q$ (postcondition) are both propositions and $\llbracket M \rrbracket$ is the denotation of some program $M$. But here
-we will present instead the weakest precondition (wp) connective, in terms of which Hoare triples can be defined. wp is more amenable to automation and since it only takes in a single proposition.
-
-\section{Deparametrisation of LProp}
-\Todo{Give examples of how the old LProp caused serious issues}
-
-\section{Variables}
-An insightful aspect of Lilac is to consider how it treats variables. Unlike usual program logics, Lilac does not have a one-to-one correspondence between
-variables in the language and the logic. And this  is a reflection of the perspectives taken probabilistic reasoning.
-One thinks about random variables as being a fixed quantity in a specific \emph{run} of the program, i.e. when thinking locally about what happens in a specific
-line of code or specific operation. But there is also the global perspective of considering all possible values a random variable can take, i.e. the distribution
-over its values. This is perspective the logic offers.
-When thinking of defining variables in Lean, both the language and the logic, the types are different in the two cases! Say in the language, a variable has type $A$,
-then in the logic, it is given type $RV A$ for a type constructor $RV$ (random variable). This causes technical challenges in defining and connecting the language
-and logic in lean and particularly in the instantiating in Iris, since there is no previous instantiation (as far as I am aware) of the variables not being the same across language and logic.
-
-Note that ``global'' reasoning tends to conflate the variables  does not mean non-compositional still enjoy a form of compositional reasoning using
-the logic, which is the independence of random variables. Thus, the compositionality offered by the semantics of the language, the line-by-line compositionality since
-each term/line is given a denotation which composes cleanly, may be understood as horizontal compositionality. The logic on the other hand, allows us to simultaneously
-talk about the variables introduced in every line of the program through the sequencing (monadic  bind) of programs. However, the structure of assertions implicitly
-inform us of the independence between the variables where present, which can be understood as a \emph{vertical} compositionality.
-
-\Todo{revise the above into talking about this compositionality stuff elsewhere}
 
 \subsection{Substitution inconsistency}
 Lilac

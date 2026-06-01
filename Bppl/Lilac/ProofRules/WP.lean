@@ -137,5 +137,23 @@ theorem wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) 
     ⊢ wp (Term.unif01.den ∘ᵣ D) Q :=
   wp_meas Ty.real ⟨λ i ↦ (i : ℝ), by fun_prop⟩ Q D
 
+-- lemma ite_den_eq {E : Term rs Ty.bool} {M N : Term rs A}
+--     : (Term.ite E M N).den = M.ret.bind (
+--                              N.ret.bind (
+
+--                              )
+--     )
+
+/-- Running `Term.ite E M N` is equivalent to running (sampling) all 3 terms (in any order, I just picked one)
+And then doing the if then else on the 3 values thus obtained-/
+theorem wp_if (Q : RV ⟪A⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) (E : Term rs Ty.bool) (M N : Term rs A.G) :
+    wp (M.den ∘ᵣ D) (fun X ↦ (
+    wp (N.den ∘ᵣ D) (fun Y ↦ (
+    Q (RV.ite (E.den ∘ᵣ D) X Y) ))))
+    ⊢ wp ((Term.ite E M N).den ∘ᵣ D) Q := by
+  -- have ite_den_eq : (Term.ite E M N).den ∘ᵣ D = ⟨λ ω ↦ M.bind (N.bind ())
+  sorry
+
+
 end
 end WP

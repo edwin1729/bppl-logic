@@ -1,358 +1,216 @@
-\chapter{Formalisation of Lilac}
-% Here I present the current progress in the formalisation of Lilac, and how I went about it. I divide it into 2 parts
-% Initial work which was mostly measure theoretic, and recent work which is more structured.
-% As in any project its best to get to the most uncertain parts of it first, to minimise its risk. I think I have somewhat
-% intuitively followed this principle in my formalisation so far, also meaning its full of \texttt{sorry}s.
-% However the shape of the formalisation
-% of Lilac is reasonably clear and I was able to identify some noteworthy problems which show up in the formalisation.
-
-% The repository can be found on \href{https://github.com/edwin1729/bppl-logic}{GitHub}: It contains most of the syntax and semantics of both the language and program logic for it. 
-% These can be regarded as the "data" parts (as opposed to "proof" parts) of the formalisation. There was much consideration (and confusion) in modelling
-% both language and logic in a principled manner. We want a representations for free variables and contexts where we don't go out of bounds by construction.
-% The approach is inspired by Dependent de Bruijn Indices \cite{cpdt} which also shows how types/propositions and terms in the language/logic are translated consistently
-% into lean types and terms repsectively when taking the denotation.
-
-% The goal with defining these, data parts is to be able to, using MoSeL, reimplement the case studies
-% provided in the Lilac paper in an ergonomic manner (with tactical support), with the proofs of soundness of the logic itself being left as \texttt{sorry}.
-% The "proof" parts are mostly incomplete, with the proof of unitarity of the
-% unital element of the KRM being almost complete, being a first milestone (as it involves proof of corollaries of the $\pi$-$\lambda$-theorem)
-
-% As a brief reflection on the difference in formalisation on the maths and computer science sides, in my limited experience,
-% I do think in this project (computer science) I do need to think of multiple things at once and papers generally disseminate
-% dependencies more clearly without depending as heavily on the reader to morph and modify lemmas as required. However
-% the objects in Lilac are so unconventional from the measure theory in mathlib, that it requires inventing some things from
-% scratch and quite challenging. This is ideal for my goals of understanding how to use a dependent type theory for formalisation. 
-% As such \ref{pi-lambda} talking about formalisation specific issues. But \ref{dependent-store}
-% talks about something more conceptual in Lilac! (My pivot towards the aim of a more theoretical contribution is that
-% I feel I have gotten enough Knowledge of Lean from formalising Lilac)
-
-% \section{Measure spaces as a dependent type}
-% \label{paired-prob-space}
-
-% \section{Parametrisation of the "store" by the "heap" in this separation logic}
-% \label{dependent-store}
-% The classical separation logic assertions are written like so $s, h \vDash P$, where the $s$ is a variable store and
-% $h$ is a heap. In the satisfiability relation, none of $s$, $h$ or $P$ are dependent on another argument. Consider the
-% probabilistic separation logic with satisfiability relation of form $\gamma, D, \mathcal{P} \vDash P$, 
-% where $\gamma$ is the deterministic variable store, $D$ is the random variable store and $\mathcal{P}$ is the 
-% probability space analagous to heap. I claim that $D$ is dependent on $\mathcal{P}$, and that many of the conditions in
-% the satisfiability relation are actually true by construction.
-
-% This unspotted dependent typing is a consequence of how measurable functions are usually just denoted $A \overset{m}{\rightarrow} B$
-% with the $\sigma$-algebra on A and B that is required being generally obvious from the context (there is usually only one).
-% However in our case, we our changing the $sigma$-algebra we're working with all the time when taking independent combinations,
-% in the separating conjunct.
-
-% The relevant measurable function here is $D$ the random variable store. Its type is
-% $D : [0, 1]^{\mathbb{N}} \overset{m}{\rightarrow} \llbracket \Delta \rrbracket$, where $\llbracket \Delta \rrbracket$ is the 
-% denotation of the random variable context, a list of types the random values that can occur in the separation logic proposition
-% $P$. As seen in a PSL, $D$ has quite an interesting type as a measurable function which can be composed with an expression
-% in a propostion, which is equivalent to substitution for the usual deterministic variables.
-% Now no explicit $\sigma$-algebra is provided for the Hilbert cube, the domain of $D$ and the natural candidate for this is
-% the $sigma$-algebra for the hilbert cube contained in the probability space $\mathcal{P}$. This interpretation yeilds
-% some simplifications in the satisfiability relation of probability specific connectives, exemplified in the \texttt{Own}
-% connective. It's semantics is:
-
-% $\gamma, 𝐷, ([0, 1]^{\mathbb{N}}, F, \mu) \vDash own \, 𝐸 \quad iff \quad 𝐸 (\gamma) \circ 𝐷$ is F-measurable
-% where $\mathcal{P} = ([0, 1]^{\mathbb{N}}, F, \mu)$ and $F$ is $\mathcal{P}$'s $\sigma$-algebra.
-% So $𝐸 (\gamma) \circ 𝐷$ is F-measurable by construction. Ownership as measurability is a key concept of Lilac, and it neatly falls into place.
-
-\section{Syntax and semantics of Appl}
-To reason about Appl (see \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
-define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
-of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, in the assertion, and would lead to a
-proliferation of exception cases. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
-letting us define a syntax (AST) that is well-typed by construction.
-
-For disambiguation, we refer to types in the \emph{meta language} (in our case Lean) and \emph{object language} (Appl), when it is unclear.
-
-There are several standard ways to define object languages which are well-typed by construction, which all differ in the crucial problem of representing
-(object language) variables. This seemingly innocent problem of how to represent variables is one of the biggest issues encountered in this project, and
-standard techniques don't quite work for Appl, because of it's non-standard interpretation of (object language) types.
-
-The final (Lean) representation of chosen for Appl follows a technique called Dependent De Brujin Indices
-\citep[prefix][see chap 17, Reasoning about programming language syntax]{cpdt}. Discussion on the alternatives are postponed to \ref{}.
-
-First we present the types of Appl along with its denotational semantics, taken from \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/Appl.lean}{Bppl.Lilac.Appl}.
-\begin{leancode}
-inductive Ty where
-  | prod : Ty → Ty → Ty
-  | bool
-  | real
-  | exp : ℕ → Ty → Ty -- Tyⁿ
-  | index
-  | G : Ty → Ty
-
-@[reducible] def Ty.den : Ty → MeasCat
-  | prod ty₁ ty₂ => .of (ty₁.den × ty₂.den)
-  | bool => .of Bool
-  | real => .of ℝ
-  | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
-  | index => .of ℕ
-  -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
-  | G ty => .of (ProbabilityMeasure (ty.den))
-\end{leancode}
-
-This mirrors the definition in the paper with no deviations. Note that the denotation of Appl types is \lean|MeasCat|, the category of
-MeasurableSpace, rather than \lean|Type| as for most other object languages. It is crucial to annotate \lean|@[reducible]|, which tells the
-typechecker to unfold \lean|Ty.den| when checking if two types are definitionally equal. The importance of this will be made clear once we describe
-the denotation of terms.
-
-First we describe the 
-De Brujin indices 
-
-Here is an excerpt of the definitions of terms, (omitted constructors can be found on Github).
-
-\begin{leancode}
-inductive Term : List Ty → Ty → Type
-  | var : Member ty ctx → Term ctx ty
-  | ret : Term ctx ty → Term ctx (.G ty)
-  | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
-  | pair : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
-  | fst : Term ctx (.prod ty₁ ty₂) → Term ctx ty₁
-  | snd : Term ctx (.prod ty₁ ty₂) → Term ctx ty₂
-  | T : Term ctx .bool
-  | F : Term ctx .bool
-  | ite : Term ctx .bool → Term ctx ty → Term ctx ty → Term ctx ty
-  | flip : (p : ℝ≥0) → (h : p ≤ 1) → Term ctx (.G .bool)
-  | r : ℝ → Term ctx .real
-  | arith : Arith → Term ctx .real → Term ctx .real → Term ctx .real
-  | cmp : Cmp → Term ctx .real → Term ctx .real → Term ctx .bool
-  | unif01 : Term ctx (.G .real)
-\end{leancode}
-
-\begin{leancode}
-/-- Takes the term and variable environment (which is a measurable function)
-to give an element of a measurable space -/
-@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
-  | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
-  | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
-      -- MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
-  -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
-  -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
-  -- to use its deep measure theoretic results for constructing measurable functions
-  | @bind _ ty₁ ty₂ M N =>
-    letI T := List.TProd (⟪·⟫) ctx
-    letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
-    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den -- need to provide type annotation for this
-    toDen (k₂ ∘ₖ k₁)
-  | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
-  | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
-  | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
-  | T => ⟨fun env ↦ true, measurable_const⟩
-  | F => ⟨fun env ↦ false, measurable_const⟩
-  | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
-      -- the function translating from bool to Prop is `Measurable`
-      -- by `measurableSet_singleton true`
-      Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
-  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
-  | r x => ⟨fun _ ↦ x, measurable_const⟩
-  | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
-    (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
-    (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | unif01 => ⟨fun _ ↦ ⟨lebI, inferInstance⟩, measurable_const⟩
-\end{leancode}
-
-interesting because of the
- \lean|theorem foo : True := by trivial|
-  Some things that are noteworthy are the fact 
-
-\section{Semantics of Lilac propositions}
-\subsection{Reviewing Probabilistic Separation Logics}
-More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
-\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
-updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
-probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
-
-There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
-probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
-from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
-expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
-in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
-More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
-
-\subsection{Lilac}
-\label{lilac}
-The following are a few core intuitions behind Lilac. Lilac aims to reason about random variables, which is a higher level of abstraction that we generally
-reason in informally (as opposed to descending down into measure theory and lebesgue integrals). Since it's a separation logic, it is also compositional but
-along a different axis to compositionality of the denotational semantics. I call the compositionality of probabilistic separation logic a line-by-line compositionality
-(as opposed to term-wise compositionality). Each let binding creates a new "line" and we can compose our reasoning about each of line. In the denotational semantics
-we would instead reason compositionally about the arguments to the monadic bind operator (an s-finite measure and an s-finite-kernel). The former is a more natural way to reason
-about a sequencing operator.
-
-This reasoning style is achieved by defining a resource which gets carried through and composed and split according to the laws of separation logic. This resource or state is
-a canonical source of randomness, the Hilbert cube, along with a measure space structure over it. It can be argued that the Hilbert cube could be replaced with something else,
-and indeed the definitions are parametric over this choice of measure space for a while. Any distribution can be constructed from the Hilbert cube (which is like a uniform distribution)
-using the operations/terms of the language.
-
-\Todo{ownership as measurability}
-
-\Todo{independent combinations of probability spaces}
-
-% It is unclear to me why an axiomatic semantics would need to be provided in terms of measurable maps
-% from the Hilbert cube. I wonder whether measure theory is not abstract enough and perhaps synthetic
-% measure theory may hold some intuitions/inspiration or simplifications 
-
+% Here will go sections about the semantics of APPL, De brujin indices as well
 
 \section{Instantiating Iris}
-Iris \cite{iris} is a step-indexed modal separation logic partly designed as a framework for embedding other separation logics into,
-to take advantage of the Iris Proof Mode (IPM) \cite{ipm}. The Iris proof mode provides state of the art "tactical support", tactic
-based interactive theorem proving. More recently the front of the IPM was abstracted from Iris to any separation logic to
-create MoSeL \cite{mosel}. We aim to use MoSeL in this project for several reasons
-\begin{enumerate}
-\item Neither Lilac nor BaSL is step-indexed, so it is much cleaner to instantiate MoSeL rather than Iris
-\item Making Lilac compatible with Lilac's interface (instantiating an algebraic structure called CMRA \cite{iris}) is an
-unsolved problem (future work section \cite{lilac})
-\item MoSeL was completely ported to Lean, shortly before the start of this project! \cite{iris-lean}.
-\end{enumerate}
+Theorem proving, can be split into two activities: writing definitions and proving theorems. The former doesn't seem difficult or time-consuming. It sounds reasonably
+easy to come up with a skeleton for the codebase, based on a paper. After a while working on this project I have realised this is not true, and indeed this is well known
+by both the theorem proving community, also true for professional mathematics and software engineering. Let's elaborate on the latter. Writing computer code is parallel
+to writing definitions (of data and algorithms). So definitions are indeed important and time-consuming in Lean as well. There is no parallel to writing theorems though, programs just need to convince themselves of the correctness.
 
-MoSeL presents the interface of a "logic of Bunched Implications" which essentially contains all standard connectives of a first order
-logic and the separation logic connectives. The only addition MoSeL adds to this is a persistence modality (which can be instantiated in 
-a trivial way in exchange for defeating any automation it might achieve?).
+A milestone was reached when the definitions of the language and logic were written down, with a set of abstractions to convince myself this development was sound.
+These definitions were composed of a separate syntax and semantics for both the language and the logic, using dependent de brujin indices for both. These definitions
+would have sufficed to prove formally the correctness of all the proofs in the paper. However, of the project is not only to validate the soundness of the logic,
+but also to create a usable tool for proving properties of actual probabilistic programs ergonomically (using tactics). The best way to do so is to instantiate the Iris
+framework. And the interface provided by Iris was not compatible with current definitions. Below we explain why it wasn't compatible and how Iris' interface is motivated.
 
-One of the key  generalisations that MoSeL makes over Iris is parametricity over linear and affine logics. Iris is an affine logic
-meaning separating conjuncts in a premise can be used 0 or 1 time in proving a goal; they can be thrown away if desired. In a linear
-logic however every conjunct must be used exactly once, as in the first separation logic by \cite{og_sl}.
-There is naturally quite an emphasis on describing whether a logic is affine or linear, since throwing away unwanted predicates
-when it is suitable to do so, is exactly the kind of thing a user wants automation for. In BaSL \cite{basl}, there is a short
-discussion stating BaSL is part affine and part linear. Precisely characterising the constructs which are affine and linear or under
-what conditions should be explored for better tactical support.
+\subsection{Deep vs Shallow Embeddings}
+When defining a language or logic, within a meta-language (lean in our case), we are presented with 2 choices. A deep embedding; inductively define the syntax,
+and the denotational semantics becomes an inductive definition over the syntax. For clarity, here is an excerpt from a deep embedding of the Lilac logic:
 
-MoSeL like IPM before it provides tactics mirroring the native Lean tactics, such as \texttt{iIntros} and \texttt{IAssumption}
 
-In an ongoing project to port Iris from Rocq to Lean, MoSeL was completely ported to Lean right before the beginning of this project
-\cite{iris-lean-impl, iris-lean}. So the formalisation builds on this. The interface provided by MoSeL is quite general. The interface
-defines a pre-orderered Set  (PROP, Entails)
+\Todo{complete this (code from c3ca63f)}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}{0.9\linewidth}
 \begin{leancode}
+inductive Assertion : List Ty → List Ty → Type
+  | top : Assertion ds rs -- ds: deterministic context, rs: random variable context
+  | and  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | sep  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
+  | forall (d : Ty) : Assertion (d :: ds) rs → Assertion ds rs
+  | forall_rv (r : Ty) : Assertion ds (r :: rs) → Assertion ds rs
+  | exists_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
+  ...
+
+def Assertion.denote {ds : List TyDet} {rs : List TyRand}
+    (P : Assertion ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+  match P with
+  | top  => True
+  | and P Q => P.denote γ D φ ∧ Q.denote γ D φ
+  | sep P Q => ∃ φ₁ φ₂ : PSp HC, φ₁ ⋆ φ₂ ≤ some φ ∧ P.denote γ D φ₁ ∧ Q.denote γ D φ₂
+  | forall d P => ∀ x : ⟦d⟧, P.denote (x :: γ) D φ
+  | forall_rv r P => ∀ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+  | exists_rv r P => ∃ X : RV ⟦r⟧, P.denote γ (X ; D) φ
+\end{leancode}
+  \end{minipage}
+  \caption{Excerpt of Deep Embedding of Lilac}
+  \label{fig:deep-embedding}
+\end{figure}
+
+
+On the other hand a shallow embedding where we fuse inductive structure of the syntax and the semantic denotation function together to simply. The denotations of terms
+in our object language get expressed directly in the meta language, and we lose the ability to distinguish entities in the object language from the meta-language. The previous
+point, in concrete terms is that we loose the ability to do induction over the object language now. Here is an excerpt of Lilac as a shallow embedding:
+
+\begin{leancode}
+
+\end{leancode}
+
+The shallow embedding had a much smaller surface and generally allowed the logic to piggyback on the forall and exists quantifiers of the meta language. 
+
+\subsection{BI in Iris}
+Remember that in \ref{sec:bi} we explained that BI (logic of bunched implications) is just abstraction which defining the standard connectives
+shared by every separation logic. Here is the definition of BI as a typeclass in 
+\href{https://github.com/leanprover-community/iris-lean/blob/bb24268a8a9b5ddb23224a8c1db66eadd4b9beb7/Iris/Iris/BI/BIBase.lean#L21-L36}{iris-lean} (a dependency of this project).
+
+\begin{leancode}
+/--
+Require the definitions of the separation logic connectives and units on a carrier type `PROP`.
+-/
 class BIBase (PROP : Type u) where
-%   ⊢ : PROP → PROP → Prop -- Entails
+  Entails : PROP → PROP → Prop
+  emp : PROP
   pure : Prop → PROP
-  ∧ : PROP → PROP → PROP
-  → : PROP → PROP → PROP
-  * : PROP → PROP → PROP -- separating conjunct
-  -∗ : PROP → PROP → PROP -- magic wand
+  and : PROP → PROP → PROP
+  or : PROP → PROP → PROP
+  imp : PROP → PROP → PROP          -- implies
+  sForall : (PROP → Prop) → PROP
+  sExists : (PROP → Prop) → PROP
+  sep : PROP → PROP → PROP          -- separating conjunct
+  wand : PROP → PROP → PROP         -- magic wand
   persistently : PROP → PROP
+  later : PROP → PROP
+\end{leancode}
+
+Firstly \lean{Prop} is the universe of propositions, part of Lean's syntax. While \lean{PROP} denotes the proposition in the object logic (Lilac in our case). The
+typeclass is called \lean{BIBase} since there is another typeclass \lean{BI} extending \lean{BIBase} which states the axioms of BI. As
+explained in \ref{sec:bi}, the instantiation of \lean{Entails} can interpret a BI as a separation logic. \lean{Entails} says what it means for a \lean{PROP} to be true
+by translating into the meta language's \lean{Prop}. \lean{persistently} and \lean{later} is omitted since the former
+is an orthogonal concern and the latter is irrelevant. \lean{emp} can be understood as the unit of the monoid with which we will instantiate BI. There are several binary
+operators. The most important connectives are  \lean{sForall} and \lean{sExists}. The original defintion from iris-rocq is more straightforward:
+
+\begin{leancode}
+  iForall : ∀ A : Type u', (A → PROP) → PROP
+  iExists : ∀ A : Type u',  (A → PROP) → PROP
+\end{leancode}
+
+We quantify over the type A of variables that we want to quantify over, since iris can't know what type a variables a specific logic may want to quantify over, and indeed
+as in Lilac there may be multiple types (Lilac has two of each quantifier). We have named the above quantifier \texttt{iForall}, with \texttt{i} short
+for indexed, since when quantifying over types we refer to the types (like \texttt{A}) as \emph{type indices}. \lean{iForall} and \lean{iExists} is impredicative
+(see \ref{sec:predicativity}), meaning we
+quantify in universes larger than that of the type being constructed. \texttt{u'} is universe level, a natural number. Indeed, impredicativity is required here to provide complete flexibility in
+what variables an instantiating logic can then quantify over.  
+
+Now lets look at \lean{sForall} and \lean{sExists}, with \texttt{s} short for \emph{set}.  
+Note that in theorem provers, Sets (say \lean{Set A}) are represented as \lean{A → Prop}. So the signature for the quantifiers says that given a set
+of \lean{PROP} we construct a \lean{PROP}. The reason for this less intuitive version of quantification is that iForall (iExists) can be defined in terms of sForall
+(sExists). And the quantified types are not restricted to a predetermined universe \texttt{u'}.
+
+
+\subsection{First Attempt: Deeply embedded logic instantiation}
+There is a result in Lilac \cite[see Appendix B.10]{lilac} called the substitution lemma which uses induction over the syntax of Lilac propositions. Supposing
+that induction over the syntax of the logic is important/necessary, a next step is to try to instantiate \lean{BIBase} above with the deep embedding from Fig 
+\ref{fig:deep-embedding}. We may try something like so:
+
+\begin{leancode}
+instance (ds rs: List Ty) : BIBase (Assertion ds rs) where
+  Entails P Q    := ∀ γ D φ, P.denote γ D φ → Q.denote γ D φ
+  and            := Assertion.and
   ...
 \end{leancode}
 
-The type class \texttt{BIBase} defines the interface for the "data" parts of the separation logic, while the axioms that these
-need to satisfy (the "proof" parts) are defined in an extension of this type class.  We are defining the separation logic, Lilac or BaSL, in the meta-logic, Lean. 
-So \texttt{BIBase} is parametrised by a type \texttt{PROP} which is a proposition in the separation logic (as opposed to \texttt{Prop} in lean).
-
-We draw the reader's attention to the \texttt{Entails} which allows us to provide the semantics of entailment. The soundness of MoSeL's
-syntactic entailments are established by the semantics provided when instantiating \texttt{Entails}. This gives us a little flexibility
-in how we'd like to instantiate \texttt{PROP}. For simpler logics we could have \texttt{PROP}, directly capture the semantis of that
-proposition, giving \texttt{PROP} this shape. 
+Where we simply instantiate each of the constructors with syntax, and called the denotation function in \lean{Entails}. This works nicely until we get to the instantiation
+of the quantifiers. We now need some syntactic version of \lean{sForall} and not just the 
+\lean{forall}/\lean{forall_rv} from Fig \ref{fig:deep-embedding}. Though the latter is all we need for our logic instantiating
+iris demands the flexibility to quantify over any type, not just the object language types. Let's introduce the following syntax into our
+language:
 
 \begin{leancode}
-PROP := Store → Heap → Prop
+inductive Assertion' : List TyDet → List TyRand → Type
+  | sForall : (Assertion' ds rs → Prop) → Assertion' ds rs
+  ...
 \end{leancode}
 
-My understanding is that this precisely encodes a relation: the satisfiability relation. An n-ary relation is encoded as a function
-from the n parameters to a Proposition. In other words it's a set of n-tuples. (Sets of type A are encoded as $A \rightarrow Prop$).
-Notice however that $s, h \vDash P$ should be of the form 
+This looks like a valid lean definition, but it is not, since it fails a syntactic requirement of inductive types called \emph{strict positivity}.
+The type being defined inductively may only appear in \emph{postiive} locations, which means they are not allowed to occur in the input of an arrow
+type. Even if we suppose the \lean{iForall} definition was used in BI, we still end up with nuanced problems with mixing semantics into the syntax
+because of the quantifiers. We spare further details, but the conclusion is that the impredicativity of quantifiers in \lean{BI}
+disallows usage of a deep embedding of the logic.
 
-\begin{leancode}
-PROP := Store → Heap → PROP → Prop
-\end{leancode}
-
-where did the $P$ (of type \texttt{PROP}) go? It's given implicitly through the inductive construction of a term of \texttt{PROP}
-through the constructors defined by \texttt{and}, \texttt{sep}, etc. Any term of \texttt{PROP} implicitly contains the tree of
-constructors used to create it.
-
-This is standard for the simple example instantiations of MoSeL (such as classical separation logic), but quite convoluted
-conceptuall. We may wish to split the representations of the separation logic assertions into syntax and
-semantics, which is what is done in non-trivial logics and this projects formalisation. There is a denotation function of type
-$Store \rightarrow Heap \rightarrow PROP \rightarrow Prop$ (exactly how the satisfiability relation should look) 
-used in the instantiation of Entails; much more natural!
-
-\section{Pi-lambda-theorem as an induction principle}
-\label{pi-lambda}
-The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
-used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.
-It is similar to an induction principle on the structure of a $\sigma$-algebra. So we need prove some property C holds in the base and inductive cases
-of a $\sigma$-algebra. However there isn't an inductive type underlying this
-induction principle! The reason is two fold 1) when generating a measurable set from some base measurable sets, a specific
-set can be shown to be measurable by multiple different permutations of application of the axioms. For reference below
-is included an inductive defintion generating a $\sigma$-algebra from base measurable seats.
-
-\begin{leancode}
-/-- The smallest σ-algebra containing a collection `s` of basic sets -/
-inductive GenerateMeasurable (s : Set (Set α)) : Set α → Prop
-  | protected basic : ∀ u ∈ s, GenerateMeasurable s u
-  | protected empty : GenerateMeasurable s ∅
-  | protected compl : ∀ t, GenerateMeasurable s t → GenerateMeasurable s tᶜ
-  | protected iUnion : ∀ f : ℕ → Set α, (∀ n, GenerateMeasurable s (f n)) →
-      GenerateMeasurable s (⋃ i, f i)
-\end{leancode}
-
-2) The $\pi$-$\lambda$-theorem provides a relaxation on our proof obligation. We dont prove that the property C holds for countable unions 
-(\texttt{iUnion} above) if it holds for each of the sets we're taking a union over. Instead we only need to do so for countably pairwise disjoint unions.
-
-Being closed under disjoint unions instead of unions, is the difference between a $\lambda$-system compared to a $\sigma$-algebra. This relaxtion is the 
-content of the $\pi$-$\lambda$-theorem which we don't go into here.
-However there is an alternative "inductive" definition of a $\lambda$ system with the following axioms: 
-\begin{enumerate}
-\item The system $\mathcal{C}$ containt the base measurable sets we chose
-\item be closed under proper difference, for $\forall V, U \in \mathcal{C}, V \subseteq U \rightarrow U \setminus V \in \mathcal{C}$
-\item closed under increasing limits, take $i \in \mathbb{N}$ and $U_i \in \mathcal{C}$ then $\bigcup_{i \in \mathbb{N}} U_i \in \mathcal{C}$
-\end{enumerate}
-
-Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it doesn't provide the "induction principle" according to this definition.
-For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
-measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
-
-\section{Binder Discipline}
-The choice between Dependent De Brujin Indices and Parametric Abstract Higher Order Syntax (PHOAS).
-\subsection{Dependent De Brujin Indices}
-\begin{itemize}
-\item More straightforward to the uninitiated following a little more intuitively from the paper. Important if
-we want this is to be an accessible code base for future probabilistic separation logics to follow from.
-\item Measurability of maps expressible explicitly
-\end{itemize}
-
-\subsection{PHOAS}
-\begin{itemize}
-\item Notion of substitution inbuilt
-\item Example programs written in it are naturally readable. No separate parser and translation from a normal
-lambda calculus required. Correctness of the parser doesn't need to be proven... (but further consideration on
-this point requires deciding if there will be a separate executable implementation of the APPL syntax)
-\end{itemize}
-
-\input{lilac/lilac2.tex}
-
-\section{Equality of dependently typed records in Lean}
+\subsection{Shallow embedding of the logic}
 
 
-\section{Choice of Kripke Resource Monoid (KRM) over Unital ordered Resource algebra (ORA) }
-ORA's are established as the standard by former Rocq-iris projects, but I couldn't see why not just directly
-use the KRM. It was conceptual simplicity traded for some possibly unweildy proofs. The unweildiness turned out to be
-restricted to a single file?
+\section{Deparametrisation of LProp}
 
-\section{Deep vs shallow embedding}
+A major concern throughout the mechanisation was the definition of \texttt{LProp}, and how amenable it might be to variable substitution. Remember that we were forced to forego
+the convenience of an induction principle over the lilac connectives (or constructors in this context). This was indeed due to the generality of iris without which we wouldn't
+be able to use it in the first place.
+This seemingly insignificant issue tended to
+have a significant effect on the decisions made. We explain below,
+why the notion of substitution as defined in the paper, is incompatible with iris. % even though iris doesn't have particularly strong requirements on this matter. 
 
-\section{Support for recursion over the data structure even with (shallow?/deep? see SSProve talk) embedding}
-(compare with SProp usage in Rocq for ORA? or something...)
-Even though the monotonicity property did not require induction, substitution atleast as defined in the paper requires it.
+% Then present parts of the paper, that were
+% not followed in this mechanisation, and the justification for the definition of LProp chosen after this deliberation.
 
-The aim, is to do things as given in the paper, and then think about if substitution could be done away with? If removing
-the ability to do recursion over assertions is desirable, etc
+Lilac has two contexts, the random and deterministic contexts. The latter is only required when the logic supports reasoning about conditioning. Remember that conditioning takes random variable
+and fixes its values, i.e. makes it deterministic. And only for that deterministic value do we need the deterministic context and otherwise, every variable in our language corresponds to a random variable.
+So we will focus on the random contexts. Take the quantifier $\forall_{rv}$:
 
-\section{Strong abstractions across the proof development}
-\subsection{The language}
-This is built on the existing abstractions. We use the typeclass \texttt{DenotationalMeas} to decouple the syntax from
-the language from the logic. The language only needs to me able to interpreted as measurable maps with a few additional
-requirements as given by \texttt{DenotationalMeas}.
+\[
+\gamma, D, \mathcal{P} \vDash \forall_{rv} X : A.\ P \qquad iff \qquad \text{for all } X : RV A (\gamma, (D, X), \mathcal{P}) \vDash P 
+\]
 
-\subsection{Resource monoid}
-\emph{for the version of Lilac with/without conditioning}
+We are quantifying over $RV A$, which means variables in Lilac are defined to have this type. Remember $RV A$ means $HC \xrightarrow{m} A$ (with additional finite footprint property not relevant here).
+Substitution is the process of transforming from one LProp to another by specifying a mapping from one variable to another. However, definition of substitution given in the paper looks like this:
 
-\subsection{Separate treatment of BI connectives and Probability specific connectives}
+\[
+S \in \llbracket \Delta' \rrbracket \to \llbracket \Delta\rrbracket 
+\]
 
-\section{Metaprogramming and tactical support}
+\[
+\begin{aligned}
+\top[S] &= \top \\
+\bot[S] &= \bot \\
+(P \wedge Q)[S] &= (P[S] \wedge Q[S]) \\
+(P \vee Q)[S] &= (P[S] \vee Q[S]) \\
+(P \to Q)[S] &= (P[S] \to Q[S]) \\
+(P * Q)[S] &= (P[S] * Q[S]) \\
+(P -* Q)[S] &= (P[S] \wand Q[S]) \\
+(\forall_{\mathrm{rv}} X:A.\,P)[S] &= \forall_{\mathrm{rv}} X:A.\,P[S \times 1_A] \\
+(\exists_{\mathrm{rv}} X:A.\,P)[S] &= \exists_{\mathrm{rv}} X:A.\,P[S \times 1_A] \\
+...
+\end{aligned}
+\]
 
-% - The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
+It is helpful to have the following mental picture of the meaning of an LProp as a function $HC \xrightarrow{m} \llbracket \Delta \rrbracket \xrightarrow{m} A$, pick an element $\omega$ of HC
+(which is like sampling a random number). Once we do this the randomness is gone and the maps forward are deterministic. $\omega$ maps to values of variables, $\llbracket \Delta \rrbracket$,
+as an intermediate step. Then these variables deterministically map to some expression of type A. With this in mind note that there's a mismatch in what we would like substitution to be, replacing
+$X : HC \xrightarrow{m} A$ with $Y : HC \xrightarrow{m} A$ which is used in an LProp, with the above definition of substitution, which only starts at the intermediate $\llbracket \Delta \rrbracket$ step.
 
-% - Correctly instantiating BI, modelling random variables, "intrinsically type calculus"? 
-% - Talk about Lilac, give the intuition that this is the actual line by line semantics
+At a high level the Iris proof mode (indeed any proof mode) works by splitting an LProp into a context of premises and variables, and a goal. The variables are of type $RV A$ and if the substitutions are
+not with $RV A$ as domain, the types just won't line up.
+
+% To make things more concrete observe the substitution rule above for $\forall_{rv}$. Thi
+% Let's give a more concrete reason for why this is problematic. The iris proof mode proves an LProp by splitting it into the context which contains premises and universally quantified
+% variables and the goal. The user tries maintains a contact of premises and universally quantified variables When using the iris proof mode we generally attempt to bring ``intro'' (using the intro tactic) 
+
+% entails fixing an arbitrary value for that variable and 
+% from the random context, converts the random variable to a deterministic
+
+In order to explain further we need an example of where substitution needs to be used. One canonical usage of substitution is in the proof rule \texttt{wp\_ret}:
+\[
+Q[[M]/X] \vdash \mathrm{wp}([[ret M]], X.Q)
+\]
+
+saying that the random variable obtained by sampling the program \( \llbracket ret M \rrbracket \) is just always the denotation of M, \( \llbracket M \rrbracket \). \( \llbracket M \rrbracket \) substitutes the
+variables X which is free in the LProp $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \llbracket \Delta \rrbracket \)
+level, but this led to a painfully convoluted system before finally hitting a dead end with this approach. We try to outline the old design with the old definitions of LProp. At a high level, the above
+notion of substitution can be made to work 
+
+The development got quite far with the \lean{LProp} being parametrised with the type of the deterministic context. However, that started causing
+serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
+in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.
+
+
+\subsection{Substitution inconsistency}
+Lilac

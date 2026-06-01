@@ -21,10 +21,7 @@ construction of a separating conjunct
 
 -/
 
-open Appl
-abbrev mul (a b : RV ⟪Ty.real⟫) : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ a ω * b ω, sorry⟩, sorry⟩
-
-open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP
+open LProp Appl Appl.Term Member Iris.BI ProbabilityTheory MeasurableFun WP RV
 /-! There is still the unsolved problem of the programs being expressed via de brujin indices.
 Maybe we can just have string based mapping somehow. -/
 noncomputable section

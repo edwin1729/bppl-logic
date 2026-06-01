@@ -1,0 +1,102 @@
+\section{Syntax and semantics of Appl}
+To reason about Appl (see \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
+define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
+of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, in the assertion, and would lead to a
+proliferation of exception cases. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
+letting us define a syntax (AST) that is well-typed by construction.
+
+For disambiguation, we refer to types in the \emph{meta language} (in our case Lean) and \emph{object language} (Appl), when it is unclear.
+
+There are several standard ways to define object languages which are well-typed by construction, which all differ in the crucial problem of representing
+(object language) variables. This seemingly innocent problem of how to represent variables is one of the biggest issues encountered in this project, and
+standard techniques don't quite work for Appl, because of it's non-standard interpretation of (object language) types.
+
+The final (Lean) representation of chosen for Appl follows a technique called Dependent De Brujin Indices
+\citep[prefix][see chap 17, Reasoning about programming language syntax]{cpdt}. Discussion on the alternatives are postponed to \ref{}.
+
+First we present the types of Appl along with its denotational semantics, taken from \repo{Appl}.
+\begin{leancode}
+inductive Ty where
+  | prod : Ty → Ty → Ty
+  | bool
+  | real
+  | exp : ℕ → Ty → Ty -- Tyⁿ
+  | index
+  | G : Ty → Ty
+
+@[reducible] def Ty.den : Ty → MeasCat
+  | prod ty₁ ty₂ => .of (ty₁.den × ty₂.den)
+  | bool => .of Bool
+  | real => .of ℝ
+  | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
+  | index => .of ℕ
+  -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
+  | G ty => .of (ProbabilityMeasure (ty.den))
+\end{leancode}
+
+This mirrors the definition in the paper with no deviations. Note that the denotation of Appl types is \lean|MeasCat|, the category of
+MeasurableSpace, rather than \lean|Type| as for most other object languages. It is crucial to annotate \lean|@[reducible]|, which tells the
+typechecker to unfold \lean|Ty.den| when checking if two types are definitionally equal. The importance of this will be made clear once we describe
+the denotation of terms.
+
+First we describe the 
+De Brujin indices 
+
+Here is an excerpt of the definitions of terms, (omitted constructors can be found on Github).
+
+\begin{leancode}
+inductive Term : List Ty → Ty → Type
+  | var : Member ty ctx → Term ctx ty
+  | ret : Term ctx ty → Term ctx (.G ty)
+  | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
+  | pair : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
+  | fst : Term ctx (.prod ty₁ ty₂) → Term ctx ty₁
+  | snd : Term ctx (.prod ty₁ ty₂) → Term ctx ty₂
+  | T : Term ctx .bool
+  | F : Term ctx .bool
+  | ite : Term ctx .bool → Term ctx ty → Term ctx ty → Term ctx ty
+  | flip : (p : ℝ≥0) → (h : p ≤ 1) → Term ctx (.G .bool)
+  | r : ℝ → Term ctx .real
+  | arith : Arith → Term ctx .real → Term ctx .real → Term ctx .real
+  | cmp : Cmp → Term ctx .real → Term ctx .real → Term ctx .bool
+  | unif01 : Term ctx (.G .real)
+\end{leancode}
+
+\begin{leancode}
+/-- Takes the term and variable environment (which is a measurable function)
+to give an element of a measurable space -/
+@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
+  | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
+  | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
+      -- MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
+  -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
+  -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
+  -- to use its deep measure theoretic results for constructing measurable functions
+  | @bind _ ty₁ ty₂ M N =>
+    letI T := List.TProd (⟪·⟫) ctx
+    letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
+    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den -- need to provide type annotation for this
+    toDen (k₂ ∘ₖ k₁)
+  | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
+  | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
+  | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
+  | T => ⟨fun env ↦ true, measurable_const⟩
+  | F => ⟨fun env ↦ false, measurable_const⟩
+  | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
+      -- the function translating from bool to Prop is `Measurable`
+      -- by `measurableSet_singleton true`
+      Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
+  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
+  | r x => ⟨fun _ ↦ x, measurable_const⟩
+  | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
+    (op.den.2).comp (M.den.2.prod N.den.2)⟩
+  | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
+    (op.den.2).comp (M.den.2.prod N.den.2)⟩
+  | unif01 => ⟨fun _ ↦ ⟨lebI, inferInstance⟩, measurable_const⟩
+\end{leancode}
+
+Note that we use the notation $ \langle \langle ty \rangle \rangle $ for the denotation of an APPL type in the lean codebase since the standard $\llbracket ty \rrbracket$ was already in use in some dependencies.
+
+\Todo{The kernel Api used for bind}
+
+\Todo{Markov Kernels and probability Measures. (alternative being weird induction)}

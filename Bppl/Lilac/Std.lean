@@ -135,14 +135,20 @@ structure RV (β : Type*) [msβ : MeasurableSpace β] extends @MeasurableFun HC 
 
 namespace RV
 
-instance instFunLikeRV {β : Type*} [MeasurableSpace β] : FunLike (RV β) HC β where
+variable {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+
+instance instFunLikeRV : FunLike (RV β) HC β where
   coe D := D.toFun
   coe_injective' f g h := by
     cases f; cases g; congr
     exact DFunLike.coe_injective h
 
-instance instCoeRV {β : Type*} [MeasurableSpace β] : Coe (RV β) (HC -m→ β) where
+instance instCoeRV : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
+
+abbrev mul (M N : RV ℝ) : RV ℝ := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
+
+abbrev ite (E : RV Bool) (M N : RV α) : RV α := ⟨⟨λ ω ↦ if E ω then M ω else N ω, sorry⟩, sorry⟩
 
 abbrev prod [MeasurableSpace α] [MeasurableSpace β]
     (f : RV α) (g : RV β) : RV (α × β) :=
