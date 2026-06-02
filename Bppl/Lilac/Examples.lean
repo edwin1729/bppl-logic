@@ -86,6 +86,21 @@ end Unif2
 
 namespace Half
 
+
+lemma expectation_of_own {X : RV ⟪Ty.real⟫} : own X ⊢ iprop(∃ e, 𝔼[X]=e) := by
+  intro Ω ownX
+  use iprop(𝔼[X]=∫ ω, X ω ∂(Ω.μ))
+  simp only [exists_apply_eq_apply, true_and]
+  exact ⟨ownX, rfl⟩
+
+lemma expectation_prod {X Y : RV ⟪Ty.real⟫} {xy : ℝ} :
+    iprop(∃ x y, 𝔼[X]=x ∧ 𝔼[Y]=y ∧ ⌜x * y = xy⌝) ⊢ iprop(𝔼[X.mul Y]=xy) := by
+  intro Ω lhs
+
+  sorry
+
+lemma expectation_of_unif01 {X : RV ⟪Ty.real⟫} : iprop(X ∼ unif01_sem ⊢ 𝔼[X]=0.5) := sorry
+
 abbrev half : Term [Ty.real] Ty.real.G :=
   unif01.bind (
     ret (.arith .mul (var (tail head)) (var head))
@@ -105,11 +120,23 @@ theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
   rw [post_half]
   iapply wp_bind
   iapply wp_unif
-  iintro %Y HY
+  iintro %Y hY
   iapply wp_ret
   rw [hrw]
-
+  ihave expX := expectation_of_own $$ hX
+  icases expX with ⟨%e, he⟩
+  iexists e
+  isplit
+  · iapply expectation_prod
+    iexists e, 0.5
+    ihave expY := expectation_of_unif01 $$ hY
+    isplit
+    · iexact he
+    · isplit
+      · iexact expY
+      · ipure_intro
+        ring
+  · iexact he
   -- iexists (∫ ω, X ω ∂(Ω.μ))
-  sorry
 
 end Half
