@@ -17,23 +17,23 @@ When defining a language or logic, within a meta-language (lean in our case), we
 and the denotational semantics becomes an inductive definition over the syntax. For clarity, here is an excerpt from a deep embedding of the Lilac logic:
 
 
-\Todo{complete this (code from c3ca63f)}
+\Todo{complete this (code from c3ca63f), just explain the code and say why it is literally the satisfiability relation}
 
 \begin{figure}[htbp]
   \centering
   \begin{minipage}{0.9\linewidth}
 \begin{leancode}
-inductive Assertion : List Ty → List Ty → Type
-  | top : Assertion ds rs -- ds: deterministic context, rs: random variable context
-  | and  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
-  | sep  : Assertion ds rs  → Assertion ds rs → Assertion ds rs
-  | forall (d : Ty) : Assertion (d :: ds) rs → Assertion ds rs
-  | forall_rv (r : Ty) : Assertion ds (r :: rs) → Assertion ds rs
-  | exists_rv (r : TyRand) : Assertion ds (r :: rs) → Assertion ds rs
+inductive LProp : List Ty → List Ty → Type
+  | top : LProp ds rs -- ds: deterministic context, rs: random variable context
+  | and  : LProp ds rs  → LProp ds rs → LProp ds rs
+  | sep  : LProp ds rs  → LProp ds rs → LProp ds rs
+  | forall (d : Ty) : LProp (d :: ds) rs → LProp ds rs
+  | forall_rv (r : Ty) : LProp ds (r :: rs) → LProp ds rs
+  | exists_rv (r : TyRand) : LProp ds (r :: rs) → LProp ds rs
   ...
 
-def Assertion.denote {ds : List TyDet} {rs : List TyRand}
-    (P : Assertion ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+def LProp.denote {ds : List TyDet} {rs : List TyRand}
+    (P : LProp ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
   match P with
   | top  => True
   | and P Q => P.denote γ D φ ∧ Q.denote γ D φ
@@ -82,12 +82,12 @@ class BIBase (PROP : Type u) where
   later : PROP → PROP
 \end{leancode}
 
-Firstly \lean{Prop} is the universe of propositions, part of Lean's syntax. While \lean{PROP} denotes the proposition in the object logic (Lilac in our case). The
-typeclass is called \lean{BIBase} since there is another typeclass \lean{BI} extending \lean{BIBase} which states the axioms of BI. As
-explained in \ref{sec:bi}, the instantiation of \lean{Entails} can interpret a BI as a separation logic. \lean{Entails} says what it means for a \lean{PROP} to be true
-by translating into the meta language's \lean{Prop}. \lean{persistently} and \lean{later} is omitted since the former
-is an orthogonal concern and the latter is irrelevant. \lean{emp} can be understood as the unit of the monoid with which we will instantiate BI. There are several binary
-operators. The most important connectives are  \lean{sForall} and \lean{sExists}. The original defintion from iris-rocq is more straightforward:
+Firstly \texttt{Prop} is the universe of propositions, part of Lean's syntax. While \texttt{PROP} denotes the proposition in the object logic (Lilac in our case). The
+typeclass is called \texttt{BIBase} since there is another typeclass \texttt{BI} extending \texttt{BIBase} which states the axioms of BI. As
+explained in \ref{sec:bi}, the instantiation of \texttt{Entails} can interpret a BI as a separation logic. \texttt{Entails} says what it means for a \texttt{PROP} to be true
+by translating into the meta language's \texttt{Prop}. \texttt{persistently} and \texttt{later} is omitted since the former
+is an orthogonal concern and the latter is irrelevant. \texttt{emp} can be understood as the unit of the monoid with which we will instantiate BI. There are several binary
+operators. The most important connectives are  \texttt{sForall} and \texttt{sExists}. The original definition from iris-rocq is more straightforward:
 
 \begin{leancode}
   iForall : ∀ A : Type u', (A → PROP) → PROP
@@ -96,45 +96,45 @@ operators. The most important connectives are  \lean{sForall} and \lean{sExists}
 
 We quantify over the type A of variables that we want to quantify over, since iris can't know what type a variables a specific logic may want to quantify over, and indeed
 as in Lilac there may be multiple types (Lilac has two of each quantifier). We have named the above quantifier \texttt{iForall}, with \texttt{i} short
-for indexed, since when quantifying over types we refer to the types (like \texttt{A}) as \emph{type indices}. \lean{iForall} and \lean{iExists} is impredicative
+for indexed, since when quantifying over types we refer to the types (like \texttt{A}) as \emph{type indices}. \texttt{iForall} and \texttt{iExists} is impredicative
 (see \ref{sec:predicativity}), meaning we
 quantify in universes larger than that of the type being constructed. \texttt{u'} is universe level, a natural number. Indeed, impredicativity is required here to provide complete flexibility in
 what variables an instantiating logic can then quantify over.  
 
-Now lets look at \lean{sForall} and \lean{sExists}, with \texttt{s} short for \emph{set}.  
-Note that in theorem provers, Sets (say \lean{Set A}) are represented as \lean{A → Prop}. So the signature for the quantifiers says that given a set
-of \lean{PROP} we construct a \lean{PROP}. The reason for this less intuitive version of quantification is that iForall (iExists) can be defined in terms of sForall
+Now lets look at \texttt{sForall} and \texttt{sExists}, with \texttt{s} short for \emph{set}.  
+Note that in theorem provers, Sets (say \texttt{Set A}) are represented as \lean{A → Prop}. So the signature for the quantifiers says that given a set
+of \texttt{PROP} we construct a \texttt{PROP}. The reason for this less intuitive version of quantification is that iForall (iExists) can be defined in terms of sForall
 (sExists). And the quantified types are not restricted to a predetermined universe \texttt{u'}.
 
 
 \subsection{First Attempt: Deeply embedded logic instantiation}
 There is a result in Lilac \cite[see Appendix B.10]{lilac} called the substitution lemma which uses induction over the syntax of Lilac propositions. Supposing
-that induction over the syntax of the logic is important/necessary, a next step is to try to instantiate \lean{BIBase} above with the deep embedding from Fig 
+that induction over the syntax of the logic is important/necessary, a next step is to try to instantiate \texttt{BIBase} above with the deep embedding from Fig 
 \ref{fig:deep-embedding}. We may try something like so:
 
 \begin{leancode}
-instance (ds rs: List Ty) : BIBase (Assertion ds rs) where
+instance (ds rs: List Ty) : BIBase (LProp ds rs) where
   Entails P Q    := ∀ γ D φ, P.denote γ D φ → Q.denote γ D φ
-  and            := Assertion.and
+  and            := LProp.and
   ...
 \end{leancode}
 
-Where we simply instantiate each of the constructors with syntax, and called the denotation function in \lean{Entails}. This works nicely until we get to the instantiation
-of the quantifiers. We now need some syntactic version of \lean{sForall} and not just the 
-\lean{forall}/\lean{forall_rv} from Fig \ref{fig:deep-embedding}. Though the latter is all we need for our logic instantiating
+Where we simply instantiate each of the constructors with syntax, and called the denotation function in \texttt{Entails}. This works nicely until we get to the instantiation
+of the quantifiers. We now need some syntactic version of \texttt{sForall} and not just the 
+\texttt{forall}/\texttt{forall\_rv} from Fig \ref{fig:deep-embedding}. Though the latter is all we need for our logic instantiating
 iris demands the flexibility to quantify over any type, not just the object language types. Let's introduce the following syntax into our
 language:
 
 \begin{leancode}
-inductive Assertion' : List TyDet → List TyRand → Type
-  | sForall : (Assertion' ds rs → Prop) → Assertion' ds rs
+inductive LProp' : List TyDet → List TyRand → Type
+  | sForall : (LProp' ds rs → Prop) → LProp' ds rs
   ...
 \end{leancode}
 
 This looks like a valid lean definition, but it is not, since it fails a syntactic requirement of inductive types called \emph{strict positivity}.
-The type being defined inductively may only appear in \emph{postiive} locations, which means they are not allowed to occur in the input of an arrow
-type. Even if we suppose the \lean{iForall} definition was used in BI, we still end up with nuanced problems with mixing semantics into the syntax
-because of the quantifiers. We spare further details, but the conclusion is that the impredicativity of quantifiers in \lean{BI}
+The type being defined inductively may only appear in \emph{positive} locations, which means they are not allowed to occur in the input of an arrow
+type. Even if we suppose the \texttt{iForall} definition was used in BI, we still end up with nuanced problems with mixing semantics into the syntax
+because of the quantifiers. We spare further details, but the conclusion is that the impredicativity of quantifiers in \texttt{BI}
 disallows usage of a deep embedding of the logic.
 
 \subsection{Shallow embedding of the logic}
@@ -146,12 +146,26 @@ A major concern throughout the mechanisation was the definition of \texttt{LProp
 the convenience of an induction principle over the lilac connectives (or constructors in this context). This was indeed due to the generality of iris without which we wouldn't
 be able to use it in the first place.
 This seemingly insignificant issue tended to
-have a significant effect on the decisions made. We explain below,
+have a significant effect on the decisions made. We will first explain
 why the notion of substitution as defined in the paper, is incompatible with iris. % even though iris doesn't have particularly strong requirements on this matter. 
+
+Substitution is somewhat complicated to think about in Lilac, because random variables are actually functions. At high a level, the takeaway from this section is that when designing a separation
+logic, we are designing an abstraction. The resource is what we are abstracting over so
+\begin{itemize}
+\item We must not require access to the resource directly for any manipulation at the program logic level.
+\item LProp should only take as argument the entity we abstract over which is the resource.
+\end{itemize}
+
+Both principles were broken by the original formalisation, and led to increasingly convoluted fixes which ultimately led to a dead end.
+The original formalisation did however use the substitution as defined in the paper at points, so it seemed to be the right path, despite the growing complexity. In retrospect, keeping
+in mind the above principles, would have led to never needing to consider and partly implement convoluted definintions for LProp and the proof rules, and the final definition that we have
+converged at is far simpler and intuitive.
+
+\subsection{Lilac substitution}
+% The first point is quite standard, but was originally broken due to substitution not quite being in terms of $RV A$ and require
 
 % Then present parts of the paper, that were
 % not followed in this mechanisation, and the justification for the definition of LProp chosen after this deliberation.
-
 Lilac has two contexts, the random and deterministic contexts. The latter is only required when the logic supports reasoning about conditioning. Remember that conditioning takes random variable
 and fixes its values, i.e. makes it deterministic. And only for that deterministic value do we need the deterministic context and otherwise, every variable in our language corresponds to a random variable.
 So we will focus on the random contexts. Take the quantifier $\forall_{rv}$:
@@ -160,7 +174,7 @@ So we will focus on the random contexts. Take the quantifier $\forall_{rv}$:
 \gamma, D, \mathcal{P} \vDash \forall_{rv} X : A.\ P \qquad iff \qquad \text{for all } X : RV A (\gamma, (D, X), \mathcal{P}) \vDash P 
 \]
 
-We are quantifying over $RV A$, which means variables in Lilac are defined to have this type. Remember $RV A$ means $HC \xrightarrow{m} A$ (with additional finite footprint property not relevant here).
+We are quantifying over $RV A$, which means variables in Lilac are defined to have this type. Remember $RV A$ means $HC \marrow A$ (with additional finite footprint property not relevant here).
 Substitution is the process of transforming from one LProp to another by specifying a mapping from one variable to another. However, definition of substitution given in the paper looks like this:
 
 \[
@@ -182,10 +196,10 @@ S \in \llbracket \Delta' \rrbracket \to \llbracket \Delta\rrbracket
 \end{aligned}
 \]
 
-It is helpful to have the following mental picture of the meaning of an LProp as a function $HC \xrightarrow{m} \llbracket \Delta \rrbracket \xrightarrow{m} A$, pick an element $\omega$ of HC
-(which is like sampling a random number). Once we do this the randomness is gone and the maps forward are deterministic. $\omega$ maps to values of variables, $\llbracket \Delta \rrbracket$,
+It is helpful to have the following mental picture of the meaning of an LProp as a function $HC \marrow \sem{\Delta} \marrow A$, pick an element $\omega$ of HC
+(which is like sampling a random number). Once we do this the randomness is gone and the maps forward are deterministic. $\omega$ maps to values of variables, $\sem{\Delta}$,
 as an intermediate step. Then these variables deterministically map to some expression of type A. With this in mind note that there's a mismatch in what we would like substitution to be, replacing
-$X : HC \xrightarrow{m} A$ with $Y : HC \xrightarrow{m} A$ which is used in an LProp, with the above definition of substitution, which only starts at the intermediate $\llbracket \Delta \rrbracket$ step.
+$X : HC \marrow A$ with $Y : HC \marrow A$ which is used in an LProp, with the above definition of substitution, which only starts at the intermediate $\sem{\Delta}$ step.
 
 At a high level the Iris proof mode (indeed any proof mode) works by splitting an LProp into a context of premises and variables, and a goal. The variables are of type $RV A$ and if the substitutions are
 not with $RV A$ as domain, the types just won't line up.
@@ -196,21 +210,284 @@ not with $RV A$ as domain, the types just won't line up.
 
 % entails fixing an arbitrary value for that variable and 
 % from the random context, converts the random variable to a deterministic
+\subsection{Definitions of LProp, random variables and WP rules}
+\emph{The code in this section is obtained from an older commit \url{https://github.com/edwin1729/bppl-logic/tree/cd19b5ff454abaf05f959ba8abfe0961518d02d3}}
+The definition of LProp after moving to a shallow embedding had the signature:
 
-In order to explain further we need an example of where substitution needs to be used. One canonical usage of substitution is in the proof rule \texttt{wp\_ret}:
 \[
-Q[[M]/X] \vdash \mathrm{wp}([[ret M]], X.Q)
+Lprop := \llbracket \Gamma \rrbracket \to (I^\mathbb{N} \marrow \sem{\Delta}) \to (I, \Sigma_{I^\mathbb{N}}, \mu) \to Prop
+\]
+In lean that would be:
+\begin{leancode}
+def LProp {ds : List Ty} {rs : List Ty} :=
+  (γ : HList (⟪·⟫) ds) → (D : RV (List.TProd (⟪·⟫) rs)) → (φ : PSp HC) → Prop
+\end{leancode}
+
+As noted before $\sem{\Delta}$ is never used without the conditioning modality, so we omit it here. We have also chosen to omit the
+monotonicity of LProp, w.r.t to the ordering on resources, as that is irrelevant here. Subsequent presentation of connectives constructing LProp,
+will be suitably modified.
+
+\begin{leancode}
+def LProp {rs : List Ty} := (D : RV (List.TProd (⟪·⟫) rs)) → (φ : PSp HC) → Prop
+\end{leancode}
+
+Remember that for each \texttt{r} in \texttt{rs}, \lean{⟪r⟫} is the denotation of a type which is a type equipped with a measurable space. And that
+\lean{List.TProd (⟪·⟫) rs} is the product measruable space of all the \texttt{r} denotations.
+
+According to the original definition of variables in the logic, which we denoted $E$ showing up prominently in probability specific proof rules \texttt{own E}, $E ~ \mu$
+and $E_1 \circeq E_2$:
+
+$E : \sem{\Delta} \marrow A$
+
+Even at this stage we can see problem coming (in retrospect) because the forall quantifiers of the logic use a different notion of
+variables $E : RV A$, which is the point of interface with iris, so the iris will also use $E : RV A$. Compare the definition of \texttt{own}
+with that of \texttt{forall\_rv}
+in the logic:
+
+\begin{leancode}
+def own {ty : Ty} (E : List.TProd (⟪·⟫) rs -m→ ⟪ty⟫) : LProp rs :=
+  ⟨fun D Ω ↦ Measurable[Ω.ms] (E ∘ D), sorry⟩
+
+def forall_rv (ty : Ty) (P : LProp (ty :: rs)) : LProp rs :=
+  fun D Ω ↦ ∀ X : RV ⟪ty⟫, P.1 (X ; D) Ω
+\end{leancode}
+
+In \texttt{own}, E starts from context \lean{List.TProd (⟪·⟫) rs}, while \texttt{forall\_rv}, starts earlier from $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}})$, both mapping to \lean{⟪ty⟫}.
+This is the first problem with our definition. This is the problem which turns out to have no workaround. Let's suppose that we need to go back and forth between one representation of
+variables to another. Given \lean{E : List.TProd (⟪·⟫) rs -m→ ⟪ty⟫} and \lean{D : HC -m→ (List.TProd (⟪·⟫) rs)} we can simply compose them to get \lean{E ∘ D : HC -m→ ⟪ty⟫}. Note
+that we only have access to \texttt{D} explicitly like this when working outside the abstraction of the logic, i.e. in soundness proofs but not in proofs within the lilac logic.
+Going the other way is not possible, and that's the irreparable issue.
+
+There's also a 2nd problem due only to my choice in formalisation: quantification takes an LProp with parameters \texttt{ty :: rs} and shrinks
+the context to \texttt{rs}. This makes sense, since under a forall quantification, there is one more free variable than there is outside. The problem is that while reasoning about a
+single program we jump between multiple types (\texttt{LProp (ty :: rs)} to \texttt{LProp (rs)}).
+
+But the iris type signatures for connectives which remember looked like:
+\begin{leancode}
+class BIBase (PROP : Type u) where
+  and : PROP → PROP → PROP
+  ...
+\end{leancode}
+
+generally had connectives where the types of the arguments and output were all the same. This something to keep in mind as a difficulty though not an insurmountable problem as we can
+work around with some bookkeeping. But as the name of this section, ``Deparametrisation'' suggests, ultimately we remove this \texttt{rs}, parameter, the need for which vanishes
+when we uniformly use $E : RV A$ everywhere, which massively simplifies the system.
+
+To show how exactly this set of definitions is irreparably flawed, we try to verify the simplest specification possible, Unif1
+
+\[
+x \leftarrow \mathrm{unif}\ [0,1];\ \mathrm{ret}\ x
+\qquad \textsc{(Unif1)}
 \]
 
+\[
+\{ \top \}\ \textsc{Unif1}\ \{ X.\ X \sim \mathrm{Unif}[0,1] \}
+\]
+
+To prove this, we will require 3 rules: \texttt{wp\_bind}, \texttt{wp\_unif} and \texttt{wp\_ret}
+
+\[
+\begin{array}{cc}
+\textsc{W-Ret}
+&
+\textsc{W-Bind}
+\\[0.5em]
+Q[\llbracket M \rrbracket / X] \vdash \mathrm{wp}(\llbracket \mathrm{ret}\ M \rrbracket, X.\,Q)
+&
+\mathrm{wp}(\llbracket M \rrbracket, X.\,\mathrm{wp}(\llbracket N \rrbracket, Y.\,Q))
+\;\vdash\;
+\mathrm{wp}(\llbracket X \leftarrow M;\, N \rrbracket, Y.\,Q)
+\\[1.5em]
+\multicolumn{2}{c}{
+\textsc{W-Unif}
+}
+\\[0.5em]
+\multicolumn{2}{c}{
+(\forall_{\mathrm{rv}}\, X\!:\!A.\; X \sim \mathrm{Unif}[0,1] \mathbin{-\!*} Q)
+\;\vdash\;
+\mathrm{wp}(\llbracket \mathrm{unif}\ [0,1] \rrbracket, X\!:\!A.\,Q)
+}
+\end{array}
+\]
+
+We can see substitution being used in \texttt{wp\_ret}. Let's go step by step through the proof showing the Lean definition of each of the 3 proof rules, and the iris
+proof states after each rule is applied. Below are the definitions of the proof goal and the proof in iris upto where no more progress can be made
+
+\begin{leancode}
+
+abbrev unif1 : Term [] Ty.real.G :=
+  unif01.bind (
+  ret (var head)
+)
+
+/-- Variable at the head of the random environment list. -/
+def fst_rv : ValRand ds (A::rs) ⟪A⟫ :=
+  ⟨fun r_env ↦ r_env.get .head , List.TProd.measurable_get .head⟩
+
+lemma unif1_prop : ⊢ (wp unif1.den iprop(fst_rv ∼ (WP.unif01_sem)) : LProp [] []) := sorry
+
+abbrev post1 : LProp [] [] := wp unif1.den iprop((fst_rv) ∼ WP.unif01_sem)
+
+theorem unif1_spec : iprop(⊢ post1) := by
+  iapply wp_bind
+  iapply wp_unif
+  iintro %x
+  irewrite ⊢ substLProp (wp ⟦ret (var head)⟧ (dropSnd iprop(fst_rv ∼ unif01_sem))) x
+  change ⊢ substLProp (fst_rv ∼ unif01_sem) x -∗
+           substLProp (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem))) x
+  iintro H
+\end{leancode}
+
+\textbf{Step 1 : \texttt{wp\_bind}}
+
+Our proof state starts like this:
+\begin{leancode}
+⊢ 
+⊢ wp ⟦unif1⟧ (fst_rv ∼ unif01_sem)
+\end{leancode}
+
+note that \texttt{fst\_rv} is picking out the first element of the random variable context which is at the moment a singleton list $[X] = X ;; []$. So it's just picking out \texttt{X}
+if X is the outcome of running \texttt{unif1}. \texttt{unif01\_sem} stands for unif01 semantics
+and is simply a uniform measure on the unit interval $[0,1]$.
+
+Firstly we apply \texttt{wp\_bind}, defined in Lean as: 
+\begin{leancode}
+lemma wp_bind (Q : LProp ds (B::rs)) (M : Term rs A.G) (N : Term (A::rs) B.G) :
+    wp ⟦M⟧ (wp ⟦N⟧ (dropSnd Q)) ⊢ wp ⟦M.bind N⟧ Q := ⟨soundness proof⟩ 
+\end{leancode}
+
+Notice the usage of \texttt{dropSnd} defined as:
+
+% /-- Used in `wp_bind`. Required since the nesting of `wp`s adds variables to the head of the rand
+% env.  So if we want to ignore the topmost variable in a do block, that actually requires ignoring
+% the 2nd variable in the randenv list. -/
+\begin{leancode}
+abbrev dropSnd (P : LProp ds (r :: rs)) : LProp ds (r :: r' :: rs) :=
+  fun D Ω ↦ P.1 (⟨fun (x, _y, z) => (x,z) , measurable_dropSnd⟩ ∘ₘ D) Ω
+\end{leancode}
+
+This is because the \texttt{Q} within a \texttt{wp}, receives an extra argument in the context (see \ref{fig:typing}). The \texttt{Q} is the same though between the left and right hand sides of
+the $\vdash$. So we introduce this \texttt{dropSnd} casting function which converts \texttt{Q} into an LProp taking a bigger context. Internally a measurable map
+\lean{⟨fun (x, _y, z) => (x,z) , measurable_dropSnd⟩} is applied on the bigger context \texttt{D}, to drop the 2nd variable and pass that to \texttt{Q}. Why are we dropping the 2nd variable (not 1st)?
+The context that Q recieves on the lhs of \texttt{wp\_bind} looks like $[Y ;; \ldots]$ while on the rhs \lean{(dropSnd Q)} will receive a context like $[Y ;; X ;; \ldots]$. \texttt{Q} does not have
+access to $X$ on the lhs which is why it is dropped, on the rhs. As we can see we have to rather tedious and unintuitive bookkeeping with such ``casting'' functions to make the types match, if
+\texttt{LProp} is parameterised.
+
+Now our state looks like this:
+\begin{leancode}
+⊢ 
+⊢ wp ⟦unif01⟧ (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem)))
+\end{leancode}
+
+\textbf{Step 2: \texttt{wp\_unif}}
+Now we are in position to apply the \texttt{wp\_unif} rule, given in lean as:
+\begin{leancode}
+lemma wp_unif (Q : LProp ds (Ty.real :: rs)) :
+    forall_rv Ty.real (fst_rv ∼ unif01_sem -∗ Q) ⊢ wp ⦃Term.unif01⟧ Q := ⟨soundness proof⟩ 
+\end{leancode}
+
+This is a pretty direct translation of the informal law. A \texttt{wp} LProp running just the \texttt{unif01} program can be turned into an LProp
+which uses the \texttt{forall\_rv} and $\wand$ connectives. Both \texttt{wp} and \texttt{forall\_rv} introduce a variable into the random context. \texttt{wp} says
+that the variable is introduced as the outcome of the program \texttt{unif01}. The right hand side says, that is the same as requiring that some arbitrary random
+variable is distributed according to \texttt{unif01\_sem}.
+
+Applying this we obtain the proof state:
+\begin{leancode}
+⊢ 
+⊢
+forall_rv Ty.real (fst_rv ∼ unif01_sem -∗ (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem))))
+\end{leancode}
+
+This is an interesting situation where both the left and right hand side of the $\wand$ contain the LProp \lean{(fst_rv ∼ unif01_sem)}. However, remember we are working
+with de brujin indices so \texttt{fst\_rv} does not always refer to the same variable. \texttt{fst\_rv} always refers to the nearest variable introduction, which on the
+right hand side comes from \texttt{wp} not \texttt{forall\_rv}. So on the rhs we refer to a different variable obtain from running \texttt{ret (var head)}, but with
+more application of proof rules, we should hopefully be able to show that these two variables are in fact equal.
+
+\textbf{Step 3: iintro}
+Now we would like to apply the intro tactic of iris called \texttt{iintro}. In general, an intro tactic can pull the input of a forall quantification or implication in the goal
+into the premise in the proof state (Remember that both forall quantificaion and implication are exactly the same: they are both dependent products \ref{sec:coc}). The \texttt{iintro} tactic
+mimics this acting on iris' $\forall$ (\texttt{iForall} or \texttt{sForall}), $\wand$ and $\to$. But the goal we have uses our custom \texttt{forall\_rv} connective. If we want to use Iris'
+proof mode, we will need to convert this \texttt{forall\_rv} to \texttt{iForall}. Iris does in fact provide extensible tactics, i.e. \texttt{iintro} can be extended to work on other custom connectives
+like \texttt{forall\_rv}. This was the original approach, which adds another level of indirection to this presentation. To make our presentation more understandable let's remove that level of indirection
+and use \texttt{iForall} directly in the definition of \texttt{wp\_unif} and never use \texttt{forall\_rv} in the first place. Here's an adapted definition for \texttt{wp\_unif}
+
+\begin{leancode}
+lemma wp_unif (Q : LProp ds (Ty.real :: rs)) :
+    iprop(∀ (X : RV ⟪Ty.real⟫), substLProp (fst_rv ∼ unif01_sem-∗ Q) X) ⊢ wp ⦃Term.unif01⦄ Q := ⟨soundness proof⟩ 
+\end{leancode}
+
+We added the \texttt{iprop} syntax specifier here to make it clear that what it wraps is an LProp, specifically $\forall$ is overloaded and here refers to iris notation \lean{iForall : (α → LProp rs) → LProp rs}.
+The second interesting thing is a direct consequence of the signature of \texttt{iForall}: it doesn't know to allow a larger context underneath it (we would have liked to have \lean{iForall : (α → LProp (r::rs)) → LProp rs}).
+So we again resort to manual book-keeping with substLProp defined as follows:
+
+\begin{leancode}
+abbrev substLProp (P : LProp (A::rs)) (X : RV ⟪A⟫) : LProp rs :=
+  fun D Ω ↦ P.1 (X ;; D) Ω
+\end{leancode}
+
+There is nothing unexpected in this defintion
+
+The \texttt{;;} syntax is supposed to look just like the cons operator, but remember that \texttt{X} and \texttt{D} are actually measurable functions to a value and list respectively.
+It is unimportant but here is the definition for completeness:
+\begin{leancode}
+def fun_prod (f : α -m→ β) (g : α -m→ γ) : α -m→ β × γ :=
+  ⟨fun a ↦ (f a, g a), Measurable.prod f.2 g.2⟩
+\end{leancode}
+
+If we apply our modified \texttt{wp\_unif}, instead of the original version in \textbf{step 3}, we will instead get this proof state after application:
+
+\begin{leancode}
+⊢ 
+⊢ ∀ X, substLProp (fst_rv ∼ unif01_sem -∗ (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem)))) X
+\end{leancode}
+
+And after the next tactic \texttt{iintro \%x}, we get the slightly different proof state where for the first time we are actually using the proof mode in a non-trivial manner!
+\begin{leancode}
+x : RV ⟪Ty.real⟫
+⊢ 
+⊢ substLProp (fst_rv ∼ unif01_sem -∗ (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem)))) x
+\end{leancode}
+
+We see that our goal now has \texttt{substLProp} at the outermost level instead of an SL connective, so we can't apply any proof rules. The intuition here is that
+thinking of an LProp as constructed using a tree of connectives, we should be able to just push the \texttt{substLProp} down to the leaves while applying the substitutions as encountered.
+Succinctly \texttt{substLProp} is just a fold over a tree. Unfortunately, this tree is not an inductive data structure (in other words it not a deep embedding but a shallow one).
+There are workarounds to this use the typeclass mechanism which can be made to emulate induction over shallow embeddings. But all of this is not the actual problem!
+We realise that the base case of this fold, the action of \texttt{substLProp} on the leaves, is not definable. Since we need to convert between the two type signatures of variables
+in the impossible direction in order to achieve the substitution on leaves.
+
+Let's return to our concrete example. We push the substLProp, through the $\wand$ connective, with a rewrite tactic. This is the \texttt{change} in our proof. After this
+and \texttt{iintro H} we have the state:
+
+\begin{leancode}
+x : RV ⟪Ty.real⟫
+⊢ ∗H : substLProp (fst_rv ∼ unif01_sem) x
+⊢ substLProp (wp ⟦ret (var head)⟧ (dropSnd (fst_rv ∼ unif01_sem))) x
+\end{leancode}
+
+Let's focus on \lean{∗H : substLProp (fst_rv ∼ unif01_sem) x}. Now we have exactly a substLProp on a ``leaf'' connective $E \sim \mu$. Conceptually \texttt{x} and \texttt{fst\_rv}
+are the same variable. However \lean{x : HC -m→ ℝ} and \lean{fst_rv : (List.TProd (⟪·⟫) rs) -m→ ℝ} and we can't apply the substitution to remove the substLProp and make $\sim$ the 
+outermost connective. If we can't do that then we can't reason using the proof rules of Lilac. In the proof mode, we have hit a dead end, and the only way to proceed is
+descend back into the meta logic. The separation logic is supposed to provide a higher level of abstraction but clearly out instantiation of Iris was flawed as we can't stay
+in the abstraction and manage to prove the simplest objective.
+
+\subsection{ignore}
+
+The whole point of the variable contexts was supposed to be that, it will
+allow substitution: we want to begin with some $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \sem{\Delta})$ and turn it into $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \llbracket \Delta' \rrbracket)$,
+where in $\Delta'$ one of the variables would have changed. As stated in the paper, we can specify a substitution as a measurable map $\sem{\Delta} \marrow \llbracket \Delta' \rrbracket$.
+The difficulty is the measurability of this map. We can't simply map an index in the list from one value to another, becuase of the way $\sem{\Delta}$ is defined in lean as \lean{List.TProd (⟪·⟫) rs},
+unfolding \texttt{TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denoptations is iteratively taken. Its possible to define a 
+measurable function which may peel off the head, or cons a new element, or both, but creating a measurable map works deeper inside the list, and then proving properties of the then rather complicated function
+is not attractive. On studying Lilac further it looked as if we only really need to manipulate the head of the list, so this opens up the possibility of not using the dependent de brujin indices method (mapping form a list), which is
+what we opt for in the end.
+
+
+
 saying that the random variable obtained by sampling the program \( \llbracket ret M \rrbracket \) is just always the denotation of M, \( \llbracket M \rrbracket \). \( \llbracket M \rrbracket \) substitutes the
-variables X which is free in the LProp $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \llbracket \Delta \rrbracket \)
+variables X which is free in the LProp $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \sem{\Delta} \)
 level, but this led to a painfully convoluted system before finally hitting a dead end with this approach. We try to outline the old design with the old definitions of LProp. At a high level, the above
 notion of substitution can be made to work 
 
-The development got quite far with the \lean{LProp} being parametrised with the type of the deterministic context. However, that started causing
+The development got quite far with the \texttt{LProp} being parametrised with the type of the deterministic context. However, that started causing
 serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
 in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.
-
-
-\subsection{Substitution inconsistency}
-Lilac

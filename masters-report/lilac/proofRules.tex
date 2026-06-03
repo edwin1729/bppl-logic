@@ -1,0 +1,135 @@
+\chapter{Mechanising Lilac Part II: Proofs}
+\emph{Having overcome the fundamental change in the definitions, consolidate inconsistencies and instantiating Iris, we present here the 2nd aspect
+of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 3 of them
+in particular: \texttt{wp\_frame}, \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
+connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use Mathlib's Probability Kernels, with kernel style definitions
+and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
+measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube. Some of the development of these proofs
+happened simultaneously with surprising progress in LLM-based auto-formalisation in Lean. We report on how these tools were used with success in simpler
+sub proofs (which are time consuming to work out but not conceptually hard), but they are not particularly good or successful, when the rich grounding of Mathlib's
+Api is not present and a library of lemmas needs to first be built in order to carry out a proof as was the case for \texttt{wp\_unif}. It is worth noting
+that as past contributor of Mathlib, Mathlib has exacting code quality standards, for the generalisability and suitable abstractions used in contributed
+code, and as seen the success of such autoformalisation is in part due to the availability of such an excellent library. The ambitions of this mechanisation
+is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic \cite{},
+so we try to maintain good abstractions and remark on the extensibility at points in the chapter.}
+
+\Todo{Proof irrelavance for closed\_krm\_subtype also for conditioning}
+\Todo{Pi-lambda theorem not suitable for BaSL}
+
+Let's recall in one place how we now define variables, contexts the language and the logic, by going through a simple but important proof rule \texttt{wp\_ret}.
+The syntax and semantics of the language has not changed and is still expressed as a measurable function $\sem{\Delta} \marrow A$, where
+$ \sem{\Delta} = A \otimes \ldots \otimes A$, where A represents types endowed with a measurable space. That's the semantics of a program
+while in the syntax to refer to variable we use dependent de brujin indices.
+
+The logic which originally started out in the same manner as the language, i.e. a deep embedding with dependent de brujin indices, has transformed into
+a shallow embedding with higher order syntax style treatment of the variables. Variables are of the type \texttt{RV A}, which expands to $HC \marrow A$,
+with the standard borel measurable space on the domain (hilbert cube) and additionally the finite footprint property, whhich we state now for the first time:
+
+% The aspect of playing with definitions sneaks into this chapter as well,
+% with some modifications to the \texttt{wp} connective. The complexity of definition of the \texttt{wp} connective is motivated by establishing the soundness
+% of the above the 3 rules}
+
+
+
+\section{To overview}
+\subsection{Reviewing Probabilistic Separation Logics}
+More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
+\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
+updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
+probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
+
+There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
+probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
+from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
+expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
+in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
+More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
+
+\section{Pi-lambda-theorem as an induction principle}
+\label{pi-lambda}
+The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
+used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.
+It is similar to an induction principle on the structure of a $\sigma$-algebra. So we need prove some property C holds in the base and inductive cases
+of a $\sigma$-algebra. However there isn't an inductive type underlying this
+induction principle! The reason is two fold 1) when generating a measurable set from some base measurable sets, a specific
+set can be shown to be measurable by multiple different permutations of application of the axioms. For reference below
+is included an inductive definition generating a $\sigma$-algebra from base measurable seats.
+
+\begin{leancode}
+/-- The smallest σ-algebra containing a collection `s` of basic sets -/
+inductive GenerateMeasurable (s : Set (Set α)) : Set α → Prop
+  | protected basic : ∀ u ∈ s, GenerateMeasurable s u
+  | protected empty : GenerateMeasurable s ∅
+  | protected compl : ∀ t, GenerateMeasurable s t → GenerateMeasurable s tᶜ
+  | protected iUnion : ∀ f : ℕ → Set α, (∀ n, GenerateMeasurable s (f n)) →
+      GenerateMeasurable s (⋃ i, f i)
+\end{leancode}
+
+2) The $\pi$-$\lambda$-theorem provides a relaxation on our proof obligation. We dont prove that the property C holds for countable unions 
+(\texttt{iUnion} above) if it holds for each of the sets we're taking a union over. Instead we only need to do so for countably pairwise disjoint unions.
+
+Being closed under disjoint unions instead of unions, is the difference between a $\lambda$-system compared to a $\sigma$-algebra. This relaxtion is the 
+content of the $\pi$-$\lambda$-theorem which we don't go into here.
+However there is an alternative "inductive" definition of a $\lambda$ system with the following axioms: 
+\begin{enumerate}
+\item The system $\mathcal{C}$ containt the base measurable sets we chose
+\item be closed under proper difference, for $\forall V, U \in \mathcal{C}, V \subseteq U \rightarrow U \setminus V \in \mathcal{C}$
+\item closed under increasing limits, take $i \in \mathbb{N}$ and $U_i \in \mathcal{C}$ then $\bigcup_{i \in \mathbb{N}} U_i \in \mathcal{C}$
+\end{enumerate}
+
+Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it doesn't provide the "induction principle" according to this definition.
+For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
+measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
+
+% \section{Binder Discipline}
+% The choice between Dependent De Brujin Indices and Parametric Abstract Higher Order Syntax (PHOAS).
+% \subsection{Dependent De Brujin Indices}
+% \begin{itemize}
+% \item More straightforward to the uninitiated following a little more intuitively from the paper. Important if
+% we want this is to be an accessible code base for future probabilistic separation logics to follow from.
+% \item Measurability of maps expressible explicitly
+% \end{itemize}
+
+% \subsection{PHOAS}
+% \begin{itemize}
+% \item Notion of substitution inbuilt
+% \item Example programs written in it are naturally readable. No separate parser and translation from a normal
+% lambda calculus required. Correctness of the parser doesn't need to be proven... (but further consideration on
+% this point requires deciding if there will be a separate executable implementation of the APPL syntax)
+% \end{itemize}
+
+
+% \section{Equality of dependently typed records in Lean}
+
+
+% \section{Choice of Kripke Resource Monoid (KRM) over Unital ordered Resource algebra (ORA) }
+% ORA's are established as the standard by former Rocq-iris projects, but I couldn't see why not just directly
+% use the KRM. It was conceptual simplicity traded for some possibly unweildy proofs. The unweildiness turned out to be
+% restricted to a single file?
+
+% \section{Deep vs shallow embedding}
+
+% \section{Support for recursion over the data structure even with (shallow?/deep? see SSProve talk) embedding}
+% (compare with SProp usage in Rocq for ORA? or something...)
+% Even though the monotonicity property did not require induction, substitution atleast as defined in the paper requires it.
+
+% The aim, is to do things as given in the paper, and then think about if substitution could be done away with? If removing
+% the ability to do recursion over assertions is desirable, etc
+
+% \section{Strong abstractions across the proof development}
+% \subsection{The language}
+% This is built on the existing abstractions. We use the typeclass \texttt{DenotationalMeas} to decouple the syntax from
+% the language from the logic. The language only needs to me able to interpreted as measurable maps with a few additional
+% requirements as given by \texttt{DenotationalMeas}.
+
+% \subsection{Resource monoid}
+% \emph{for the version of Lilac with/without conditioning}
+
+% \subsection{Separate treatment of BI connectives and Probability specific connectives}
+
+% \section{Metaprogramming and tactical support}
+
+% - The correct type for meaurable spaces because type casting issue, it needed to be a dependent type.
+
+% - Correctly instantiating BI, modelling random variables, "intrinsically type calculus"? 
+% - Talk about Lilac, give the intuition that this is the actual line by line semantics

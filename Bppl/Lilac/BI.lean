@@ -11,7 +11,7 @@ import Iris.Std.Equivalence
 
 /-! # Generating instance of BI (logic of Bunched Implications) given a KRM (Kripke Resource Monoid)
 This file instantiates MoSeL, the frontend  of Iris offering a proofmode for general separatin
-logics. We also prove that the Lilac is an affine logic, which is guaranteed by our defintion
+logics. We also prove that the Lilac is an affine logic, which is guaranteed by our definition
 of the Krm along with the following standard recipe for constructing a BI out of it.
 
 ## Main Definitions

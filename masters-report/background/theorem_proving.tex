@@ -1,6 +1,7 @@
 \section{Theorem Proving}
 
 \subsection{Dependent type theory}
+\label{sec:coc}
 
 Examples in this section are based on the excellent introduction to the calculus of inductive constructions by \cite{coc}.
 
@@ -141,8 +142,8 @@ structure MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β
   meas: Measurable toFun
 \end{leancode}
 
-the equivalence of two \lean{MeasurableFun}s is determined solely by the equality of the \lean{toFun}, since \lean{meas} is a (dependent) proof and will be 
-definitionally equal if \lean{toFun} is equal. In practice this is incredibly convenient, and is applied automatically throughout the codebase to simplify proof
+the equivalence of two \texttt{MeasurableFun}s is determined solely by the equality of the \texttt{toFun}, since \texttt{meas} is a (dependent) proof and will be 
+definitionally equal if \texttt{toFun} is equal. In practice this is incredibly convenient, and is applied automatically throughout the codebase to simplify proof
 objectives. It was always used in an elegant abstraction in establishing that certain constructions form a KRM, which we will detail later.
 
 The choices made in lean's type theory to bring about proof irrelevance does have some major theoretical drawbacks such as leading to undecidability of definitional
@@ -167,12 +168,12 @@ to the style of pen and paper proofs.
 ``Tactics'' are metaprograms meant for constructing proof terms. A Tactic block is started in Lean using $by$ syntax: in our code if we wanted to
 a term (proof) of type $A : Prop$, we can write $(by \ldots) : A$ (though the type A, would usually be inferred by lean). So how does the $by$ tactic
 make it easier to construct the term? It provides a proof context, of premises and goals, which is actually additional state wrapped in a monad called
-\lean{TacticM}. Inside a tactic block a sequence of \lean{TacticM} monads are composed, each monad constructed using one Lean's ecosystem of tactics,
+\texttt{TacticM}. Inside a tactic block a sequence of \texttt{TacticM} monads are composed, each monad constructed using one Lean's ecosystem of tactics,
 incrementally modifying the proof state until ``all goals are solved''. And at the end of a tactic block, using the information acquired in the monadic state
 a term of the desired type should be constructed using the information collected in the TacticM monad.
 
 We have been pretty vague about what this ``proof context'' and ``goals'' actually are so far. In lean there are a few more constructors for terms than in the simply
-types lambda calculus, on top of lambda abstraction and application. Terms are called \lean{Expr} in lean. We introduce the constructor \lean{mvar : MVarID \to Expr}.
+types lambda calculus, on top of lambda abstraction and application. Terms are called \texttt{Expr} in lean. We introduce the constructor \lean{mvar : MVarID → Expr}.
 For building an expression given a metavariable. This is at the heart of how tactics work. Tactics communicate to eachother of what has been proven and
 what is left to prove using metavariables. We will illustrate this through a simple example reproduced from \citep[chapter 4]{meta}. In the proof of the following
 theorem we show the evolution of the proof context, line by line.
@@ -185,8 +186,8 @@ example {α} (a : α) (f : α → α) (h : ∀ a, f a = a) : f (f a) = a := by
 \end{leancode}
 
 Metavariables are used to represent unknown terms of known types, which may be holes in larger terms or a goal we want to prove (term of a certain Prop that
-we are looking to construct). As soon as the tactic block starts with \lean{by}, a metavariable \texttt{?m1} which is unassigned but has type \lean{f (f a) = a}.
-Now we look at the state after the first \lean{apply}. The types of \lean{Eq.trans} and \texttt{?m1} can be unified, so the tactic succeeds and we have new proof
+we are looking to construct). As soon as the tactic block starts with \texttt{by}, a metavariable \texttt{?m1} which is unassigned but has type \lean{f (f a) = a}.
+Now we look at the state after the first \texttt{apply}. The types of \texttt{Eq.trans} and \texttt{?m1} can be unified, so the tactic succeeds and we have new proof
 state as follows:
 
 To a user it would look like this:

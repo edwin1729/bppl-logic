@@ -54,7 +54,7 @@ def own (E : RV ⟪A⟫) : LProp :=
 /-- We depart from the convention of using `RV` for for the variable `E` here.
 The measurability of `E : RV ⟪A⟫` would be given as `HC.Inf_borel` on the domain
 and this is unnessecary info. So we instead take a simple function E. Measurability is
-asserted as part of the resource in the original defintion. -/
+asserted as part of the resource in the original definition. -/
 def dist (E : HC → ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
   ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = @Measure.map _ _ Ω.ms _ E Ω.μ,
   -- monotonicity proof

@@ -14,7 +14,7 @@
 \setmonofont{FreeMono}
 \usepackage{minted}
 \newmintinline[lean]{lean4}{bgcolor=white}
-\newminted[leancode]{lean4}{fontsize=\footnotesize}
+\newminted[leancode]{lean4}{fontsize=\small}
 \usemintedstyle{tango}  % a nice, colorful theme
 
 %% Useful packages
@@ -39,8 +39,13 @@
 \newcommand{\denote}[2]{\llbracket #1 \rrbracket_{#2}}
 \newcommand{\bient}{\mathrel{\dashv\vdash}}
 \newcommand{\repo}[1]{\href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/#1.lean}{Bppl.Lilac.#1}}
+\newcommand{\marrow}{\xrightarrow{\,\mathrm{m}\,}}
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\rv}{\mathrm{rv}}
+\newcommand{\RV}{\mathrm{RV\ }}
 
-\title{Tools for Foundational Verification of Probabilistic Programs}
+
+\title{Foundational Verification of Probabilistic Programs}
 \author{Edwin Fernando}
 % Update supervisor and other title stuff in title/title.tex
 
@@ -63,6 +68,7 @@
 \input{background/background.tex}
 % \input{project/project.tex}
 \input{lilac/lilac.tex}
+\input{lilac/proofRules.tex}
 % \input{evaluation/evaluation.tex}
 % \input{ethical.tex}
 % \input{conclusion/conclusion.tex}
