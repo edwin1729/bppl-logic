@@ -434,7 +434,6 @@ volume = {2},
 number = {ICFP},
 url = {https://doi.org/10.1145/3236772},
 doi = {10.1145/3236772},
-abstract = {A number of tools have been developed for carrying out separation-logic proofs mechanically using an interactive proof assistant. One of the most advanced such tools is the Iris Proof Mode (IPM) for Coq, which offers a rich set of tactics for making separation-logic proofs look and feel like ordinary Coq proofs. However, IPM is tied to a particular separation logic (namely, Iris), thus limiting its applicability.  In this paper, we propose MoSeL, a general and extensible Coq framework that brings the benefits of IPM to a much larger class of separation logics. Unlike IPM, MoSeL is applicable to both affine and linear separation logics (and combinations thereof), and provides generic tactics that can be easily extended to account for the bespoke connectives of the logics with which it is instantiated. To demonstrate the effectiveness of MoSeL, we have instantiated it to provide effective tactical support for interactive and semi-automated proofs in six very different separation logics.},
 journal = {Proc. ACM Program. Lang.},
 month = jul,
 articleno = {77},
@@ -629,10 +628,39 @@ isbn="978-3-540-44802-0"
 
 @article{galmiche, title={The semantics of BI and resource tableaux}, volume={15}, DOI={10.1017/S0960129505004858}, number={6}, journal={Mathematical Structures in Computer Science}, author={Galmiche, D. and Méry, D. and Pym, D.}, year={2005}, pages={1033–1088}}
 
-@article{coquand,
-author = {Coquand, Thierry},
-year = {1999},
-month = {10},
-pages = {},
-title = {An Analysis of Girard's Paradox}
+@inproceedings{coquand,
+  title={An Analysis of Girard's Paradox},
+  author={Thierry Coquand},
+  booktitle={Logic in Computer Science},
+  year={1986},
+  url={https://api.semanticscholar.org/CorpusID:5533529}
+}
+
+@article{rustbelt,
+author = {Jung, Ralf and Jourdan, Jacques-Henri and Krebbers, Robbert and Dreyer, Derek},
+title = {RustBelt: securing the foundations of the Rust programming language},
+year = {2017},
+issue_date = {January 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {POPL},
+url = {https://doi.org/10.1145/3158154},
+doi = {10.1145/3158154},
+abstract = {Rust is a new systems programming language that promises to overcome the seemingly fundamental tradeoff between high-level safety guarantees and low-level control over resource management. Unfortunately, none of Rust's safety claims have been formally proven, and there is good reason to question whether they actually hold. Specifically, Rust employs a strong, ownership-based type system, but then extends the expressive power of this core type system through libraries that internally use unsafe features. In this paper, we give the first formal (and machine-checked) safety proof for a language representing a realistic subset of Rust. Our proof is extensible in the sense that, for each new Rust library that uses unsafe features, we can say what verification condition it must satisfy in order for it to be deemed a safe extension to the language. We have carried out this verification for some of the most important libraries that are used throughout the Rust ecosystem.},
+journal = {Proc. ACM Program. Lang.},
+month = dec,
+articleno = {66},
+numpages = {34},
+keywords = {type systems, separation logic, logical relations, concurrency, Rust}
+}
+
+@misc{amaryllis,
+      title={First Steps Towards Probabilistic Iris: Harmonizing Independence, Conditioning, and Dynamic Heap Allocation}, 
+      author={Janine Lohse and Tim Rohde and Jimmy Xin and Niklas Mück and Iona Kuhn and Derek Dreyer and Deepak Garg and Emanuele D'Osualdo},
+      year={2026},
+      eprint={2605.13765},
+      archivePrefix={arXiv},
+      primaryClass={cs.LO},
+      url={https://arxiv.org/abs/2605.13765}, 
 }

@@ -1,0 +1,46 @@
+{
+  "latex-workshop.latex.recipe.default": "lastUsed",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk-xelatex",
+      "command": "latexmk",
+      "args": [
+        "-r",
+        ".latexmkrc",
+        "-xelatex",
+        "-shell-escape",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk-xelatex",
+      "tools": [
+        "latexmk-xelatex"
+      ]
+    }
+  ],
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.watch.files.ignore": [
+    "**/.git/**",
+    "**/build/**",
+    "**/_minted*/**",
+    "**/*.aux",
+    "**/*.bbl",
+    "**/*.bcf",
+    "**/*.blg",
+    "**/*.fdb_latexmk",
+    "**/*.fls",
+    "**/*.log",
+    "**/*.out",
+    "**/*.pyg",
+    "**/*.run.xml",
+    "**/*.synctex.gz",
+    "**/*.toc",
+    "**/*.xdv"
+  ]
+}

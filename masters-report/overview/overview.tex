@@ -1,4 +1,36 @@
 \chapter{Overview}
+There has been an exciting amount of progress recently in the area of \emph{probabilistic separation logics} (PSL).
+Separation logic first introduced in \citet{og_sl} has since been tremendously successful in reasoning about
+heap manipulating programs \cite{} and concurrent programs \cite{}. 
+Iris \cite{iris} introduced a
+language-generic framework of separation logics for reasoning about programming languages with concurrency and higher order state,
+which spanned a significant class of mainstream programming languages. Notably the soundness of a significant subset
+of the Rust programming language \cite{rustbelt}. The popularity of Iris is due in part to the Iris Proof Mode (IPM) \cite{ipm},
+an ergonomic interface embedded in a host theorem prover, for proofs in separation logic, enabling the scaling of
+mechanisation of systems in a separation logic. The IPM was generalised away from Iris, and modularised to provide a frontend for any separation logic
+in \cite{mosel}.
+The application of separation logics for reasoning about
+\emph{probabilistic programs} was first explored in \cite{og_psl}. At a high level a probabilistic program offers sampling
+from a probability distribution as a primitive of the language. A persuasive notion of separation: ``separation is independence of
+random variables'' was proposed by Lilac \cite{lilac} which has been adopted by most subsequent probabilistic separation logics.
+
+This project provides a complete mechanisation of Core Lilac, in Lean, along with the proof mode required to carry out interactive
+proofs in it. We know of two similar roughly simultaneous projects, which are along with this project one of the first mechanised
+probabilistic separation logics: Bluebell \cite{bluebell} and Amaryllis \cite{amaryllis}.
+
+\textbf{Contributions}
+\begin{itemize}
+\item We mechanise the soundness of Core Lilac proof system (Lilac without conditioning) available \href{https://github.com/edwin1729/bppl-logic/tree/submission}{on github}.
+This is first mechanisation of a probabilistic separation logic which supports continuous distributions.
+\item We overcome difficulties in embedding Lilac (as provided in \cite{lilac}) into Iris, by suggesting some modifications to Lilac, and introduce
+some new proof rules (about expectations) as necessary to carry out proofs in Lilac
+\item We instantiate a nascent port of Iris to Lean to provide proof mode for carrying out lilac proofs. For Lilac-specific connectives we provide some
+custom tactics through metaprogramming. This also acts as one of the first non-trivial logics instantiating the Iris-lean port. 
+% \item We outline of validating probabilistic inference algorithms using probabilistic separation logics
+% with support for continuous distributions, as a promising reason for pursuing them. It is well known that 
+\end{itemize}
+
+
 \section{Contributions}
 \begin{itemize}
 \item We provide the first complete implementation of a probabilistic separation logic.
@@ -77,11 +109,31 @@ as the remove the difficulty of working with the probabilistic inference algorit
 for discrete algorithms, so discrete PPLs are not of much interest. So why are programs logics for discrete PPLs such as \citep{bluebell} and \cite{lohse} important?
 
 \subsection{Probabilistic programs in the wild}
+Probabilistic programs stretch far beyond the reaches of domain specific languages like Stan. They are in fact pervasive in modern software systems:
+cryptographic protocols, differential privacy, distributed systems and randomised algorithms. These were all examples where it would suffice to
+only support discrete probability distribution. Conventional techniques like software testing are much less applicable here; applying it naively
+would result in an outlier (correct) execution and a bug become indistinguishable. The above applications of probabilistic reasoning all require support
+only for discrete distributions, and generally fall firmly within traditional areas of computer science. This justifies the many logics which
+support only discrete distributions, including both bluebell and amaryllis. Examples requiring continuous distributions include
+Scientific computing (climate modelling, physics simulations for engineering applications), bayesian data analysis and probabilistic machine learning.
+In each of these, the probabilistic component is centred around probabilistic inference \cite{}
+% ghahramani2015 — Ghahramani, Nature 521 (2015), probabilistic ML
+% stuart2010 — Stuart, Acta Numerica 19 (2010), Bayesian inverse problems (the scientific-computing anchor)
+% vandemeent2018 — van de Meent et al., An Introduction to Probabilistic Programming (2018), the inference-as-foundation framing
+
 In the most general sense a probabilistic program is just any program which samples from a distribution. Support for this
 can be found in the standard libraries of every major programming language, such as Python, C++ or Java. 
 Some of critical applications manipulating discrete distributions, where formal verification is desirable is Cryptography \cite{} and
 differential privacy \cite{}. In fact one of the first major applications of probabilistic \emph{separation} logic is being pursued
 in the formalisation of \citep{bluebell} to prove soundness of Zero Knowledge Proof Systems (subfield of Cryptography).
+
+
+\subsection{Comparison with contemporary ongoing mechanisations}
+Each of the 3 mechanisation projects of Bluebell, Amaryllis and Lilac push the boundaries in distinct directions. Bluebell is a PSL which only supports
+discrete distributions. It
+
+Probabilistic program logics which endea
+
 
 % 1) Cryptography -> we're not building a statistical model here... what's going on?
 % 2)

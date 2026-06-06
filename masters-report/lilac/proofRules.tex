@@ -1,4 +1,4 @@
-\chapter{Mechanising Lilac Part II: Proofs}
+\chapter{Mechanising Lilac II: Proofs}
 \emph{Having overcome the fundamental change in the definitions, consolidate inconsistencies and instantiating Iris, we present here the 2nd aspect
 of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 3 of them
 in particular: \texttt{wp\_frame}, \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
@@ -15,6 +15,210 @@ so we try to maintain good abstractions and remark on the extensibility at point
 
 \Todo{Proof irrelavance for closed\_krm\_subtype also for conditioning}
 \Todo{Pi-lambda theorem not suitable for BaSL}
+
+\section{Finite Footprints}
+When it comes to the proof rules of Lilac, the probability reasoning that can occur in the logic is predominantly present in two rules \texttt{wp\_unif} and
+\texttt{wp\_flip}, which reason about two syntactic constructs from Appl, \texttt{unif01} (uniform distribution on unit interval) and \texttt{flip}
+(bernoulli distribution) respectively. There is nothing special about these two distributions, and we can indeed have a general rule \texttt{wp\_meas}, parametric
+over any distribution. For this suppose we define a new Appl term  we also introduce a construct for a defining a general distribution, like so:
+
+\[
+\tag{\textsc{wp-meas}}
+(\forall\, X : \RV A.\; X \sim \mu \wand Q)
+\;\vdash\;
+\mathrm{wp} (\lambda\ \_ \mapsto \mu) ( \lambda X\!:\!A.\mapsto Q)
+\]
+
+where $\mu$ is an arbitrary probability measure. We are specifying a denotation directly instead of taking the denotation of some concrete program
+Note that $(\lambda\ \_ \mapsto \mu) : A \marrow \mathcal{G} B$ which is correctly typed as a denotation of a program
+(in other words it is a kernel).
+
+\Todo{cite the result that any distribution can be constructed using uniform}
+
+The soundness of \texttt{wp\_meas} is the general theorem that we prove in lean and instantiate to \texttt{wp\_unif} and \texttt{wp\_flip}. The choice of the Hilbert Cube
+with finite footprint as a probability space was made to validate \texttt{wp\_meas}. In order to prove the soundness of this result, we first had to establish a
+substantial body of fundamental results in Lean about Hilbert cubes with finite footprint, to express transformations which are so intuitive that they do
+not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that Finite footprints
+were invented for validating these proof rules, and isn't of general mathematical interest to be supported by Mathlib.
+
+\textbf{Definition B.5 \cite[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_\Omega$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
+is of the form $F' \times [0,1]^\mathbb{N}$ for some $F' \subseteq [0,1]^n$.
+
+The intuition behind this definition goes back to the slogan ``measurability is ownership''. Finite footprint restricts the set of measurable functions from the
+Hilbert cube (thereby restricting ownership over random variables). We have adopted the below equivalent definition which makes the intuition explicit, at the cost of
+introducing a few more concepts (the change motivated making the proofs clearer and succinct). The following snippets are from \repo{Std}.
+
+\begin{leancode}
+/-- The σ-algebra is only "interesting" in the first `n` coordinates for
+some finite `n`.  In the rest of the coordinates, its the `univ` set. -/
+def FiniteFootprint (n : ℕ) (ms : MeasurableSpace (ℕ → I)) : Prop :=
+  ∃ ms' : MeasurableSpace (Fin n → I), ms = unSplitBi (ms' ×ₘ (⊥ : ℕ → I))
+\end{leancode}
+
+First let's look at the types involved $\mathbb{N} \to I$ is exactly the Hilbert cube, while $\mathrm{Fin}\ n \to I$ ($I^n$) is a finite portion of it.
+There exists an isomorphism $(\mathrm{Fin}\ n \to I) \times (\mathbb{N} \to I) \simeq \mathbb{N} \to I$, which just that we can split something infinite to a
+finite and infinite part.
+
+We define finite footprint based on this isomorphism, defined in Lean as \texttt{splitBi}:
+
+\begin{leancode}
+noncomputable def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ → I) :=
+  (MeasurableEquiv.piCongrLeft (fun _ => I) (finSumNatEquiv n)).symm.trans
+  (MeasurableEquiv.sumPiEquivProdPi (fun _ => I))
+\end{leancode}
+
+We focus on the type of splitBi; $\simeq^m$ is notation in mathlib for measurable equivalence, lifting the isomorphism just presented above for the types,
+to measurable spaces, i.e. there are measurable functions going back and forth, with composition in each way giving the left or right identity functions.
+(The body of the definition is using results from Mathlib, and is just constructing such an isomorphism)
+
+\texttt{splitBi} is the natural notion of isomorphism between measurable spaces that we chose for defining finite footprints, finally here is unsplitBi,
+which is applying the splitBi backwards, from the split measurable space to the ``unsplit'' space by taking the pullback $\sigma$-algebra, which is called \texttt{comap}
+in Lean.
+
+\begin{leancode}
+abbrev unSplitBi {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × (ℕ → I)))
+    : MeasurableSpace (ℕ → I) := ms.comap (splitBi n)
+\end{leancode}
+
+Now returning to the definition \texttt{FiniteFootprint}, we see that we are choosing some arbitrary measurable space on the finite part, and the
+measurable space $\bot = \{\phi, I^\mathbb{N}\}$ on the infinite part. This smallest/trivial measurable space on the infinite part of the hilbert
+cube, makes that part effectively meaningless. A random variable mapping from a finite footprint hilbert cube (thought of as an infinite list),
+would be forced to ignore all indices greater than n (
+from the infinite part). We offer a way to visualise a measurable space over the hilbert cube in \ref{fig:hc}.
+
+\begin{figure}[htbp]
+  \centering
+
+% \TwoPhasePartitionGraph{1234}{15}{8}{10}
+% \TwoPhasePartitionGraph{42}{15}{8}{10}
+% \TwoPhasePartitionGraph{43}{15}{8}{10}
+% \TwoPhasePartitionGraph{44}{15}{8}{10}
+\caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
+makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
+on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}
+\label{fig:hc}
+\end{figure}
+
+
+Let's take a quick example, to see why indices after n must be ignored. Take $X : I^\mathbb{N} \to Bool$, and a finite footprint measurable space over the domain
+and the powerset measurable space over the codomain ($\{\phi, \{false\}, \{true\}, \{false, true\}\}$).
+
+Let's say we know $X(0.1, 0.1, 0.1, \ldots) = false$. 
+Then what is the pre-image of the measurable set {false} constrained to be, to remain measurable? The smallest possible answer is $X^{-1} (\{false\}) = (0.1, 0.1, a_0, a_1, a_2, \ldots)$
+for arbitrary $a_i \in I$. Referring to \ref{fig:hc}, this is the same as saying that the region past n, is dense. Hopefully, this convinces the reader
+of the key fact that a random variable (which is a measurable function) from a finite footprint Hilbert cube, must ignore all the dimensions beyond n, in
+other words Finite footprint hilbert cube (FFHC) can't own every random variable and are restricted in some way. In particular, we are always able to easily construct
+random variables that a FFHC does not own simply by having some $Y$ consider the values of dimensions greater than n.
+
+The above FFHC property of measurability interpretable as ownership, only used that fact that FFHC can be decomposed into a product. So it is just
+a property of product measurable spaces. The key property of a lilac resource $\mathcal{P} = (\Sigma_{I^\mathbb{N}}, \mathcal{F}, \mu)$ (FFHC along with a probability measure) is one can create
+a new $\mathcal{P'} = (\Sigma_{I^\mathbb{N}}, \mathcal{F'}, \mu')$ by ``adding a random variable $Y$ to $\mathcal{P}$''.
+Let's make that intuition precise.
+
+\begin{enumerate}
+\item For all random variables $X : (I^\mathbb{N}, \mathcal{F}) \marrow A$ (we explicitly state the measurable space of
+the domain), which we refer to as random variables owned by $\mathcal{P}$, $X$ must also measurable w.r.t. $\mathcal{F'}$.
+\item Say we have a probability
+measure $\nu$ in the space $B : \texttt{Meas}$. We are able to construct $\mathcal{P'}$ such that with a suitable choice of $Y : (I^\mathbb{N}, \mathcal{F'}) \marrow A$,
+$Y_\#\mu' = \nu$!
+\end{enumerate}
+
+Let's show concretely how to construct both $\mathcal{P'}$ and $Y : I^\mathbb{N} \marrow \mathbb{R}$, taking $\mathbb{R}$ as the co-domain and
+the target distribution $\nu=\mathrm{Unif}[0,1]$ to be the uniform distribution on the unit interval,
+in this example. Let $\mathcal{P}$ have finite footprint n. The idea is to first construct a $\mathcal{P}_n = (I^\mathbb{N}, \mathcal{F}_n, \mu_n)$, 
+where we can define $Y$ as a projection  $Y := (\omega : \mathbb{N} \to I) \mapsto \omega n$ to obtain the target distribution $Y_\#\mu_n = \nu$.
+$\mathcal{P}_n$ satisfies condition (2) above while the original $\mathcal{P}$ of course satisfies (1), but neither satisfies both. We claim that taking the
+independent combination $\mathcal{P'} := \mathcal{P} \star \mathcal{P}_n$ will satisfy both conditions. Deferring the justification of this claim to
+the next section \ref{sec:wp-meas}, we provide the construction of $\mathcal{P'}$ here.
+
+The Hilbert cube can be decomposed into product measurable spaces
+at arbitrary indices n. The construction of $\mathcal{P}_n = (I^\mathbb{N}, \mathcal{F}_n, \mu_n)$, is defined using a decomposition of the hilbert cube
+into 3 pieces: before n, at n and after n.
+
+$(I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$
+
+We also need to define $\mu_n$. On a $\bot$ measurable space there is only one possible probability measure defined as $\mu_\bot := \{\phi \mapsto 0, \mathrm{univ} \mapsto 1\}$.
+$\mu_n := \mu_\bot \otimes \lambda_I \otimes \mu_\bot$. Where $\lambda_I$ is the lebesgue measure on $I$ and $\otimes$ is the product of measures (see Sec \ref{sec:measure_theory}).
+
+Note that $\lambda_I$ expanded into a measure on $\mathbb{R}$ (mapping all new elements from its domain to 0), is precisely $\nu=\mathrm{Unif}[0,1]$. So if $Y$ is a map from
+$\mathcal{P}_n$, we get $Y_\#\mu_n = \mathrm{Unif[0,1]}$ as required. We wish that if we take the independent combination $\mathcal{P'} := \mathcal{P} \star \mathcal{P}_n$,
+then we will also have $Y_\#\mu' = \mathrm{Unif[0,1]}$
+
+We are now in a position to state a 3rd slogan: ``Hilbert Cubes with Finite Footprint are infinite random number generators''. Given some resource $\mathcal{P}$ representing
+the state of a program, we are always able to modify this state to some $\mathcal{P'}$ which supports one more random variable $Y$ of our choice. Each of these $Y$s are
+just straightforward projections of some dimension n, i.e. measure on each dimension is the source of randomness. And we can repeat this process arbitrarily, because
+of the finite footprint condition, obtaining a resource
+which simultaneously supports an arbitrary number of random variables $Y_i$.
+
+
+\section{wp\_meas}
+\label{sec:wp-meas}
+
+\begin{leancode}
+lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitBi (N_ms ×ₘ Inf_nil)
+      = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by ...
+\end{leancode}
+
+% into 3 pieces and assign the $\bot$ measurable space to the left and right spaces
+% single dimension. 
+
+
+Note that in this presentation we have been verbose with stating the isomorphisms going back and forth by splitting and unsplitting the Hilbert cube. In the
+informal proof this isomorphism is not mentioned, and it is natural fluidly move in between the two representations, not even noticing that there are must in 
+fact be two different representations in a type theory (since the types $I^\mathbb{N}$ and $I^n \times I^\mathbb{N}$ are not equal). Similarly, measures over
+one representation fluidly move to the another. An aspect of the latter which was seemingly insignificant and completely intuitive, ended up turning into
+an entire file \repo{ProofRules/MeasureProduct} of proofs.
+
+based resources is that it allows   
+The properties of FFHC we have explored so far don't really warrant the use of an FFHC. All we really used was the fact that 
+
+\subsection{tour of the wp connective}
+
+Using this let's lay down the core intuition in the proof of \texttt{wp\_meas}. Taking some $\mathcal{P}$ for which the premise holds, our goal is to 
+validate $\mathcal{P} \vDash \mathrm{wp} (\lambda\ \_ \mapsto \mu) ( \lambda X\!:\!A.\mapsto Q)$.
+To validate a \texttt{wp} connective, one of the things we require is to construct a new $\mathcal{P'}$ which owns a random variable $X$ whose distribution
+is $\mu$. Mathematically stated, given $\mathcal{P'} = (\Sigma_{I^\mathbb{N}}, \mathcal{F}, \mu')$, 
+
+In order to see what is required to achieve this rule we first need to remember
+the semantics of the $\wand$. 
+$X \sim \mu \wand Q$ holds for some $\mathcal{P}$ if we have $\mathcal{R} \vDash X \sim \mu$, and $\mathcal{R} \star \mathcal{P}$ exists then
+$\mathcal{R} \star \mathcal{P} \vDash Q$. If the premise above holds, then 
+
+We need to 
+
+$ \mathcal{R} \vDash P \wand Q$ if there is some $\mathcal{P} \vDash P$
+
+Let us now create a 3rd slogan about Lilac ``Hilbert Cubes with Finite Footprint are infinite random generators''. More specifically
+a resource $\mathcal{P}$ (which is an FFHC plus a probability measure) can simultaneously support an arbitrary number of random variables, 
+
+allow the construction
+of
+
+% \[
+% (0.1, 0.1, 0.1) \mapsto 0.1
+% (0.1, 0.1, 0.2) \mapsto 0.2
+% (0.1, 0.1, 0.3) \mapsto 0.3
+
+% \]
+
+The infinite part is what is important denoting the smallest ``trivial'' measurable space consisting of just 
+
+decomposing a \texttt{MeasurableSpace} on the Hilbert Cube as the product of measurable space on  
+
+The above isomorphism on the underlying type can be lifted to an isomorphism on measurable spaces by stipulating isomorphisms between associated
+$\sigma$-algebras.
+
+
+What this is saying is that a \texttt{MeasurableSpace} with finite footprint can be decomposed as the product of two measurable pieces. Observe that
+$\mathbb{N} \to I$ is exactly the Hilbert cube, while $\mathrm{Fin} n \to I$ is a finite portion of it. The first piece, \texttt{ms'} is the finite piece,
+which is allowed to have an arbitrary $\sigma$-algebra associated with it. The second piece is infinite,
+
+The  ``interesting'' one (\texttt{ms'})
+being finite and the other being the unit measurable space, \texttt{Inf\_nil}  being infinite. The trivial
+
+So far we have ignored finite footprints 
+
 
 Let's recall in one place how we now define variables, contexts the language and the logic, by going through a simple but important proof rule \texttt{wp\_ret}.
 The syntax and semantics of the language has not changed and is still expressed as a measurable function $\sem{\Delta} \marrow A$, where

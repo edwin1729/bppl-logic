@@ -4,6 +4,8 @@
 \usepackage[english]{babel}
 \usepackage[utf8x]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usetikzlibrary{fadings}
 
 %% Sets page size and margins
 \usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
@@ -31,6 +33,7 @@
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage[square]{natbib}
 \usepackage[normalem]{ulem}
+\usepackage{xstring}
 
 \newcommand{\rcite}{\textcolor{red}{CITE}}
 \newcommand{\Todo}[1]{\texttt{<insert: #1>}}
@@ -38,11 +41,88 @@
 \newcommand{\wand}{\mathbin{-\!*}}
 \newcommand{\denote}[2]{\llbracket #1 \rrbracket_{#2}}
 \newcommand{\bient}{\mathrel{\dashv\vdash}}
-\newcommand{\repo}[1]{\href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/#1.lean}{Bppl.Lilac.#1}}
 \newcommand{\marrow}{\xrightarrow{\,\mathrm{m}\,}}
 \newcommand{\sem}[1]{\llbracket #1 \rrbracket}
 \newcommand{\rv}{\mathrm{rv}}
 \newcommand{\RV}{\mathrm{RV\ }}
+\newcommand{\repo}[1]{%
+  \StrSubstitute{#1}{/}{.}[\tmp]%
+  \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/#1.lean}{Bppl.Lilac.\tmp}%
+}
+\newcommand{\TwoPhasePartitionGraph}[4]{%
+% #1 = seed
+% #2 = number of random boxes
+% #3 = number of uniform boxes
+% #4 = number of uniform points per partition
+
+\begin{tikzpicture}[x=0.60cm,y=0.60cm]
+  \pgfmathsetseed{#1}
+
+  \def\nRand{#2}
+  \def\nUnif{#3}
+  \def\NUnif{#4}
+  \pgfmathtruncatemacro{\TotalBoxes}{\nRand+\nUnif}
+  \pgfmathtruncatemacro{\LastPartition}{\TotalBoxes}
+
+  % Draw strip (no hard right boundary, to suggest continuation)
+  \draw[thick] (0,0) -- (\TotalBoxes+0.2,0);
+  \draw[thick] (0,1) -- (\TotalBoxes+0.2,1);
+  \draw[thick] (0,0) -- (0,1);
+
+  % Internal partition lines
+  \foreach \x in {1,...,\TotalBoxes} {
+    \draw (\x,0) -- (\x,1);
+  }
+
+  % Left/random part:
+  % partitions 0,...,nRand-1
+  % each partition gets 1--5 random points
+  \foreach \i in {0,...,\numexpr\nRand-1\relax} {
+    \pgfmathtruncatemacro{\Ni}{1 + int(5*rnd)}
+    \expandafter\xdef\csname count\i\endcsname{\Ni}
+    \foreach \j in {1,...,\Ni} {
+      \pgfmathsetmacro{\yy}{0.08 + 0.84*rnd}
+      \coordinate (p\i-\j) at (\i,\yy);
+    }
+  }
+
+  % Right/uniform part:
+  % partitions nRand,...,TotalBoxes
+  \foreach \i in {\nRand,...,\LastPartition} {
+    \expandafter\xdef\csname count\i\endcsname{\NUnif}
+    \foreach \j in {1,...,\NUnif} {
+      \pgfmathsetmacro{\yy}{1 - \j/(\NUnif+1)}
+      \coordinate (p\i-\j) at (\i,\yy);
+    }
+  }
+
+  % Fully connect adjacent partitions
+  \foreach \i in {0,...,\numexpr\LastPartition-1\relax} {
+    \pgfmathtruncatemacro{\ip}{\i+1}
+    \edef\NA{\csname count\i\endcsname}
+    \edef\NB{\csname count\ip\endcsname}
+    \foreach \a in {1,...,\NA} {
+      \foreach \b in {1,...,\NB} {
+        \draw[line width=0.2pt, opacity=0.18] (p\i-\a) -- (p\ip-\b);
+      }
+    }
+  }
+
+  % Draw points
+  \foreach \i in {0,...,\numexpr\nRand-1\relax} {
+    \edef\NN{\csname count\i\endcsname}
+    \foreach \j in {1,...,\NN} {
+      \fill (p\i-\j) circle (0.8pt);
+    }
+  }
+  % Fade out the right-hand side
+  \fill[white,path fading=west] (\TotalBoxes-4,0) rectangle (\TotalBoxes+1.3,1);
+
+  % Dots on top of the fade
+  \node[scale=1.2] at (\TotalBoxes-0.5,0.5) {$\cdots$};
+
+\end{tikzpicture}%
+}
 
 
 \title{Foundational Verification of Probabilistic Programs}
