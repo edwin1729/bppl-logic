@@ -17,4 +17,5 @@ The following outlines the structure of the repository:
 <!-- - [`Bppl/Lilac/ProofRules/WPUnifHelpers.lean`](Bppl/Lilac/ProofRules/WPUnifHelpers.lean) — Helper lemmas for `WPMeas` (pending consolidation into `WPMeas.lean`). -->
 - [`Bppl/Lilac/ProofRules/MeasureProduct.lean`](Bppl/Lilac/ProofRules/MeasureProduct.lean) — Helper lemmas for the measure product condition used in `wp_meas`.
 - [`Bppl/Lilac/Examples.lean`](Bppl/Lilac/Examples.lean) — Worked examples (`unif1`, `unif2`, `half`) using the Iris proof mode instantiated to Lilac.
-- [`Bppl/Lilac/HilbertCube.lean`](Bppl/Lilac/HilbertCube.lean) — Fundamental transformations on Hilbert cubes.
+- [`Bppl/Lilac/Std.lean`](Bppl/Lilac/Std.lean) — Key definition used throughout the project: Finite Footprint,
+Fundamental translations on Hilbert Cubes, `RV` (random variable) and bundled measurable functions

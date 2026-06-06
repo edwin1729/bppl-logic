@@ -12,7 +12,6 @@ import Mathlib.Probability.ProductMeasure
 
 namespace HC
 open unitInterval MeasurableSpace
-noncomputable section
 
 variable {α β : Type*} {msα₁ msα₂ : MeasurableSpace α} {msβ₁ msβ₂ : MeasurableSpace β}
 -- scoped[HilbertCube] infixr:25 " ×ₘ " => MeasurableSpace.prod
@@ -27,7 +26,7 @@ abbrev N_nil (N : ℕ) : MeasurableSpace (Fin N → I) := ⊥
 abbrev I_nil : MeasurableSpace I := ⊥
 abbrev I_borel : MeasurableSpace I := inferInstance
 
-noncomputable def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ → I) :=
+def splitBi (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × (ℕ → I) :=
   (MeasurableEquiv.piCongrLeft (fun _ => I) (finSumNatEquiv n)).symm.trans
   (MeasurableEquiv.sumPiEquivProdPi (fun _ => I))
 
@@ -36,7 +35,7 @@ dimensions and another space on the rest of the infinite dimensions. -/
 abbrev unSplitBi {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
   ms.comap (splitBi n)
 
-noncomputable def splitOne : (ℕ → I) ≃ᵐ I × (ℕ → I) :=
+def splitOne : (ℕ → I) ≃ᵐ I × (ℕ → I) :=
   (MeasurableEquiv.piCongrLeft (fun _ => I)
     (Equiv.natEquivNatSumPUnit.trans (Equiv.sumComm ℕ Unit))).trans
   ((MeasurableEquiv.sumPiEquivProdPi (fun _ => I)).trans
@@ -45,7 +44,7 @@ noncomputable def splitOne : (ℕ → I) ≃ᵐ I × (ℕ → I) :=
 abbrev unSplitOne (ms : MeasurableSpace (I × (ℕ → I))) : MeasurableSpace (ℕ → I) :=
   ms.comap splitOne
 
-noncomputable def splitTri (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × I × (ℕ → I) :=
+def splitTri (n : ℕ) : (ℕ → I) ≃ᵐ (Fin n → I) × I × (ℕ → I) :=
   (splitBi n).trans ((MeasurableEquiv.refl _).prodCongr splitOne)
 
 abbrev unSplitTri {n : ℕ} (ms : MeasurableSpace ((Fin n → I) × I × (ℕ → I)))
@@ -64,8 +63,8 @@ lemma unSplitBi_eq_comap_fst (n : ℕ)
   simp only [unSplitBi, Inf_nil, MeasurableSpace.prod, MeasurableSpace.comap_bot,
     sup_bot_eq, MeasurableSpace.comap_comp]
 
-lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn : n ≤ n') (ff : FiniteFootprint n ms)
-    : FiniteFootprint n' ms := by
+lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn : n ≤ n')
+    (ff : FiniteFootprint n ms) : FiniteFootprint n' ms := by
   obtain ⟨ms_n, h_ms_n⟩ := ff
   use ms_n.comap (fun (a : Fin n' → I) (i : Fin n) => a (Fin.castLE hn i))
   convert h_ms_n using 1
@@ -73,7 +72,95 @@ lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn
   convert unSplitBi_eq_comap_fst n ms_n
   exact comap_comp
 
-end
+lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) :
+    (MeasurableSpace.prod msα₁ msβ₂) ⊔ (MeasurableSpace.prod msα₂ msβ₁) =
+    MeasurableSpace.prod msα₂ msβ₂ := by
+  unfold MeasurableSpace.prod
+  rw [sup_sup_sup_comm,
+      sup_eq_right.mpr (MeasurableSpace.comap_mono le_α),
+      sup_eq_left.mpr (MeasurableSpace.comap_mono le_β)]
+
+private lemma commute_over_tri {N : ℕ} (N_ms : MeasurableSpace (Fin N → I)) :
+    unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil)
+    = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by
+  have le_β : I_nil ×ₘ Inf_nil ≤ I_borel ×ₘ Inf_nil := sup_le_sup_right (comap_mono bot_le) _
+  rw [← comap_sup, commute bot_le le_β]
+
+private lemma eq_N_ms {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitBi (N_ms ×ₘ Inf_nil) = unSplitTri (N_ms ×ₘ I_nil ×ₘ Inf_nil) := by
+  simp only [prod, comap_bot, bot_le, sup_of_le_left, comap_comp, le_refl]
+  congr 1
+
+/-- Used in the construction for wp_meas, where a single dimension gets added between at the
+separation index separatiing the finite part with interesting MeasureSpace and the infinite part
+with boring MeasurableSpace. -/
+lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitBi (N_ms ×ₘ Inf_nil)
+      = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by
+  rw [eq_N_ms N_ms]
+  exact commute_over_tri N_ms
+
+abbrev N_nil_I_borel (N : ℕ) := unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil)
+abbrev N_borel_I_borel (N : ℕ) := unSplitTri ((N_borel N) ×ₘ I_borel ×ₘ Inf_nil)
+
+/-- this helper relates `unSplitTri` at `N` to `unSplitBi` at `N+1` by absorbing the middle
+`I`-coordinate into the finite (first) part. -/
+lemma unSplitTri_eq_unSplitBi_succ {N : ℕ}
+    (ms_N : MeasurableSpace (Fin N → I))
+    (ms_I : MeasurableSpace I) :
+    unSplitTri (ms_N ×ₘ ms_I ×ₘ Inf_nil) =
+    @unSplitBi (N + 1)
+      ((MeasurableSpace.comap (· ∘ Fin.castSucc) ms_N ⊔
+        MeasurableSpace.comap
+          (fun f => f (Fin.last N)) ms_I) ×ₘ
+        Inf_nil) := by
+          simp +decide only [unSplitTri, prod, comap_bot, bot_le, sup_of_le_left, comap_comp,
+            comap_sup, unSplitBi];
+          congr! 2
+
+/-- `FiniteFootprint` for an arbitrary sub-σ-algebra on the first `N` coordinates
+combined with `I_borel` on coordinate `N`. -/
+lemma ff_unSplitTri_I_borel {n : ℕ} (ms : MeasurableSpace (Fin n → I)) :
+    ∃ n', FiniteFootprint n' (unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil)) :=
+  ⟨n + 1, _, unSplitTri_eq_unSplitBi_succ ms I_borel⟩
+
+lemma ff_N_nil_I_borel {N : ℕ} : ∃ n, FiniteFootprint n (N_nil_I_borel N) :=
+  ff_unSplitTri_I_borel (N_nil N)
+lemma ff_N_borel_I_borel {N : ℕ} : ∃ n, FiniteFootprint n (N_borel_I_borel N) :=
+  ff_unSplitTri_I_borel (N_borel N)
+
+lemma N_nil_I_borel_le_Inf_borel (N : ℕ) : N_nil_I_borel N ≤ Inf_borel := by
+  refine MeasurableSpace.comap_le_iff_le_map.mpr ?_
+  simp only [prod, comap_bot, bot_le, sup_of_le_left, comap_comp, sup_of_le_right,
+    MeasurableSpace.map, MeasurableEquiv.measurableSet_preimage]
+  exact MeasurableSpace.comap_le_iff_le_map.mpr (measurable_snd.fst)
+
+lemma N_borel_I_borel_le_Inf_borel (N : ℕ) : N_borel_I_borel N ≤ Inf_borel := by
+  unfold N_borel_I_borel
+  simp only [prod, N_borel, Inf_nil, comap_bot, bot_le, sup_of_le_left, comap_comp,
+    comap_sup, sup_le_iff]
+  constructor <;> intro s hs <;>
+    rcases hs with ⟨t, ht, rfl⟩
+  · exact measurable_pi_lambda _
+      (fun _ => measurable_pi_apply _) ht
+  · apply_rules [MeasurableSet.preimage, ht]
+    fun_prop
+
+/-- The combined σ-algebra on first `N` coords + Borel on coord `N` is ≤ `Inf_borel`. -/
+lemma unSplitTri_I_borel_le_Inf_borel {N : ℕ} (ms : MeasurableSpace (Fin N → I))
+    (hms : ms ≤ N_borel N) : unSplitTri (ms ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := by
+  refine trans ?_ ( N_borel_I_borel_le_Inf_borel N )
+  apply_rules [ MeasurableSpace.comap_mono, sup_le_sup_right ]
+
+@[fun_prop]
+lemma coordProj_measurable (n : ℕ) :
+    @Measurable (ℕ → I) I (N_nil_I_borel n) _ (fun ω ↦ ω n) :=
+  (Measurable.comp (measurable_snd.fst)) (comap_measurable _)
+
+
+/-- The first component of `splitBi n ω` at index `i : Fin n` equals `ω ↑i`. -/
+@[simp]
+lemma splitBi_fst_apply (n : ℕ) (ω : ℕ → I) (i : Fin n) : (splitBi n ω).1 i = ω i := rfl
 end HC
 
 open MeasureTheory MeasureTheory.Measure unitInterval
@@ -164,6 +251,8 @@ notation x " ;; " xs => RV.prod x xs
 abbrev comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
   ⟨⟨g ∘ f, Measurable.comp g.meas f.meas⟩, sorry⟩
 notation g " ∘ᵣ " f => RV.comp g f
+
+def coordProj (n : ℕ) : RV I := ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
 
 abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
 notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g

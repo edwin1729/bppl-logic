@@ -6,7 +6,7 @@ Authors: Edwin Fernando
 
 import Mathlib
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
-import Bppl.Lilac.HilbertCube
+import Bppl.Lilac.Std
 
 /-! # APPL probabilistic programming language syntax and semantics
 

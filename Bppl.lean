@@ -8,4 +8,3 @@ import Bppl.Lilac.ProofRules.WPMeas
 import Bppl.Lilac.ProofRules.WPUnifHelpers
 import Bppl.Lilac.ProofRules.MeasureProduct
 import Bppl.Lilac.Examples
-import Bppl.Lilac.HilbertCube

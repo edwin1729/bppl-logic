@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Edwin Fernando
 -/
 
-import Bppl.Lilac.HilbertCube
+import Bppl.Lilac.Std
 import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
 import Mathlib.MeasureTheory.Measure.RegularityCompacts
 import Mathlib.Topology.EMetricSpace.Paracompact

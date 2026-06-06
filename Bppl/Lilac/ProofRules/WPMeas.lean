@@ -84,7 +84,7 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
   have ff_D_ext := HC.finite_footprint_of_ge (le_max_right n₁ n₂) ff_D_ext
 
   have hΩ_le_pre : Ω.ms ≤ (↓Ω_pre).ms := by rw [PSp.sum_ms_of_prod]; exact subset_sum_r Ω_fr.ms Ω.ms
-  let X : RV ⟪ty⟫ := X_glue ∘ᵣ ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
+  let X : RV ⟪ty⟫ := X_glue ∘ᵣ (RV.coordProj n)
   -- Construct μ' and Ω_n which are relevant to after the program runs
   let μ_k : ProbabilityMeasure (Fin n → I) :=
     μ.map (measurable_fst.comp (HC.splitBi n).measurable).aemeasurable
