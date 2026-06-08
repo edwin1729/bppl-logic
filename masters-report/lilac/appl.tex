@@ -1,18 +1,22 @@
 \section{Syntax and semantics of Appl}
-To reason about Appl (see \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
+To reason about Appl (see Sec \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
 define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
 of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, when writing a specification on it, and would lead to a
 proliferation of exception handling. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
 letting us define a syntax (AST) that is well-typed by construction.
 
-For disambiguation, we refer to types in the \emph{meta language} (in our case Lean) and \emph{object language} (Appl), when it is unclear.
+We need to disambiguate, references to types in Lean and types of Appl (which are in-fact terms in Lean). We will refer to the former as types in
+the \emph{meta language} and to the latter as types in the \emph{object language}.
 
 There are several standard ways to define object languages which are well-typed by construction, which all differ in the crucial problem of representing
 (object language) variables. This seemingly innocent problem of how to represent variables is one of the biggest issues encountered in this project, and
 standard techniques don't quite work for Appl, because of it's non-standard interpretation of (object language) types.
 
-The final (Lean) representation of chosen for Appl follows a technique called Dependent De Brujin Indices
-\citep[prefix][see chap 17, Reasoning about programming language syntax]{cpdt}. Discussion on the alternatives are postponed to \ref{}.
+The final (Lean) representation of chosen for Appl follows a technique called dependent de Brujin indices~\citep[see chap 17, Reasoning about programming language syntax]{cpdt}
+The reference also covers Parametric Higher Order Abstract Syntax which was heavily considered, along with the simple string based approach to variables,
+which is standard in Iris projects. For both alternatives it is not straightforward or perhaps not even possible to express that the denotation of
+a program is not an ordinary function from a variable context but a measurable function. Among these, only de Brujin indices make this map explicit. So that
+we can express measurability.
 
 First we present the types of Appl along with its denotational semantics, taken from \repo{Appl}.
 \begin{leancode}
@@ -21,32 +25,41 @@ inductive Ty where
   | bool
   | real
   | exp : ℕ → Ty → Ty -- Tyⁿ
-  | index
-  | G : Ty → Ty
-
-@[reducible] def Ty.den : Ty → MeasCat
+  | G : Ty → Ty -- Giry monad
+  
+@[reducible] def Ty.den : Ty → MeasCat -- category of measurable spaces
   | prod ty₁ ty₂ => .of (ty₁.den × ty₂.den)
   | bool => .of Bool
   | real => .of ℝ
   | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
-  | index => .of ℕ
-  -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
   | G ty => .of (ProbabilityMeasure (ty.den))
 \end{leancode}
 
-This mirrors the definition in the paper with no deviations. Note that the denotation of Appl types is \lean|MeasCat|, the category of
+This mirrors the definition in the paper~\citep{lilac} with no deviations. Note that the denotation of Appl types is \lean|MeasCat|, the category of
 MeasurableSpace, rather than \lean|Type| as for most other object languages. It is crucial to annotate \lean|@[reducible]|, which tells the
 typechecker to unfold \lean|Ty.den| when checking if two types are definitionally equal. The importance of this will be made clear once we describe
 the denotation of terms.
 
-First we describe the 
-De Brujin indices 
+First we describe the machinery for dependent de Brujin indices. De Brujin indices is a system of variable naming that facilitates guarantees
+by the type system that there is no usage of undeclared variables. The idea is to use natural numbers as names, where 0 refers to the nearest (rightmost)
+binding, 1 refers to the next one and so on. $(\lambda.\, \lambda. \#1 + \#0)$ would represent $(\lambda x.\, \lambda y. x + y)$ for example.
 
-Here is an excerpt of the definitions of terms, (omitted constructors can be found on Github).
+First we upgrade to a typed lambda calculus: $\mathbb{N}$ is replaced with \texttt{List Ty} and an index like $\#0$ for example is a $ty : Ty$ at the
+head of the list. \emph{Dependent} de Brujin indices remove the worry that we may still refer to an index that is too high and thus unbound.
+We use inductive type, \texttt{Member}, which is a proof of membership in a \texttt{List Ty}, as indices with which we refer to variables.
+
+\begin{leancode}
+inductive Member : α → List α → Type
+  | head {a as}  : Member a (a::as)
+  | tail {a b bs}: Member a bs → Member a (b::bs)
+\end{leancode}
+
+Note that \texttt{{a}} is syntax for an inferred argument. Here is the definition of terms. Note how \texttt{var} is defined use a \texttt{Member} as
+an index.
 
 \begin{leancode}
 inductive Term : List Ty → Ty → Type
-  | var : Member ty ctx → Term ctx ty
+  | var : Member ty ctx → Term ctx ty -- a variable can never be unbound
   | ret : Term ctx ty → Term ctx (.G ty)
   | bind : Term ctx (.G ty₁) → Term (ty₁ :: ctx) (.G ty₂) → Term ctx (.G ty₂)
   | pair : Term ctx ty₁ → Term ctx ty₂ → Term ctx (.prod ty₁ ty₂)
@@ -55,23 +68,23 @@ inductive Term : List Ty → Ty → Type
   | T : Term ctx .bool
   | F : Term ctx .bool
   | ite : Term ctx .bool → Term ctx ty → Term ctx ty → Term ctx ty
-  | flip : (p : ℝ≥0) → (h : p ≤ 1) → Term ctx (.G .bool)
   | r : ℝ → Term ctx .real
   | arith : Arith → Term ctx .real → Term ctx .real → Term ctx .real
   | cmp : Cmp → Term ctx .real → Term ctx .real → Term ctx .bool
-  | unif01 : Term ctx (.G .real)
+  | flip : (p : ℝ≥0) → (h : p ≤ 1) → Term ctx (.G .bool) -- Ber p
+  | unif01 : Term ctx (.G .real) -- Uniform[0,1]
 \end{leancode}
 
+In Lean's dot notation, \texttt{.G} will elaborate into \texttt{Ty.G} since the expected type at that location can be inferred.
+We can anticipate that the semantics of a term $te : .G ty$ (object language typing), would be a Kernel.  % Appl is interpreted in a monad (the Giry)
+\texttt{bind}  \texttt{Arith} and \texttt{Cmp}
+are types for the syntax of operators like $+$, $-$, $\leq$, etc, so we omit them, Below we provide the denotation of selected terms:
+
 \begin{leancode}
-/-- Takes the term and variable environment (which is a measurable function)
-to give an element of a measurable space -/
-@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den
+@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den -- -m→ is a measurable function
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
   | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
-      -- MeasureTheory.Measure.measurable_dirac.comp X.den.2⟩
-  -- In `bind` we are working exactly with kernels (as shown by the two coercions above)
-  -- The `Kernel` api bundles `measurable` property and we need to convert to it and back
-  -- to use its deep measure theoretic results for constructing measurable functions
+  -- In `bind` we are working exactly with kernels
   | @bind _ ty₁ ty₂ M N =>
     letI T := List.TProd (⟪·⟫) ctx
     letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
@@ -79,23 +92,25 @@ to give an element of a measurable space -/
     toDen (k₂ ∘ₖ k₁)
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
-  | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
   | T => ⟨fun env ↦ true, measurable_const⟩
-  | F => ⟨fun env ↦ false, measurable_const⟩
   | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
-      -- the function translating from bool to Prop is `Measurable`
-      -- by `measurableSet_singleton true`
       Measurable.ite (P.den.2 (measurableSet_singleton true)) M.den.2 N.den.2⟩
-  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
   | r x => ⟨fun _ ↦ x, measurable_const⟩
-  | arith op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
-    (op.den.2).comp (M.den.2.prod N.den.2)⟩
-  | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
-    (op.den.2).comp (M.den.2.prod N.den.2)⟩
+  | flip p hp => ⟨fun _ ↦ ⟨(bernoulli p hp).toMeasure, inferInstance⟩, measurable_const⟩
   | unif01 => ⟨fun _ ↦ ⟨lebI, inferInstance⟩, measurable_const⟩
 \end{leancode}
 
-Note that we use the notation $ \langle \langle ty \rangle \rangle $ for the denotation of an APPL type in the lean codebase since the standard $\llbracket ty \rrbracket$ was already in use in some dependencies.
+Firstly, if \texttt{Ty} was not marked as \lean|@[reducible]|, each denotation would not type check. In \lean{Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den},
+\texttt{ty.den} needs to be normalised to the actual denotation of a \texttt{Ty}. For example, if \texttt{Ty.real} does not reduce to $\mathbb{R}$
+then in the semantics of \texttt{Term.r}, we have $x : \mathbb{R}$, but we want $x : Ty.real$ which will not type-check. This kind of type-level
+computation has its limits and during the project we had faced significant difficulties with being able to prove that two types are equal, but the 
+reduction not happening automatically (called \emph{definitional equality}), and thus the terms could not be typed as desired.
+
+Note that we use the notation $\tysem{ty}$ for the denotation of an APPL type in the lean codebase since the standard $\llbracket ty \rrbracket$ was already in use in some dependencies.
+
+Unfolding \texttt{List.TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denotations is iteratively taken.
+A measurable space over \texttt{List.TProd} is provided by Mathlib in this fashion, if each of the components of the list has associated with it a measurable space.
+The main reason we are using dependent de Brujin indices, even though there are drawbacks to readability of the proof interface, is because it is clear how to define a measurable space over a heterogeneous list.
 
 \Todo{The kernel Api used for bind}
 

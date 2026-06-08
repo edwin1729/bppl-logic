@@ -45,6 +45,7 @@
 \newcommand{\bient}{\mathrel{\dashv\vdash}}
 \newcommand{\marrow}{\xrightarrow{\,\mathrm{m}\,}}
 \newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\tysem}[1]{\langle\langle #1 \rangle\rangle}
 \newcommand{\rv}{\mathrm{rv}}
 \newcommand{\RV}{\mathrm{RV\ }}
 \newcommand{\repo}[1]{%
@@ -105,7 +106,7 @@
     \edef\NB{\csname count\ip\endcsname}
     \foreach \a in {1,...,\NA} {
       \foreach \b in {1,...,\NB} {
-        \draw[line width=0.2pt, opacity=0.18] (p\i-\a) -- (p\ip-\b);
+        \draw[line width=0.2pt, opacity=0.25] (p\i-\a) -- (p\ip-\b);
       }
     }
   }

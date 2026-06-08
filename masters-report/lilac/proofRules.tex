@@ -1,17 +1,20 @@
 \chapter{Mechanising Lilac II: Proofs}
 \emph{Having overcome the fundamental change in the definitions, consolidate inconsistencies and instantiating Iris, we present here the 2nd aspect
-of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 3 of them
-in particular: \texttt{wp\_frame}, \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
+of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 2 of them
+in particular: \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
 connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use Mathlib's Probability Kernels, with kernel style definitions
 and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
-measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube. Some of the development of these proofs
-happened simultaneously with surprising progress in LLM-based auto-formalisation in Lean. We report on how these tools were used with success in simpler
-sub proofs (which are time consuming to work out but not conceptually hard), but they are not particularly good or successful, when the rich grounding of Mathlib's
-Api is not present and a library of lemmas needs to first be built in order to carry out a proof as was the case for \texttt{wp\_unif}. It is worth noting
-that as past contributor of Mathlib, Mathlib has exacting code quality standards, for the generalisability and suitable abstractions used in contributed
-code, and as seen the success of such autoformalisation is in part due to the availability of such an excellent library. The ambitions of this mechanisation
-is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic \cite{},
-so we try to maintain good abstractions and remark on the extensibility at points in the chapter.}
+measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube.}
+
+
+% Some of the development of these proofs
+% happened simultaneously with surprising progress in LLM-based auto-formalisation in Lean. We report on how these tools were used with success in simpler
+% sub proofs (which are time consuming to work out but not conceptually hard), but they are not particularly good or successful, when the rich grounding of Mathlib's
+% Api is not present and a library of lemmas needs to first be built in order to carry out a proof as was the case for \texttt{wp\_unif}. It is worth noting
+% that as past contributor of Mathlib, Mathlib has exacting code quality standards, for the generalisability and suitable abstractions used in contributed
+% code, and as seen the success of such autoformalisation is in part due to the availability of such an excellent library. The ambitions of this mechanisation
+% is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic \cite{},
+% so we try to maintain good abstractions and remark on the extensibility at points in the chapter.}
 
 \Todo{Proof irrelavance for closed\_krm\_subtype also for conditioning}
 \Todo{Pi-lambda theorem not suitable for BaSL}
@@ -42,7 +45,7 @@ substantial body of fundamental results in Lean about Hilbert cubes with finite 
 not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that Finite footprints
 were invented for validating these proof rules, and isn't of general mathematical interest to be supported by Mathlib.
 
-\textbf{Definition B.5 \cite[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_\Omega$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
+\textbf{Definition B.5 \cite[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
 is of the form $F' \times [0,1]^\mathbb{N}$ for some $F' \subseteq [0,1]^n$.
 
 The intuition behind this definition goes back to the slogan ``measurability is ownership''. Finite footprint restricts the set of measurable functions from the
@@ -151,6 +154,14 @@ just straightforward projections of some dimension n, i.e. measure on each dimen
 of the finite footprint condition, obtaining a resource
 which simultaneously supports an arbitrary number of random variables $Y_i$.
 
+We end this section with the definition of a finite footprint for a measurable function:
+
+\textbf{Definition B.6 \cite[Appendix B]{lilac}} A random variable $X : (I^\mathbb{N}, \Sigma_{I^\mathbb{N}}) \to (A, \Sigma_A)$ has finite footprint if the pullback $\sigma$-algebra $\{X^{-1}(E) \mid E \in \Sigma_A\}$ has finite footprint.
+
+The need for this definition is a technical detail: sometimes we will not always have access to a measurable space with finite footprint to define a measurable map from. Even when a measurable function
+is from the Borel $\sigma$-algebra on the Hilbert cube, this definition allows us to only consider those measurable maps, which still behave as if they were mapping from some $\sigma$-algebra
+with a finite footprint. We will see an example of this in use in Sec \ref{sec:wp-bind}.
+
 \section{A tour of the \texttt{wp} connective}
 \label{sec:wp}
 We restate and motivate the definition of the \texttt{wp} connective in this section:
@@ -168,22 +179,46 @@ The \texttt{wp} connective is the most crucial and intricate part of the semanti
 Specifically, at the heart of the definition is the requirement that running the program on $\mathcal{P}$ as the resource, will cause a modification of the resource to $\mathcal{P'}$, which
 1) doesn't make unnecessary changes to $\mathcal{P}$ 2) is able to generate the output of the program $M$.
 These clauses are captured respectively by the following splitting:
-\[
-\begin{array}{c@{\qquad\qquad}c}
-\left( \begin{array}{l} \omega \leftarrow \mu;\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr) \end{array} \right)
-&
-\left( \begin{array}{l} \omega \leftarrow \mu;\\ M(\omega) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(X(\omega)\bigr) \end{array} \right)
+\begin{align}
+\left(
+\begin{array}{l}
+\omega \leftarrow \mu;\\
+\mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr)
 \end{array}
-\]
+\right)
+&=
+\left(
+\begin{array}{l}
+\omega \leftarrow \mu';\\
+\mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr)
+\end{array}
+\right)
+\qquad&
+\left(
+\begin{array}{l}
+\omega \leftarrow \mu;\\
+M(\omega)
+\end{array}
+\right)
+&=
+\left(
+\begin{array}{l}
+\omega \leftarrow \mu';\\
+\mathrm{ret}\bigl(X(\omega)\bigr)
+\end{array}
+\right)
+\label{eq:original}
+\\[1ex]
+(D_{\mathrm{ext}})_\#\mu
+&=
+(D_{\mathrm{ext}})_\#\mu'
+\qquad&
+\mu \bind M
+&=
+X_\#\mu'
+\label{eq:simplified}
+\end{align}
 
-which further simplifies to: 
-\[
-\begin{array}{c@{\qquad\qquad\qquad}c}
-(D_{ext})_\#\mu = (D_{ext})_\#\mu'
-&
-\mu \bind M = X_\#\mu'
-\end{array}
-\]
 
 Firstly we see that neither measure associated with the resources $\mathcal{P}$ or $\mathcal{P'}$ get used directly. Instead, we use $\mu$ and $\mu'$ respectively which is any larger measure
 on the Borel sigma algebra on the Hilbert cube. On the left, we see that if we choose arbitrarily some random variable $D_{ext}$ we can accommodate for the random variable to be unchanged,
@@ -251,34 +286,42 @@ def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
   (Q X).1 Ω'
 \end{leancode}
 
+We see quite a lot of new notation. Firstly, $\checkmark'$ is notation for \lean{Option.is_some : Option a → Bool}, stating for example that the independent combination \lean{Ω_fr ⋆ Ω} exists.
+$\downarrow$ denotes unwrapping of the value within an \texttt{Option} when we know it is \texttt{some}. We see that the choice of random variable \texttt{D\_ext} can be to any $(\alpha, ms\alpha)$.
+As suggested in the beginning of this equation satisfied by $\mu$ and $\mu'$ can be written in various forms, in particular we had decomposed it into two equations each of which were point free.
+In the lean code too we have a point free formulation of the equation, which essentially merges the two point free forms above. This style is adopted since it uses the
+``kernel API'', Mathlib's preferred style~\citep{remy} for expressing these kinds of equations. The ``kernel API'' has vast library of lemmas, and one can imagine
+how using a point free style facilitates prerequisites for applying a lemma to be more easily inferred (less parameters less things to infer), by the workhorse of type-class inference~\citep{spitters}.
+Again we explain the notation. We have merged the two equations from Eq \ref{eq:simplified}, using the
+$\times_k = \text{Kernel.prod} : \text{Kernel} \alpha \beta \to \text{Kernel} \alpha \gamma \to Kernel \alpha (\beta \times \gamma)$. Remember that a kernel is defined $\text{Kernel} \alpha \beta := \alpha \marrow \mathcal{G} \beta$.
+$M$ has type isomorphic to that of a Kernel\footnote{\texttt{toMK} is a manual coercion to a kernel, which is required since denotation of Appl programs are not in general kernels, only those with Appl type \texttt{Ty.g ty}}.
+\texttt{det} makes a $\RV \langle\langle A\rangle\rangle$ into a Kernel.
+
 \section{wp\_meas}
 \label{sec:wp-meas}
 
 In Sec \ref{sec:ff} on Finite Footprints we gave most of the intuition for the proof of the rule \texttt{wp\_meas} followed by defining precisely the semantics of \texttt{wp}, which appears in
 \texttt{wp\_meas}, in Sec \ref{sec:wp}. Now we can discuss the proof of soundness of \texttt{wp\_meas}, elaborating on Sec \ref{sec:ff} and showing parts of the Lean mechanisation.
 
-\begin{leancode}
-lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
-    : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitBi (N_ms ×ₘ Inf_nil)
-      = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by ...
-\end{leancode}
+In our presentation of transformations on the Hilbert cube, we are being quite verbose with stating the isomorphisms (measurable equivalence), by ``splitting'' and ``unsplitting'' the Hilbert cube. In the
+informal proof this isomorphism is not mentioned, and it is natural to fluidly move in between the two representations, not even noticing that there are must in 
+fact be two different representations in a type theory (since the types $I^\mathbb{N}$ and $I^n \times I^\mathbb{N}$ are not equal). At the base there is a measurable equivalence on measurable spaces,
+and on top of that there is also an isomorphism of measures over
+each representation. In Sec \ref{sec:ff} we had brushed over this as is done in the informal proof, appealing to intuition. However, this isomorphism between the measures is not covered by
+Mathlib, so as part of this project we have had to develop some deep measure-theoretic results which are not directly related to finite footprints.
+This is one of the factors which makes the proof of \texttt{wp\_meas} the hardest in the entire development, and ended up taking weeks instead of days. Here we talk specifically about the
+measure-theoretic result which lets us make some remarks on some incompatibilities of Mathlib (or mainstream mathematics) with our requirements which has plagued most proofs across the development to some extent.
 
-% into 3 pieces and assign the $\bot$ measurable space to the left and right spaces
-% single dimension. 
+\[
+\tag{\textsc{wp-meas}}
+(\forall\, X : \RV A.\; X \sim \mu \wand Q)
+\;\vdash\;
+\mathrm{wp} (\lambda\ \_ \mapsto \mu) ( \lambda X\!:\!A.\mapsto Q)
+\]
 
+We want to prove a \texttt{wp} statement.
 
-Note that in this presentation we have been verbose with stating the isomorphisms going back and forth by splitting and unsplitting the Hilbert cube. In the
-informal proof this isomorphism is not mentioned, and it is natural fluidly move in between the two representations, not even noticing that there are must in 
-fact be two different representations in a type theory (since the types $I^\mathbb{N}$ and $I^n \times I^\mathbb{N}$ are not equal). Similarly, measures over
-one representation fluidly move to the another. An aspect of the latter which was seemingly insignificant and completely intuitive, ended up turning into
-an entire file \repo{ProofRules/MeasureProduct} of proofs.
-
-based resources is that it allows   
-The properties of FFHC we have explored so far don't really warrant the use of an FFHC. All we really used was the fact that 
-
-\subsection{tour of the wp connective}
-
-Using this let's lay down the core intuition in the proof of \texttt{wp\_meas}. Taking some $\mathcal{P}$ for which the premise holds, our goal is to 
+Taking some $\mathcal{P}$ for which the premise holds, our goal is to 
 validate $\mathcal{P} \vDash \mathrm{wp} (\lambda\ \_ \mapsto \mu) ( \lambda X\!:\!A.\mapsto Q)$.
 To validate a \texttt{wp} connective, one of the things we require is to construct a new $\mathcal{P'}$ which owns a random variable $X$ whose distribution
 is $\mu$. Mathematically stated, given $\mathcal{P'} = (\Sigma_{I^\mathbb{N}}, \mathcal{F}, \mu')$, 
@@ -291,46 +334,51 @@ $\mathcal{R} \star \mathcal{P} \vDash Q$. If the premise above holds, then
 We need to 
 
 $ \mathcal{R} \vDash P \wand Q$ if there is some $\mathcal{P} \vDash P$
+\Todo{How do I talk about anything hard without getting bogged down with explaining easy stuff. I think I should just give up on re-explaining
+proofs. It makes no sense there's already a paper, and I've formalized it so why another version :(}
 
-Let us now create a 3rd slogan about Lilac ``Hilbert Cubes with Finite Footprint are infinite random generators''. More specifically
-a resource $\mathcal{P}$ (which is an FFHC plus a probability measure) can simultaneously support an arbitrary number of random variables, 
+We begin with this equality at the heart of the proof.
+\begin{leancode}
+lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
+    : unSplitTri ((N_nil N) ×ₘ I_borel ×ₘ Inf_nil) ⊔ unSplitBi (N_ms ×ₘ Inf_nil)
+      = unSplitTri (N_ms ×ₘ I_borel ×ₘ Inf_nil) := by ...
+\end{leancode}
+Recalling the development from Sec \ref{sec:ff} this proof is essentially $\mathcal{P}_n \star \mathcal{P} = \mathcal{P'}$ (in that order in the Lean code) but only showing the
+equality for the underlying measurable space, forgetting the measure. For example, if \texttt{.ms} denotes the underlying measurable space then
+$\mathcal{P}.ms = unSplitTri ((N\_nil N) ×ₘ I\_borel ×ₘ Inf\_nil) = (I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$.
+Note that the independent combination $\star$, cast down to measurable spaces, is the sum of the two measurable spaces: the smallest $\sigma$-algebra generated from the union
+of the two spaces. This is also \texttt{join} $\sqcup$ (measurable spaces form a lattice), which is what we see in Lean.
 
-allow the construction
-of
+There was a slight omission in the above presentation
 
-% \[
-% (0.1, 0.1, 0.1) \mapsto 0.1
-% (0.1, 0.1, 0.2) \mapsto 0.2
-% (0.1, 0.1, 0.3) \mapsto 0.3
+\subsection{Use of Aristotle in this proof}
 
-% \]
+\subsection{Difficulties with type class inference and upstreaming to Mathlib}
 
-The infinite part is what is important denoting the smallest ``trivial'' measurable space consisting of just 
-
-decomposing a \texttt{MeasurableSpace} on the Hilbert Cube as the product of measurable space on  
-
-The above isomorphism on the underlying type can be lifted to an isomorphism on measurable spaces by stipulating isomorphisms between associated
-$\sigma$-algebras.
-
-
-What this is saying is that a \texttt{MeasurableSpace} with finite footprint can be decomposed as the product of two measurable pieces. Observe that
-$\mathbb{N} \to I$ is exactly the Hilbert cube, while $\mathrm{Fin} n \to I$ is a finite portion of it. The first piece, \texttt{ms'} is the finite piece,
-which is allowed to have an arbitrary $\sigma$-algebra associated with it. The second piece is infinite,
-
-The  ``interesting'' one (\texttt{ms'})
-being finite and the other being the unit measurable space, \texttt{Inf\_nil}  being infinite. The trivial
-
-So far we have ignored finite footprints 
+% into 3 pieces and assign the $\bot$ measurable space to the left and right spaces
+% single dimension. 
 
 
-Let's recall in one place how we now define variables, contexts the language and the logic, by going through a simple but important proof rule \texttt{wp\_ret}.
-The syntax and semantics of the language has not changed and is still expressed as a measurable function $\sem{\Delta} \marrow A$, where
-$ \sem{\Delta} = A \otimes \ldots \otimes A$, where A represents types endowed with a measurable space. That's the semantics of a program
-while in the syntax to refer to variable we use dependent de brujin indices.
 
-The logic which originally started out in the same manner as the language, i.e. a deep embedding with dependent de brujin indices, has transformed into
-a shallow embedding with higher order syntax style treatment of the variables. Variables are of the type \texttt{RV A}, which expands to $HC \marrow A$,
-with the standard borel measurable space on the domain (hilbert cube) and additionally the finite footprint property, whhich we state now for the first time:
+
+% What this is saying is that a \texttt{MeasurableSpace} with finite footprint can be decomposed as the product of two measurable pieces. Observe that
+% $\mathbb{N} \to I$ is exactly the Hilbert cube, while $\mathrm{Fin} n \to I$ is a finite portion of it. The first piece, \texttt{ms'} is the finite piece,
+% which is allowed to have an arbitrary $\sigma$-algebra associated with it. The second piece is infinite,
+
+% The  ``interesting'' one (\texttt{ms'})
+% being finite and the other being the unit measurable space, \texttt{Inf\_nil}  being infinite. The trivial
+
+% So far we have ignored finite footprints 
+
+
+% Let's recall in one place how we now define variables, contexts the language and the logic, by going through a simple but important proof rule \texttt{wp\_ret}.
+% The syntax and semantics of the language has not changed and is still expressed as a measurable function $\sem{\Delta} \marrow A$, where
+% $ \sem{\Delta} = A \otimes \ldots \otimes A$, where A represents types endowed with a measurable space. That's the semantics of a program
+% while in the syntax to refer to variable we use dependent de brujin indices.
+
+% The logic which originally started out in the same manner as the language, i.e. a deep embedding with dependent de brujin indices, has transformed into
+% a shallow embedding with higher order syntax style treatment of the variables. Variables are of the type \texttt{RV A}, which expands to $HC \marrow A$,
+% with the standard borel measurable space on the domain (hilbert cube) and additionally the finite footprint property, whhich we state now for the first time:
 
 % The aspect of playing with definitions sneaks into this chapter as well,
 % with some modifications to the \texttt{wp} connective. The complexity of definition of the \texttt{wp} connective is motivated by establishing the soundness
@@ -339,6 +387,8 @@ with the standard borel measurable space on the domain (hilbert cube) and additi
 
 \section{wp\_bind}
 \label{sec:wp-bind}
+
+\Todo{Draw the kernel diagram and explain just what is needed of the proof for that to make sense}
 
 
 \section{To overview}
@@ -356,6 +406,7 @@ in fact be more expressive making it important. Relational reasoning for probabi
 More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
 
 \section{Pi-lambda-theorem as an induction principle}
+\emph{This stuff is old from december. Can skip when reviewing}
 \label{pi-lambda}
 The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
 used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.

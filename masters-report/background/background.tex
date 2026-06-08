@@ -4,13 +4,19 @@ Probabilistic programming is a paradigm where we are defining statistical models
 complex distributions over some space in a structured way. Probabilistic programming language (PPL) also come with an interpreter
 (probabilistic inference engine) which allows the programmer to sample a term from the distribution denoted by a program
 and indeed sample distributions while constructing new distributions.
+ More interestingly, Bayesian probabilistic programming languages (Bppl) also allow one to ``observe'' some data and update
+their belief of the world (update the probability distribution they associate with some occurrence). Lilac does not support Bayesian
+updates, so will not be seeing much of this important feature of probabilistic programming.
 
-More interestingly a Bayesian probabilistic programming languages (BPPL) also allows one to "observe" an event and update
-their belief of the world (update the probability distribution they associate with some ocurrence). Here we take the
-bayesian perspective underpinned by Baye's law which describes how we update a probability distribution based
+In order to understand the semantics of probabilistic programming we first need a crash course on measure theory, and then explore a compositional
+semantics for PPLs. We turn our attention to the theory of separation logics abstracting a prototypical instance, till we reach the core ideas,
+on top of which Lilac will be built in Chapter \ref{sec:definitions}. Finally, we seek a fundamental understanding of our premise of foundational
+interactive verification: the foundations in dependent type theory, and the meta-programming which makes it ``interactive''.
+% Here we take the
+% bayesian perspective underpinned by Baye's law which describes how we update a probability distribution based
 
 
-A simple example taken from \cite{prob-semantics} is reproduced below to show how 
+% A simple example taken from \cite{prob-semantics} is reproduced below to show how 
 
 % \section{Preliminaries}
 \subsection{Monads}
@@ -100,23 +106,21 @@ of the function is less likely to be a measurable set in the domain, and satisfy
 \section{Semantics of Probabilistic Programs}
 \label{sec:appl}
 
-We first present APPL \citep[][appendix A]{lilac}, a probabilistic programming language without bayesian updates. Syntactically it looks like a basic WHILE language.
-In Appl, there isn't an explicit \texttt{sample} construct, sampling is realised in the semantics of sequencing as explained later. Though the language is
+We first present Appl \citep[appendix A]{lilac}, a probabilistic programming language without Bayesian updates. Syntactically it looks like a basic WHILE language.
+In Appl, there isn't an explicit \texttt{sample} construct. Sampling is realised in the semantics of sequencing as explained later. Though the language is
 first order, PPLs still have a non-trivial, novel denotational semantics. The central difference is that types are interpreted as \texttt{MeasurableSpace} rather than
 just \texttt{Set} from which everything else follows. Concretely $\llbracket A \rrbracket = (\mathbb{A}, \Sigma_{\mathbb{A}})$. In our PPL we would like to express
-measures and manipulate measures. The type constructor $\mathrm{G} A$
-is interpreted as the (meta) type $ProbMeasure \llbracket A \rrbracket$, the
-\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$. So in order for $\mathrm{G} A$ to be a valid (object) type, there must
-be some canonical MeasurableSpace $\Sigma_{\mathrm{G} A} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed true, but we don't reprove
-the mathematical foundations on which the semantics stands, in this report.
+measures and manipulate measures. The type constructor $\mathcal{G} A$
+is interpreted as type of probability measures $\text{ProbMeasure} \llbracket A \rrbracket$, the
+\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$. So in order for $\mathcal{G} A$ to be a valid Appl type, there must
+exist some canonical \texttt{MeasurableSpace} $\Sigma_{\mathcal{G} A} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed 
+true~\citep{giry}\footnote{An excellent blogpost introducing the Giry monad can be found here \url{https://jtobin.io/giry-monad-foundations}}.
 
-\Todo{Why measurableSpaces?}
-
-\begin{figure}[htbp]
+\begin{figure}[tb]
   \centering
   \begin{math}
   \begin{aligned}
-  A, B &::= A \times B \mid bool \mid  real \mid A^n \mid index \mid \mathrm{G} A \\
+  A, B &::= A \times B \mid bool \mid  real \mid A^n \mid \mathcal{G} A \\
   p &\in [0,1] \\
   r &\in \mathbb{R} \\
   n &\in \mathbb{N} \\
@@ -129,11 +133,11 @@ the mathematical foundations on which the semantics stands, in this report.
   &\quad [M,\ldots,M] \mid [M|N] \mid \mathrm{for}(n, M_{\mathrm{init}}, i\ X.\, M_{\mathrm{step}})
   \end{aligned}
   \end{math}
-  \caption{Syntax of the language}
+  \caption{Syntax of Appl}
   \label{fig:syntax}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tb]
   \centering
   \[
   \begin{aligned}
@@ -141,7 +145,6 @@ the mathematical foundations on which the semantics stands, in this report.
   \llbracket \mathbf{bool} \rrbracket &= (\{T,F\}, \mathcal{P}(\{T,F\})) \\
   \llbracket \mathbf{real} \rrbracket &= (\mathbb{R}, \mathcal{B}(\mathbb{R})) \\
   \llbracket A^n \rrbracket &= \underbrace{\llbracket A \rrbracket \otimes \cdots \otimes \llbracket A \rrbracket}_{n\ \text{times}} \\
-  \llbracket \mathbf{index} \rrbracket &= (\mathbb{N}, \mathcal{P}(\mathbb{N})) \\
   \llbracket \mathbf{GA} \rrbracket &= \mathcal{G}[\![A]\!] \\
   \llbracket \mathbf{1} \rrbracket &= \text{the one-point space}
   \end{aligned}
@@ -150,7 +153,7 @@ the mathematical foundations on which the semantics stands, in this report.
   \label{fig:denotations}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tb]
   \centering
   \[
   \begin{aligned}

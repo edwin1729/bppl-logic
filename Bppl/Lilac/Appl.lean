@@ -50,7 +50,7 @@ inductive Ty where
   | bool
   | real
   | exp : ℕ → Ty → Ty -- Tyⁿ
-  | index
+  -- | index
   | G : Ty → Ty
 
 -- scoped notation ty₁ " × " ty₂ => Ty.prod ty₁ ty₂
@@ -82,8 +82,8 @@ inductive Term : List Ty → Ty → Type
   | arith : Arith → Term ctx .real → Term ctx .real → Term ctx .real
   | cmp : Cmp → Term ctx .real → Term ctx .real → Term ctx .bool
   | unif01 : Term ctx (.G .real)
-  | vect : (Fin n → Term ctx ty) → Term ctx (.exp n ty)
-  | index : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
+  -- | vect : (Fin n → Term ctx ty) → Term ctx (.exp n ty)
+  -- | index : Term ctx .index → Term ctx (.exp n ty) → Term ctx ty
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   -- | for : ℕ → Term ctx ty → Term (.index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
 
@@ -98,7 +98,7 @@ noncomputable section
   | bool => .of Bool
   | real => .of ℝ
   | exp n ty => .of (∀ (_ : Fin n), ty.den) -- using MeasurableSpace.pi
-  | index => .of ℕ
+  -- | index => .of ℕ
   -- using `MeasureTheory.ProbabilityMeasure.instMeasurableSpace`
   | G ty => .of (ProbabilityMeasure (ty.den))
 
@@ -131,7 +131,7 @@ notation "⟪" t "⟫" => Ty.den t
         measurableSet_diagonal.preimage (Measurable.prod
           (measurable_pi_apply i |>.comp measurable_fst)
           (measurable_pi_apply i |>.comp measurable_snd)))⟩
-  | index => inferInstance
+  -- | index => inferInstance
   | G ty => sorry
 
 notation "⟪" t "⟫ᵐ" => MeasCat.str (Ty.den t)
@@ -169,7 +169,7 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
     | .prod ty₁ ty₂ =>
       (@default ty₁.den.carrier (arbitrary ty₁), @default ty₂.den.carrier (arbitrary ty₂))
     | (Ty.G ty) => ⟨Measure.dirac (@default ty.den.carrier (arbitrary ty)), Measure.dirac.isProbabilityMeasure⟩
-    | Ty.index => default
+    -- | Ty.index => default
     | Ty.exp _ ty => fun _ ↦ @default ty.den.carrier (arbitrary ty)
     | Ty.real => default
     | Ty.bool => default
@@ -225,10 +225,10 @@ to give an element of a measurable space -/
   | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
   -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
   -- has inverse images measurable
-  | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩
-  | @index _ len _ N M => ⟨fun env ↦
-    let n : ℕ := (N.den env)
-    if h: n < len then (M.den env) ⟨n, h⟩ else default, sorry⟩
+  -- | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩
+  -- | @index _ len _ N M => ⟨fun env ↦
+  --   let n : ℕ := (N.den env)
+  --   if h: n < len then (M.den env) ⟨n, h⟩ else default, sorry⟩
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   -- | @«for» _ ty n Mᵢ Mₛ =>
   --   let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
