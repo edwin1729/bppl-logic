@@ -29,24 +29,27 @@ noncomputable section
 
 abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, sorry⟩
 
+notation "#0" => var head
+notation "#1" => var (tail head)
+
 namespace Unif1
+-- abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ X : RV ⟪Ty.real⟫ ↦ iprop(X ∼ unif01_sem))
+
 abbrev unif1 : Term [] Ty.real.G :=
   unif01.bind (
-  ret (var head)
+  ret (#0)
 )
 
-abbrev post1 : LProp := wp (unif1.den ∘ᵣ nil) (λ (X : RV ℝ) ↦ @LProp.dist Ty.real X unif01_sem)
+lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((#0).den ∘ᵣ (X ;; nil)) = X := by rfl
 
-lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((var head).den ∘ᵣ (X ;; nil)) = X := by rfl
-
-theorem unif1_spec : iprop(⊢ post1) := by
+theorem unif1_spec :
+    iprop(⊢ wp (unif1.den ∘ᵣ nil) (λ X : RV ⟪Ty.real⟫ ↦ iprop(X ∼ unif01_sem))) := by
   iapply wp_bind
   iapply wp_unif
-  iintro %X
-  iintro H
+  iintro %X HX
   iapply wp_ret
   rw [hrw]
-  iexact H
+  iexact HX
 
 end Unif1
 
@@ -94,7 +97,7 @@ lemma expectation_of_own {X : RV ⟪Ty.real⟫} : own X ⊢ iprop(∃ e, 𝔼[X]
   exact ⟨ownX, rfl⟩
 
 lemma expectation_prod {X Y : RV ⟪Ty.real⟫} {xy : ℝ} :
-    iprop(∃ x y, 𝔼[X]=x ∧ 𝔼[Y]=y ∧ ⌜x * y = xy⌝) ⊢ iprop(𝔼[X.mul Y]=xy) := by
+    iprop(∃ x y, 𝔼[X]=x ∧ 𝔼[Y]=y ∧ ⌜x * y = xy⌝) ⊢ iprop(𝔼[X * Y]=xy) := by
   intro Ω lhs
 
   sorry
@@ -103,17 +106,19 @@ lemma expectation_of_unif01 {X : RV ⟪Ty.real⟫} : iprop(X ∼ unif01_sem ⊢ 
 
 abbrev half : Term [Ty.real] Ty.real.G :=
   unif01.bind (
-    ret (.arith .mul (var (tail head)) (var head))
+    ret (#1 * #0)
   )
 
 -- abbrev X : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ ω 0, sorry⟩, sorry⟩
 
 abbrev envX : RV (List.TProd (⟪·⟫) [Ty.real]) := ⟨⟨λ ω ↦ (ω 0, PUnit.unit), sorry⟩, sorry⟩
 
-abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ (Z : RV ℝ) ↦
-    iprop(∃ e, 𝔼[Z]=e/2 ∧ 𝔼[X]=e))
+abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
+    iprop(∃ e, 𝔼[Y]=e/2 ∧ 𝔼[X]=e))
 
-lemma hrw (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul (var head.tail) (var head)).den ∘ᵣ Y ;; X ;; nil) = mul X Y := by rfl
+lemma hrw (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul #1 #0).den ∘ᵣ Y ;; X ;; nil) = X * Y := by rfl
+lemma hr2 (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul #1 #0).den ∘ᵣ Y ;; X ;; nil)
+  = ((Term.den ((#1 * #0): Term [Ty.real, Ty.real] Ty.real)) ∘ᵣ Y ;; X ;; nil) := by rfl
 
 theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
   iintro hX
@@ -122,7 +127,7 @@ theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
   iapply wp_unif
   iintro %Y hY
   iapply wp_ret
-  rw [hrw]
+  rw [← hr2, hrw]
   ihave expX := expectation_of_own $$ hX
   icases expX with ⟨%e, he⟩
   iexists e

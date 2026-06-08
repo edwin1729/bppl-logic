@@ -167,6 +167,7 @@ than $\Sigma_I$ would suffice: ${\phi, [0,0.5], [0.5,1], I}$. In general measura
 \end{figure}
 
 \subsection{Variables}
+\label{sec:variables}
 In order to reason about programs, the logic must be able to express facts about the program effectively. In other words, the language and the logic need to 
 ``communicate'' somehow. In this section we explain the interface between the language and the logic. Interfaces between different components, namely:
 language \& logic and logic \& iris, are important in a formalisation as it guides and motivates choices in how key definitions are made.
@@ -201,7 +202,7 @@ by the logic by destructuring a tuple output by the program as in the example of
 
 \Todo{how this destructuring works even with RV?}
 
-The alternative connective, $wp$, is contructed with the denotation of a program and only one LProp, the postcondition. Syntactically: $wp \llbracket M \rrbracket \{X. Q\}$.
+The alternative connective, $wp$, is constructed with the denotation of a program and only one LProp, the postcondition. Syntactically: $wp \llbracket M \rrbracket \{X. Q\}$.
 $wp$ is defined to be the weakest precondition on the program M, such that the postcondition Q holds. In a consistently defined semantics the following equivalence
 constructing a Hoare triple in terms of wp holds: $\{ P \} \llbracket M \rrbracket \{X. Q \} \triangleq P \wand wp \llbracket M \rrbracket \{X. Q \}$. The advantage
 of using $wp$ is that it is more amenable to automation and since it only takes in a single proposition. It is easier to infer postconditions in proof rules

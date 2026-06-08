@@ -2,12 +2,12 @@
   "latex-workshop.latex.recipe.default": "lastUsed",
   "latex-workshop.latex.tools": [
     {
-      "name": "latexmk-xelatex",
+      "name": "latexmk-lualatex",
       "command": "latexmk",
       "args": [
         "-r",
         ".latexmkrc",
-        "-xelatex",
+        "-lualatex",
         "-shell-escape",
         "-synctex=1",
         "-interaction=nonstopmode",
@@ -18,9 +18,9 @@
   ],
   "latex-workshop.latex.recipes": [
     {
-      "name": "latexmk-xelatex",
+      "name": "latexmk-lualatex",
       "tools": [
-        "latexmk-xelatex"
+        "latexmk-lualatex"
       ]
     }
   ],

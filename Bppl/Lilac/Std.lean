@@ -233,7 +233,10 @@ instance instFunLikeRV : FunLike (RV β) HC β where
 instance instCoeRV : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
 
-abbrev mul (M N : RV ℝ) : RV ℝ := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
+instance : Mul (RV ℝ) where
+  mul M N := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
+
+-- abbrev mul (M N : RV ℝ) : RV ℝ := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
 
 abbrev ite (E : RV Bool) (M N : RV α) : RV α := ⟨⟨λ ω ↦ if E ω then M ω else N ω, sorry⟩, sorry⟩
 

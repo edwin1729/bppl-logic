@@ -13,10 +13,12 @@
 % %% setup for lean
 \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
-\setmonofont{FreeMono}
+\setmonofont[
+  Scale=0.85
+]{JuliaMono}
 \usepackage{minted}
 \newmintinline[lean]{lean4}{bgcolor=white}
-\newminted[leancode]{lean4}{fontsize=\small}
+\newminted[leancode]{lean4}{fontsize=\normalsize}
 \usemintedstyle{tango}  % a nice, colorful theme
 
 %% Useful packages
@@ -149,6 +151,9 @@
 % \input{project/project.tex}
 \input{lilac/lilac.tex}
 \input{lilac/proofRules.tex}
+foo
+\input{examples/examples.tex}
+\input{future/future.tex}
 % \input{evaluation/evaluation.tex}
 % \input{ethical.tex}
 % \input{conclusion/conclusion.tex}

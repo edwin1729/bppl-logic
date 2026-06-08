@@ -17,7 +17,8 @@ so we try to maintain good abstractions and remark on the extensibility at point
 \Todo{Pi-lambda theorem not suitable for BaSL}
 
 \section{Finite Footprints}
-When it comes to the proof rules of Lilac, the probability reasoning that can occur in the logic is predominantly present in two rules \texttt{wp\_unif} and
+\label{sec:ff}
+When it comes to the proof rules of Lilac, the probability-specific reasoning that can occur in the logic is predominantly present in two rules \texttt{wp\_unif} and
 \texttt{wp\_flip}, which reason about two syntactic constructs from Appl, \texttt{unif01} (uniform distribution on unit interval) and \texttt{flip}
 (bernoulli distribution) respectively. There is nothing special about these two distributions, and we can indeed have a general rule \texttt{wp\_meas}, parametric
 over any distribution. For this suppose we define a new Appl term  we also introduce a construct for a defining a general distribution, like so:
@@ -29,7 +30,7 @@ over any distribution. For this suppose we define a new Appl term  we also intro
 \mathrm{wp} (\lambda\ \_ \mapsto \mu) ( \lambda X\!:\!A.\mapsto Q)
 \]
 
-where $\mu$ is an arbitrary probability measure. We are specifying a denotation directly instead of taking the denotation of some concrete program
+where $\mu$ is an arbitrary probability measure. We are specifying a denotation directly instead of taking the denotation of some concrete program.
 Note that $(\lambda\ \_ \mapsto \mu) : A \marrow \mathcal{G} B$ which is correctly typed as a denotation of a program
 (in other words it is a kernel).
 
@@ -86,13 +87,13 @@ cube, makes that part effectively meaningless. A random variable mapping from a 
 would be forced to ignore all indices greater than n (
 from the infinite part). We offer a way to visualise a measurable space over the hilbert cube in \ref{fig:hc}.
 
-\begin{figure}[htbp]
+\begin{figure}[tb]
   \centering
 
-% \TwoPhasePartitionGraph{1234}{15}{8}{10}
-% \TwoPhasePartitionGraph{42}{15}{8}{10}
-% \TwoPhasePartitionGraph{43}{15}{8}{10}
-% \TwoPhasePartitionGraph{44}{15}{8}{10}
+\TwoPhasePartitionGraph{1234}{15}{8}{10}
+\TwoPhasePartitionGraph{42}{15}{8}{10}
+\TwoPhasePartitionGraph{43}{15}{8}{10}
+\TwoPhasePartitionGraph{44}{15}{8}{10}
 \caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
 makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
 on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}
@@ -150,9 +151,111 @@ just straightforward projections of some dimension n, i.e. measure on each dimen
 of the finite footprint condition, obtaining a resource
 which simultaneously supports an arbitrary number of random variables $Y_i$.
 
+\section{A tour of the \texttt{wp} connective}
+\label{sec:wp}
+We restate and motivate the definition of the \texttt{wp} connective in this section:
+
+\[
+\begin{aligned}
+(\mathcal{F},\mu) \vDash \mathrm{wp}(M,X\!:\!A.\,Q) &\iff \text{for all } \mathcal{P}_{\mathrm{frame}} \text{ and } \mu \text{ with } \mathcal{P}_{\mathrm{frame}}\bullet\mathcal{P} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu) \text{ and all } D_{\mathrm{ext}} : \mathrm{RV}\,\llbracket \Delta_{\mathrm{ext}} \rrbracket, \\
+&\quad \text{there exists } X : \mathrm{RV}\,A \text{ and } \mathcal{P}' \text{ and } \mu' \text{ with } \mathcal{P}_{\mathrm{frame}}\bullet\mathcal{P}' \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu') \text{ such that } \\
+&\quad \left( \begin{array}{l} \omega \leftarrow \mu;\\ v \leftarrow M(\omega);\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega),v\bigr) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega),X(\omega)\bigr) \end{array} \right), \\
+&\quad \text{and } \mathcal{P}' \vDash Q[X]
+\end{aligned}
+\]
+
+The \texttt{wp} connective is the most crucial and intricate part of the semantics of Lilac. Thankfully, we have already laid the foundations to understanding it in the previous Sec \ref{sec:ff}.
+Specifically, at the heart of the definition is the requirement that running the program on $\mathcal{P}$ as the resource, will cause a modification of the resource to $\mathcal{P'}$, which
+1) doesn't make unnecessary changes to $\mathcal{P}$ 2) is able to generate the output of the program $M$.
+These clauses are captured respectively by the following splitting:
+\[
+\begin{array}{c@{\qquad\qquad}c}
+\left( \begin{array}{l} \omega \leftarrow \mu;\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega)\bigr) \end{array} \right)
+&
+\left( \begin{array}{l} \omega \leftarrow \mu;\\ M(\omega) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(X(\omega)\bigr) \end{array} \right)
+\end{array}
+\]
+
+which further simplifies to: 
+\[
+\begin{array}{c@{\qquad\qquad\qquad}c}
+(D_{ext})_\#\mu = (D_{ext})_\#\mu'
+&
+\mu \bind M = X_\#\mu'
+\end{array}
+\]
+
+Firstly we see that neither measure associated with the resources $\mathcal{P}$ or $\mathcal{P'}$ get used directly. Instead, we use $\mu$ and $\mu'$ respectively which is any larger measure
+on the Borel sigma algebra on the Hilbert cube. On the left, we see that if we choose arbitrarily some random variable $D_{ext}$ we can accommodate for the random variable to be unchanged,
+with our choice of $\mu'$\footnote{We are not saying that every random variable will remain unchanged, the ordering of the quantifiers in the semantics of \texttt{wp} is crucial}.
+This is in line with ``no unnecessary changes''. On the right we can see that the new measure $\mu'$ essentially encodes composition of the old resource and the program.
+
+We will see why $D_{ext}$ is required when explaining the soundness proof for the \texttt{wp\_bind} rule (Sec \ref{sec:wp-bind}). We notice that $\mu'$ is barely constrained; it is existentially quantified and only needs
+to satisfy $\mathcal{P'} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu')$. What is $\mathcal{P'}$ constrained by? The clause $\mathcal{P'} \vDash Q$. $\mathcal{P'}$ must satisfy $Q$ which having
+access to $X$ will likely make assertions about it.
+
+We have not yet mentioned $\mathcal{P}_{\mathrm{frame}}$. This aspect of the semantics is in line with what is standard in separation logic to establish the frame rule \texttt{wp\_frame}. Fig \ref{sec:proof-rules}
+lists all the \texttt{wp} of Lilac. The soundness of these rules has been proven in Lean. However, we cannot go through all of them in this report.
+
+\begin{figure}[tb]
+\centering
+\begin{mathpar}
+\inferrule*[right=\textsc{wp-consequence}]
+  {P \vdash Q}
+  {\mathrm{wp}(M,X,P) \vdash wp(M,X,Q)}
+
+\inferrule*[right=\textsc{wp-frame}]
+  {X \notin F}
+  {F * \mathrm{wp}(M,X,Q) \vdash wp(M,X,F * Q)}
+
+\inferrule*[right=\textsc{wp-disjunction}]
+  {}
+  {\mathrm{wp}(M,X,P) \lor wp(M,X,Q) \vdash wp(M,X,P \lor Q)}
+
+\inferrule*[right=\textsc{wp-ret}]
+  {}
+  {Q[\![M]\!/X] \vdash \mathrm{wp}([\![\mathrm{ret}\;M]\!],X,Q)}
+
+\inferrule*[right=\textsc{wp-bind}]
+  {}
+  {\mathrm{wp}([\![M]\!],X,wp([\![N]\!],Y,Q)) \vdash wp([\![X \leftarrow M;\,N]\!],Y,Q)}
+
+\inferrule*[right=\textsc{wp-uniform}]
+  {}
+  {(\forall_{rv}\,X\!:\!A.\;X\sim\mathrm{Unif}[0,1]\multimap Q)\vdash \mathrm{wp}([\![\mathrm{unif}\,[0,1]]\!],X\!:\!A,Q)}
+
+\inferrule*[right=\textsc{wp-flip}]
+  {}
+  {(\forall_{rv}\,X\!:\!A.\;X\sim\mathrm{Ber}\,p\multimap Q)\vdash \mathrm{wp}([\![\mathrm{flip}\;p]\!],X\!:\!A,Q)}
+
+\inferrule*[right=\textsc{wp-if}]
+  {}
+  {\mathrm{wp}([\![M]\!],X\!:\!A.\,wp([\![N]\!],Y\!:\!A.\,Q(\mathrm{if}\;E\;\mathrm{then}\;X\;\mathrm{else}\;Y))) \vdash wp([\![\mathrm{if}\;E\;M\;N]\!],X\!:\!A.\,Q)}
+
+\inferrule*[right=\textsc{wp-for}]
+  {}
+  {I(1,e) * (\forall i\!:\!\mathbb{N}.\;\forall_{rv}\,X\!:\!A.\;\{I(i,X)\}\;M\;\{X'.\,I(i+1,X')\}) \vdash \mathrm{wp}([\![\mathrm{for}(n,e,i\,X.\,M)]\!],X\!:\!A.\,I(n+1,X))}
+\end{mathpar}
+\caption{\texttt{wp} proof rules of Lilac}
+\label{sec:proof-rules}
+\end{figure}
+
+We conclude this section with a translation of \texttt{wp} to Lean:
+\begin{leancode}
+def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
+  fun Ω ↦
+  ∀ Ω_fr : PSp, ∀ Ω_pre : ✓'(Ω_fr ⋆ Ω), ∀ μ,
+    (↓Ω_pre).1 ≤ PSpace.mk' μ → ∀ {α: Type} {msα : MeasurableSpace α} (D_ext : RV α),
+  ∃ X : RV ⟪A⟫, ∃ Ω' : PSp, ∃ Ω_post: ✓'(Ω_fr ⋆ Ω'), ∃ μ', (↓Ω_post).1 ≤ PSpace.mk' μ' ∧
+  (toMK M ×ₖ det D_ext) ∘ₘ μ = (det X ×ₖ det D_ext) ∘ₘ μ' ∧
+  (Q X).1 Ω'
+\end{leancode}
 
 \section{wp\_meas}
 \label{sec:wp-meas}
+
+In Sec \ref{sec:ff} on Finite Footprints we gave most of the intuition for the proof of the rule \texttt{wp\_meas} followed by defining precisely the semantics of \texttt{wp}, which appears in
+\texttt{wp\_meas}, in Sec \ref{sec:wp}. Now we can discuss the proof of soundness of \texttt{wp\_meas}, elaborating on Sec \ref{sec:ff} and showing parts of the Lean mechanisation.
 
 \begin{leancode}
 lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
@@ -233,6 +336,9 @@ with the standard borel measurable space on the domain (hilbert cube) and additi
 % with some modifications to the \texttt{wp} connective. The complexity of definition of the \texttt{wp} connective is motivated by establishing the soundness
 % of the above the 3 rules}
 
+
+\section{wp\_bind}
+\label{sec:wp-bind}
 
 
 \section{To overview}

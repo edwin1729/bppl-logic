@@ -1,0 +1,325 @@
+\chapter{Examples}
+\emph{In this chapter we demonstrate a few simple examples of how our embedding of Lilac in Iris can be used for interactively proving specifications of APPL programs.
+We develop some proof automation, and reflect on more divergences from the Lilac paper \cite{lilac}}
+
+
+First in sec \ref{sec:uniform} we verify the most basic programs which we had struggled to verify under the original definitions in Chapter \ref{sec:definitions}. Next
+in sec \ref{sec:expectation} we outline difficulties faced with reasoning about \texttt{LProp}s which used the \texttt{expectation} ($\mathbb{E}[X]=e$) connective in the logic.
+We develop some proof rules regarding expectation and some custom tactics for ergonomic reasoning.
+
+Most notably we use this example to remark on how in our mechanised proofs we completely sidestep the usage of almost surely equals connective ($\circeq$) and substitutions using the congruence rule.
+This is not specific to this particular example and is a general phenomenon. Indeed, the Lilac paper \cite{lilac} has not provided proof rules for introduction of
+$\circeq$\footnote{the original notation from the paper for the almost surely equals connective is $\overset{as}{=}$. We use $\circeq$ in the lean formalisation}, and uses it rather intuitively
+in the proof sketches. In our formalisation, we have required it at all.
+
+\section{Sampling Uniform distributions}
+\label{sec:uniform}
+
+We recall the proof from Sec \ref{sec:parametrised}, which we had failed to complete under the old definitions. 
+The informal and lean version, taken from \repo{Examples}, are provided side-by-side.
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{leancode}
+abbrev unif1 : Term [] Ty.real.G :=
+  unif01.bind (
+  ret (#0)
+)
+\end{leancode}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\[
+x \leftarrow \mathrm{unif}\ [0,1];\\
+ \mathrm{ret}\ x
+\]
+\end{minipage}
+
+Since we are using de Brujin indices we cannot name variables bound by the \texttt{bind} construct, but instead need to access this variables
+from an implicit context. \texttt{\#0} is shorthand for \texttt{Term.var Member.head}, which refers to the syntactically closest (right most)
+variable bound. In this case it is obvious which variable we refer to since there is only a single variable. Below the informal
+specification is followed by the formalised Lean specification:
+
+\[
+\{ \top \}\ \textsc{Unif1}\ \{ X.\ X \sim \mathrm{Unif}[0,1] \}
+\]
+
+\begin{leancode}
+nil : RV (List.TProd (⟪·⟫) []) := ...
+abbrev post1 : LProp :=
+  wp (unif1.den ∘ᵣ nil) (λ X : RV ⟪Ty.real⟫ ↦ (X ∼ unif01_sem))
+\end{leancode}
+
+We see that the lean code of the specification has some additional components implicit in the informal version.  Recall that \texttt{wp} has type, \lean{def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp}.
+We have assigned \lean{(M := unif1.den ∘ᵣ nil)}. Why is it not just \texttt{unif1.den}, the denotation of the unif1 program we had just defined above?
+Inspecting the types, $\text{unif1.den} : \sem{\Delta} \marrow \mathcal{G} \mathbb{R}$, but we require $I^\mathbb{N} \marrow \mathcal{G} \mathbb{R}$\footnote{actually, \lean{RV (⟪Ty.G Ty.real⟫)}, so we had omitted the finite
+footprint property for understanding}. Note that in this case $\Delta = [] = $, an empty list so $\sem{\Delta} = \text{Unit}$ which is what \lean{List.TProd (⟪·⟫) []} is. We will have an empty context $\Delta$ for closed programs, which is
+generally what we will see in a top level \texttt{wp} specification.
+We compose \texttt{unif1.den} with the map \texttt{nil} to resolve the discrepancy.
+But why do we bother with maps from $I^\mathbb{N}$ in the logic in the first place, when this is completely absent in the semantics of APPL? We refer the reader back to Sec \ref{sec:variables}, where this insightful question is answered.
+
+\[
+\{ \top \}\ \textsc{Unif1}\ \{ X.\ X \sim \mathrm{Unif}[0,1] \}
+\]
+
+The proof in Lilac using the Iris proof mode is as follows taken from \repo{Examples}:
+
+\begin{leancode}
+
+theorem unif1_spec :
+    ⊢ wp (unif1.den ∘ᵣ nil) (λ X : RV ⟪Ty.real⟫ ↦ (X ∼ unif01_sem)) := by
+  iapply wp_bind
+  iapply wp_unif
+  iintro %X HX
+  iapply wp_ret
+  rw [hrw]
+  iexact HX
+
+\end{leancode}
+
+We present the proof state after each tactic\footnote{The interested reader is encouraged to clone the repository and view the file \repo{Examples} directly, in a Lean LSP enabled IDE such as vs-code.
+Interactive proofs more informative when interacted with.}. Unlike the failed attempt in Sec \ref{sec:parametrised} where the proof state was artificially simplified for readability, here we faithfully reproduce the proof state
+displayed by Lean's info-view, as seen by a user.
+
+\texttt{iapply wp\_bind}
+\begin{leancode}
+⊢ 
+⊢ wp (unif01.den ∘ᵣ nil) fun X ↦
+  wp (#0.ret.den ∘ᵣ X ;; nil) fun X ↦ (X ∼ unif01_sem)
+\end{leancode}
+
+Application of the \texttt{wp\_bind} rule deconstructs the syntactic \texttt{bind} in the program \texttt{unif1} into nested \texttt{wp}
+statements on the constituent programs \texttt{unif01} and \texttt{Term.ret \#0}. As expected the program of the inner \texttt{wp}
+is not a closed-program and has the newly bound random variable $X$ in its context, at the head of the context. We can see already that
+\texttt{\#0} is referring to $X$, but \texttt{\#0} is wrapped by \texttt{Term.ret}, so there is no reduction that can be applied yet.
+
+\texttt{iapply wp\_unif}
+\begin{leancode}
+⊢ 
+⊢ ∀ X, X ∼ unif01_sem -∗ 
+  wp (#0.ret.den ∘ᵣ X ;; nil) fun X ↦ (X ∼ unif01_sem)
+\end{leancode}
+
+\texttt{iintro \%X HX}
+\begin{leancode}
+X : RV ⟪Ty.real⟫.carrier
+⊢ 
+∗HX : X ∼ unif01_sem
+⊢ wp ((var head).ret.den ∘ᵣ X ;; nil) fun X ↦ (X ∼ unif01_sem)
+\end{leancode}
+
+Crucially here we are able to we have no \texttt{substLProp} unlike in Sec \ref{sec:parametrised}, unblocking
+further application of rules. This is as far as we had previously gotten. 
+
+\texttt{iapply wp\_ret}
+\begin{leancode}
+X : RV ⟪Ty.real⟫.carrier
+⊢ 
+∗HX : X ∼ unif01_sem
+⊢ (#0.den ∘ᵣ X ;; nil) ∼ unif01_sem
+\end{leancode}
+
+We have removed the \texttt{Term.ret} allowing us to simplify the composition of program denotation and context.
+
+\texttt{rw [hrw]}
+\begin{leancode}
+X : RV ⟪Ty.real⟫.carrier
+⊢ 
+∗HX : X ∼ unif01_sem
+⊢ X ∼ unif01_sem
+\end{leancode}
+
+\texttt{hrw} is defined as
+\begin{leancode}
+lemma hrw {A : Ty} {X : RV ⟪A⟫} : ((#0).den ∘ᵣ (X ;; nil)) = X := by rfl
+\end{leancode}
+
+as seen the proof is \texttt{rfl} (reflexivity) which only holds for two terms which are \emph{definitionally equal},
+meaning they reduce to the same normal form\footnote{there's quite a bit of nuance to what is considered a normal form
+and which reductions need to be considered, for the purposes of computational efficiency of the \texttt{defEq} algorithm,
+that we don't go into}. We can see a well defined procedure for constructing such rewrite lemmas, so this step can be automated
+using a custom simplification tactic for our logic. However we didn't pursue this, as we would like to solve the deeper
+problem of de Brujin indices being unintuitive, and custom tactics to automate rewrites would likely become redundant then.
+
+\texttt{iexact HX}
+\begin{leancode}
+No goals
+\end{leancode}
+
+This concludes the first ever mechanised Lilac proof.
+
+\section{Specifications with Expectations}
+\label{sec:expectation}
+
+Here we explore a more nuanced example where we first encountered difficulty with a notational side-stepping
+of an issue in the Lilac paper~\citep{lilac}. Next, we this opportunity to also comment on a pervasive
+simplification in proofs in our mechanisation and informal proofs provided in the paper. Here is a Hoare triple
+style proof annotation of the program \texttt{Halve} which we have will next mechanise.
+
+\[
+\begin{array}{l}
+\textcolor{blue}{\{\,\mathrm{own}\,X\,\}} \\[4pt]
+Y \leftarrow \mathrm{unif}\ [0,1];\\
+\textcolor{blue}{\{\,\mathrm{own}\,X * Y \sim \mathrm{Unif}[0,1]\,\}}\\
+\mathrm{ret}\ (XY)\\
+\textcolor{blue}{\{\,Z.\ \mathrm{own}\,X * Y \sim \mathrm{Unif}[0,1] * Z \circeq XY\,\}}\\
+\textcolor{blue}{\{\,Z.\ \mathbb{E}[Y] = 1/2 \wedge \mathbb{E}[XY] = \mathbb{E}[X]\mathbb{E}[Y]\, * Z \circeq XY\,\}}\\
+\textcolor{blue}{\{\,Z.\ \mathbb{E}[Y] = 1/2 \wedge \mathbb{E}[Z] = \mathbb{E}[X]\mathbb{E}[Y]\,\}}\\
+\textcolor{blue}{\{\,Z.\ \mathbb{E}[Z] = \mathbb{E}[X]/2\,\}}
+\end{array}
+\]
+
+We choose the \texttt{Halve} program, as not only does it exercise one of the salient features of the logic,
+reasoning about expectations, it would also test whether the mechanisation can support this rather unconventional
+goal of verifying a specification on an open variable. We are very much interested in whether our approach to variables
+is robust to these kinds of examples, as it was a major difficulty that was overcome in this project.
+
+The immediate difficulty to notice is that the expectation is a logical connective, $\mathbb{E}[X]=e$, includes $=$
+in the syntax of the connective which can be misleading. It expects arguments typed as $E : \RV \mathbb{R}$ and $e : \mathbb{R}$.
+So in particular, none of the expectations in the above proof, are using valid syntax. For example the post
+condition must by expanded to:
+
+
+$\textcolor{blue}{\{\,Z.\ \exists e,\ \mathbb{E}[Z] = e/2 \land \mathbb{E}[X] = e\,\}}$
+
+% The verbosity of these shorthands unfolded quickly grows, with $\mathbbb{E}[XY] = \mathbb{E}[X] \mathbb{E}[Y]$ becoming
+
+% $\exists e_X
+
+
+
+% $\{\,Z.\ \exists e_Y e_x,\ \mathbb{E}[Y] = 1/2 \wedge \mathbb{E}[Z] = \mathbb{E}[X]\mathbb{E}[Y]\,\}$
+
+
+Is this merely an inconvenience or a more fundamental problem, which might make this theorem unprovable in the logic.
+The latter was in-fact a concern since it is not actually possible to instantiate the above existential! For clarity,
+we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean), it is defined as an integral
+of the random variable X. We want to instantiate $e$ with this semantic $\mathbb{E}[X]$. Let us first present the partial proof until we hit this roadblock.
+
+\begin{leancode}
+lemma hrw (X Y : RV ⟪Ty.real⟫) :
+    (Term.den ((#1 * #0)) ∘ᵣ Y ;; X ;; nil) = X * Y := by rfl
+
+abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
+    iprop(∃ e, 𝔼[Y]=e/2 ∧ 𝔼[X]=e))
+
+theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
+  iintro hX
+  rw [post_half]
+  iapply wp_bind
+  iapply wp_unif
+  iintro %Y hY
+  iapply wp_ret
+  rw [hrw]
+\end{leancode}
+
+
+but that is not possible as we demonstrate, with in this partia
+i.e. an expression in Lean. This is well-defined. But we still aren't able to construc
+We would of course want to instantiate it with the semantic (Lean )
+
+\subsection{}
+
+\section{Removing the almost surely equals connective ($\circeq$)}
+As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analagous situations appear all throughout the paper,
+both in examples using Core Lilac (Lilac without conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
+conditioning modality. Simultaneously, we are demonstrating that the set of definitions for Core Lilac will translate naturally into full Lilac.
+We explain just what is relevant to showing that almost surely equals is not necessary, omitting the conditioning-specific proof rules. This is the first
+instance in this report where we present something which does not have corresponding end-to-end proofs in Lean. Below is a condensed version of \citet[Appendix C]{lilac}:
+
+\[
+\begin{array}{l}
+\textcolor{blue}{\{\, \top \,\}} \\[4pt]
+Z \leftarrow \operatorname{flip}(1/2); \quad
+X \leftarrow \operatorname{flip}(1/2); \quad
+Y \leftarrow \operatorname{flip}(1/2); \\
+\textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \,\}} \\[4pt]
+A \leftarrow \mathrm{ret}\, (X \lor Z); \quad
+B \leftarrow \mathrm{ret}\, (Y \lor Z); \\
+\textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \ast A = (X \lor Z) \ast B = (Y \lor Z) \,\}} \\[4pt]
+\operatorname{ret}\, (Z,X,Y,A,B) \\
+\textcolor{blue}{\{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+\end{array}
+\]
+
+We translate the Hoare style specific to a \texttt{wp} style specification, and show the stages of reduction as we apply the \texttt{wp} proof rules:
+
+\[
+\begin{array}{l}
+\textcolor{blue}{\vdash \mathrm{wp}} \\
+\left(
+\begin{array}{l}
+Z \leftarrow \operatorname{flip}(1/2); \quad
+X \leftarrow \operatorname{flip}(1/2); \quad
+Y \leftarrow \operatorname{flip}(1/2); \\
+A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
+B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
+\operatorname{ret}\, (Z,X,Y,A,B)
+\end{array}
+\right) \\[4pt]
+\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+\end{array}
+\]
+
+\[
+\begin{array}{l}
+\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+\textcolor{blue}{X \sim Ber (1/2)} \\
+\textcolor{blue}{Y \sim Ber (1/2) }\\ 
+\textcolor{blue}{Z \sim Ber (1/2)} \\
+\textcolor{blue}{\vdash \mathrm{wp}} \\
+\left(
+\begin{array}{l}
+A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
+B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
+\operatorname{ret}\, (Z,X,Y,A,B)
+\end{array}
+\right) \\[4pt]
+\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+\end{array}
+\]
+
+\[
+\begin{array}{l}
+\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+\textcolor{blue}{X \sim Ber (1/2)} \\
+\textcolor{blue}{Y \sim Ber (1/2) }\\ 
+\textcolor{blue}{Z \sim Ber (1/2)} \\
+\textcolor{blue}{\vdash \mathrm{wp}}
+\ \operatorname{ret}\, (Z,X,Y,(X \lor Z),(Y \lor Z)) \\
+\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+\end{array}
+\]
+
+\[
+\begin{array}{l}
+\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+\textcolor{blue}{X \sim Ber (1/2)} \\
+\textcolor{blue}{Y \sim Ber (1/2)} \\
+\textcolor{blue}{Z \sim Ber (1/2)} \\
+\textcolor{blue}{\vdash \{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(X \lor Z) \ast \operatorname{own}(Y \lor Z)) \,\}}
+\end{array}
+\]
+
+\Todo{Condense into a diagram with arrows stating the proof rules applying to achieve the transformations}
+
+We have made the program context (of the form \lean{∘ᵣ (... ;; nil)}) implicit, and given explicit
+names rather than de Brujin indices to variables, as a consequence of this omission, for readability. We color code
+the program in black and the LProp logical assertions in \textcolor{blue}{blue} to show the entire reduction of
+of the program using weakest precondition reasoning and our proof rules, never needs to use $\circeq$ the almost
+surely equals connective. The proof is not completed, and we have stopped at the point that we would have needed proof
+rules about the conditioning modality, the mechanisation of whose soundness proofs, we leave as future work\footnote{This
+is expected to be similar in difficulty to the formalisation of \texttt{wp\_unif} possibly requiring the mechanisation
+of relevant measure theoretic lemmas first before we can proceed with the soundness proof itself.
+}
+
+\subsection{Comparison with Bluebell}
+\Todo{}
+This section is incomplete. What I aim to talk about is that the definition of almost surely equals in Lilac,
+and as a consequence the proof its properties such as being an equivalence relation, got somewhat convoluted,
+and in Bluebell a fundamentally alternative approach was pursued in part to offer a cleaner solution to this problem.
+
+In particular Bluebell includes variables in its resource algebra. @Shing Hin can you confirm if these claims are correct?
+
+Because of this observation, I just want to state that it is strange I ended up not needed almost surely equals at all.
+And I would want to try out more example and implement full Lilac (with conditioning) before being confirming if
+almost surely equals is indeed not necessary....

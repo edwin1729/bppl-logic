@@ -87,6 +87,9 @@ inductive Term : List Ty → Ty → Type
   -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
   -- | for : ℕ → Term ctx ty → Term (.index :: ty :: ctx) (.G ty) → Term ctx (.G ty)
 
+instance : Mul (Term ctx .real) where
+  mul M N := Term.arith Arith.mul M N
+
 noncomputable section
 -- Most of the MeasurableSpace instance provided in
 -- Mathlib.MeasureTheory.MeasurableSpace.Instances
@@ -232,6 +235,8 @@ to give an element of a measurable space -/
   --     .dirac v else
   --     Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
   --   ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
+
+notation "〚" M "⟧" => Term.den M
 
 end
 end Appl

@@ -211,6 +211,7 @@ not with $RV A$ as domain, the types just won't line up.
 % entails fixing an arbitrary value for that variable and 
 % from the random context, converts the random variable to a deterministic
 \subsection{Definitions of LProp, random variables and WP rules}
+\label{sec:parametrised}
 \emph{The code in this section is obtained from an older commit \url{https://github.com/edwin1729/bppl-logic/tree/cd19b5ff454abaf05f959ba8abfe0961518d02d3}}
 The definition of LProp after moving to a shallow embedding had the signature:
 
@@ -371,7 +372,7 @@ the $\vdash$. So we introduce this \texttt{dropSnd} casting function which conve
 \lean{⟨fun (x, _y, z) => (x,z) , measurable_dropSnd⟩} is applied on the bigger context \texttt{D}, to drop the 2nd variable and pass that to \texttt{Q}. Why are we dropping the 2nd variable (not 1st)?
 The context that Q recieves on the lhs of \texttt{wp\_bind} looks like $[Y ;; \ldots]$ while on the rhs \lean{(dropSnd Q)} will receive a context like $[Y ;; X ;; \ldots]$. \texttt{Q} does not have
 access to $X$ on the lhs which is why it is dropped, on the rhs. As we can see we have to rather tedious and unintuitive bookkeeping with such ``casting'' functions to make the types match, if
-\texttt{LProp} is parameterised.
+\texttt{LProp} is parametrised.
 
 Now our state looks like this:
 \begin{leancode}

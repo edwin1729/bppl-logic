@@ -1,8 +1,8 @@
 \section{Syntax and semantics of Appl}
 To reason about Appl (see \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
 define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
-of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, in the assertion, and would lead to a
-proliferation of exception cases. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
+of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, when writing a specification on it, and would lead to a
+proliferation of exception handling. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
 letting us define a syntax (AST) that is well-typed by construction.
 
 For disambiguation, we refer to types in the \emph{meta language} (in our case Lean) and \emph{object language} (Appl), when it is unclear.
