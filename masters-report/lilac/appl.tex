@@ -1,4 +1,5 @@
 \section{Syntax and semantics of Appl}
+\label{sec:appl-lean}
 To reason about Appl (see Sec \ref{sec:appl}), we first need to define Appl in Lean. A first attempt at doing this may be inspired by how compilers are written:
 define an AST for the syntax of the language, and a typechecker for accepting or rejecting AST terms. Following such an approach would be painful given our goal
 of specifying properties of programs. We would always have to guard for the possibility that a program is not well-typed, when writing a specification on it, and would lead to a
@@ -78,17 +79,19 @@ inductive Term : List Ty → Ty → Type
 In Lean's dot notation, \texttt{.G} will elaborate into \texttt{Ty.G} since the expected type at that location can be inferred.
 We can anticipate that the semantics of a term $te : .G ty$ (object language typing), would be a Kernel.  % Appl is interpreted in a monad (the Giry)
 \texttt{bind}  \texttt{Arith} and \texttt{Cmp}
-are types for the syntax of operators like $+$, $-$, $\leq$, etc, so we omit them, Below we provide the denotation of selected terms:
+are types for the syntax of operators like $+$, $-$, $\leq$, etc, so we omit them. The syntax follows straightforwardly from Fig \ref{fig:term-syntax}, presented in sec \ref{sec:appl}.
+In the Lean code, we also see they that the syntax is typed (for example \texttt{arith} only takes terms of types \texttt{Ty.real} as arguments), so that all terms are correct by
+construction. Below we provide the denotation of selected terms:
 
 \begin{leancode}
-@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den -- -m→ is a measurable function
+@[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den -- measurable
   | var mem => ⟨fun env ↦ env.get mem, List.TProd.measurable_get mem⟩
   | ret X => ⟨fun env ↦ probDirac (X.den env), measurable_probDirac.comp X.den.2⟩
   -- In `bind` we are working exactly with kernels
   | @bind _ ty₁ ty₂ M N =>
     letI T := List.TProd (⟪·⟫) ctx
     letI k₁ : Kernel T (⟪ty₁⟫ × T) := (toMK M.den ×ₖ Kernel.id)
-    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den -- need to provide type annotation for this
+    letI k₂ : Kernel (⟪ty₁⟫ × T) ⟪ty₂⟫ := toMK N.den
     toDen (k₂ ∘ₖ k₁)
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
@@ -112,6 +115,41 @@ Unfolding \texttt{List.TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) P
 A measurable space over \texttt{List.TProd} is provided by Mathlib in this fashion, if each of the components of the list has associated with it a measurable space.
 The main reason we are using dependent de Brujin indices, even though there are drawbacks to readability of the proof interface, is because it is clear how to define a measurable space over a heterogeneous list.
 
-\Todo{The kernel Api used for bind}
+The reason we are seeing the awkward notation of $\lambda$-functions (\texttt{fun env ...}), being enclosed in tuples $\langle \ldots \rangle$, is because we need to prove each of the functions
+from the context are measurable. They are of type \lean{List.TProd (⟪·⟫) ctx -m→ ty.den} where the $-m\to$ is notation for \texttt{MeasurableFun}, which is the structure (flat inductive type) that
+these tuples elaborate into:
 
-\Todo{Markov Kernels and probability Measures. (alternative being weird induction)}
+\begin{leancode}
+structure MeasurableFun (α β : Type*) [MeasurableSpace α] [MeasurableSpace β] where
+  /-- underlying function -/
+  toFun : α → β
+  meas: Measurable toFun
+\end{leancode}
+
+and we can refer to the underlying function as the first field $.1$ and the measurability condition as the second field $.2$ which is what one may notice throughout the code. We are invoking Mathlib's
+measure theory API to get these measurability proofs. The most interesting definition of \texttt{Term.den} is that of \texttt{bind}. Since we know that the arguments of bind are typed $M N : \mathrm{G} \_$, we know they
+are both kernels, so we cast them into the kernel type provided by Mathlib and construct the following diagram (copied from Sec \ref{sec:bind}), in a point-free style.
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{background/binding-semantics.png}
+\end{figure}
+
+Notes on the notation: \texttt{toMK}
+is short for ``to Markov Kernel'', and is simply a cast\footnote{We attempted using an implicit coercion, which are implemented using typeclasses in Lean, but the required types could not be inferred automatically}.
+Given two kernels $P$ and $Q$, the kernel product $P \times_m Q$, copies the inputs and return the output of each of $P$ and $Q$ as a tuple 
+(product measure on a product measurable space). Again we represent it diagrammatically, this time within a dotted box in Fig \ref{fig:kernel-prod}:
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{lilac/kernel-prod.png}
+    \caption{Kernel product between kernels $P$ and $Q$}
+    \label{fig:kernel-prod}
+\end{figure}
+
+Finally, \texttt{Kernel.id} the identity kernel, can achieve the effect of just passing on its deterministic input if we define it as $\text{Kernel.id}\, x = \text{dirac}\, x$.
+Our original definition was
+the definition from the paper, but it was very difficult to prove the measurability of the construct; there was no suitable Mathlib lemma, and proving measurability from scratch
+is involved, requiring finding relevant helper lemma in Mathlib, and long. Thankfully, measurable function compose to measurable functions, and we only had to realise this perspective,
+of the definition of \texttt{bind}, before it became more natural to state the definition using kernels compositionally and get measurability for free!
+

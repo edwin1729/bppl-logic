@@ -38,7 +38,7 @@
 \usepackage{xstring}
 
 \newcommand{\rcite}{\textcolor{red}{CITE}}
-\newcommand{\Todo}[1]{\texttt{<insert: #1>}}
+\newcommand{\Todo}[1]{\textcolor{red}{Todo: #1}}
 \newcommand{\bind}{\mathbin{>\!\!>\mkern-6.7mu=}} % monadic bind
 \newcommand{\wand}{\mathbin{-\!*}}
 \newcommand{\denote}[2]{\llbracket #1 \rrbracket_{#2}}
@@ -52,6 +52,7 @@
   \StrSubstitute{#1}{/}{.}[\tmp]%
   \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/#1.lean}{Bppl.Lilac.\tmp}%
 }
+\newcommand{\G}{\mathcal{G}}
 \newcommand{\TwoPhasePartitionGraph}[4]{%
 % #1 = seed
 % #2 = number of random boxes

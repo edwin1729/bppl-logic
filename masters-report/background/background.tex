@@ -39,15 +39,22 @@ A monad can be understood as a map from type A to M A. It is additionally associ
 Readers are also assumed to have some familiarity with type theory, in particular having seen inference rules.
 
 \section{Measure Theory}
-\label{sec:measure_theory}
+\label{sec:measure-theory}
 In order to understand the semantics of a probabilistic programming, a formal definition for probability is needed.
 Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
 probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
-variable we first need to define Measures and Measurable Space. A measurable space is a pair $(\Omega, \Sigma_\Omega)$,
+variable we first need to define measures and measurable spaces. A measurable space is a pair $(\Omega, \Sigma_\Omega)$,
 where $\Omega$ is some Set, and $\Sigma_\Omega \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\Sigma_\Omega$
 to be an event (such as a coin flip landing heads). We would like the $\sigma$-algebra to be closed under complements and
-countable unions. From the presentation so far, it may seem like all singleton sets must be events but
-due to technical reasons (see \cite{axler} Ch. 2), this cannot be in certain cases where $\Sigma$ is infinite.
+countable unions\footnote{from unions and complements we obtain intersections through de Morgan's law}. From the presentation so far, it may seem like all singleton sets must be events but
+due to technical reasons (\citep[Chapter 2]{axler}), this cannot be in certain cases where $\Sigma$ is infinite.
+
+Formally, a $\sigma$-algebra $\Sigma_\Omega \subseteq \mathcal{P}(\Omega)$ is a collection of subsets of $\Omega$ satisfying:
+\begin{align*}
+  &\Omega \in \Sigma_\Omega, \\
+  &E \in \Sigma_\Omega \implies \Omega \setminus E \in \Sigma_\Omega, \\
+  &(E_i)_{i \in \mathbb{N}} \in \Sigma_\Omega \implies \bigcup_{i \in \mathbb{N}} E_i \in \Sigma_\Omega.
+\end{align*}
 
 A measure on a measurable space is a function
  $\mu : \Sigma_\Omega \rightarrow [0, \infty]$. 
@@ -55,14 +62,24 @@ A measure on a measurable space is a function
 A probability measure on the other hand is more restrictive: $\mu : \Sigma_\Omega \rightarrow [0, 1]$.
 It gives the probability of an event $E \in \Sigma\_\Omega$ ocurring. 
 A similar but more general notion than what a measure gives us, is a random variable: a measurable
-function between two measurable spaces. I say "more general notion", since using the identity measurable function
+function between two measurable spaces. We say "more general notion", since using the identity measurable function
 yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \marrow (\Omega_2, \mathcal{G})$
-$f : \Omega_1  \marrow \Omega_2$ is well defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
+$f : \Omega_1  \marrow \Omega_2$ is well-defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
 and $(\Omega_2, \mathcal{G})$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
 $\Omega_1 = \{1,\ldots,6\}^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = \{1,\ldots,12\}$.
 A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\Omega)$ to the pushforward measure $\mu'$ on $(\Omega_2, \mathcal{G})$.
-In order for this to always be well defined we require the following measurability to be satisfied by all measurable functions:
+In order for this to be well-defined we require the following measurability condition to be satisfied by all measurable functions:
 $\forall G \in \mathcal{G}, f^{-1}(G) \in \Sigma_\Omega$.
+We denote the pushforward as $\mu' = f_\#\mu$.
+
+A related notion to the pushforward measure, is the pullback $\sigma$-algebra. Instead of constraining the measurable function to behave according to the $\sigma$-algebra
+on the domain, the pullback asks what $\sigma$-algebra do we require on the domain to support some measurable function. Given a function $f : \Omega \rightarrow \Omega'$
+and a $\sigma$-algebra $\mathcal{G}$ on the codomain $\Omega'$, the pullback $\sigma$-algebra on $\Omega$ is
+\[
+f^{*}\mathcal{G} := \{\, f^{-1}(G) \mid G \in \mathcal{G} \,\}.
+\]
+This is the coarsest (smallest) $\sigma$-algebra on $\Omega$ making $f$ measurable, and we are guaranteed is closed under complements and
+countable unions since $\mathcal{G}$ is a $sigma$-algebra. 
 
 A Lebesgue integral is a generalisation of the standard (Reimann) integral. Intuitively the lebesgue and reimann integral will coincide on the spaces such as $\mathbb{R}$,
 where the domain of integration is continuous. The lebesgue integral relaxes that requirement. The lesbesgue integral of a measurable function $f : \Omega \rightarrow [0, \infty]$
@@ -82,16 +99,85 @@ by picking some choice of measurable disjoint sets whose union is the $\Omega$ (
 point $\omega$ evaluates f on $\omega$ and weights it by how large the set is ($\mu U_i)$. The supremum and infimum together enforce that the chosen disjoint
 cover is chosen as finely (small measure) as possible.
 
-\subsection{Borel spaces and lebesgue measures}
+\subsection{Borel spaces and Lebesgue measures}
+Intuitively a measure is supposed to be a length, volume or in general a ``size'' in a higher dimensional counterpart. 
+The standard borel $\sigma$-algebra on $\mathbb{R}$, $B_\mathbb{R}$, corresponds to our notion of those subsets of $\mathbb{R}$ which have a ``size''. Again we refer
+to~\cite[Chapter 2 of]{axler}, for examples of subsets of $\mathbb{R}$ which are not measurable sets, which are rather obscure. In general
+most subsets that we care about: open and closed interval, singletons and of course unions and complements of the previous, are all included in $B_\mathbb{R}$.
+We define the $\sigma$-algebra, \emph{generated} out of some $S : Set (Set A)$, $\sigma(S)$ as the smallest set containing A and is closed under complements
+and countable unions. We can see what $B_\mathbb{R}$ includes by seeing various ways of defining it:
+
+We have that the Borel $\sigma$-algebra $B_\mathbb{R} = \sigma(S)$, when $S$ is:
+\begin{enumerate}
+  \item[(a)] $\{(a, b) : a, b \in \mathbb{R}\}$,
+  \item[(b)] $\{(-\infty, a) : a \in \mathbb{R}\}$,
+  \item[(c)] $\{(-\infty, a] : a \in \mathbb{R}\}$,
+  \item[(d)] $\{(a, \infty) : a \in \mathbb{R}\}$.
+\end{enumerate}
+
+More generally a Borel $\sigma$-algbera, (not necessarily on $\mathbb{R}$), is a $\sigma$ algebra generated from the topology and the standard Borel
+$\sigma$-algebra is canonical since it is generated from the standard topology~\citep{axler}. We are only concerned with Borel $\sigma$-algebras for $\mathbb{R}^n$ (i.e. Euclidean space) in
+this project.
+
+Returning to the initial claim that a measure is intuitively the size of a set, we present the Lebesgue measure on $\mathbb{R}, B_\mathbb{R}$, $\lambda$, which corresponds to the sums of lengths of all
+intervals in a measurable subset. Precisely:
+\[
+\lambda(E) := \inf \left\{
+\sum_{i=1}^{\infty} (b_i - a_i)
+\;\middle|\;
+E \subseteq \bigcup_{i=1}^{\infty} (a_i, b_i)
+\right\}.
+\]
+
+That is, the Lebesgue measure of a set $E$ is the infimum, over all countable covers of $E$ by open intervals, of the
+total length of those intervals. On an interval it recovers the expected value, $\lambda\big((a, b)\big) = b - a$, and it
+assigns measure zero to every singleton (and hence to every countable set, such as $\mathbb{Q}$).
 
 \subsection{Product of measurable spaces $\times_m$ and product measures $\otimes$}
+In the previous section we mentioned that we are interested in measurable spaces (and measures) over $\mathbb{R}^n$ for some n. Let's see how we can build the
+standard Borel $\sigma$-algebra and Lebesgue measure over $\mathbb{R}^n$ by taking products.
 
-\subsection{Probability THoery: (independent) random variables, joints and marginals, conditioning, expection, pushfowards and pullbacks}
-\ref{sec:indep}
-In the definition of E and M, we want them to be as general as possible, so we take the measurable space which is very fine grained. In other words it is very large as it contains a large number
-of sets. To bolster the intuition that the measurability condition is less restrictive over finer measurable space in the domain, Imagine a coarse measurable space in the domain. The pre-image
-of the function is less likely to be a measurable set in the domain, and satisfy the measurability condition. Hence coarses measurable spaces in the domain are more restrictive. It is helpful to think of the
-  measurable space in the domain of $RV A$ as the finest (greatest) measurable space (though this doesn't exist for general $\Omega$), until we choose a specific $\Omega$ and measurable space on it later on. 
+Given two measurable spaces $(\Omega_1, \Sigma_1)$ and $(\Omega_2, \Sigma_2)$, their product is the measurable space on the Cartesian
+product $\Omega_1 \times \Omega_2$, whose $\sigma$-algebra is generated by the \emph{measurable rectangles}:
+\[
+\Sigma_1 \otimes \Sigma_2 := \sigma\big(\{\, A \times B \mid A \in \Sigma_1,\ B \in \Sigma_2 \,\}\big).
+\]
+Note we must take the generated $\sigma$-algebra: the rectangles themselves are not closed under complement or countable union. We
+write the resulting measurable space as $(\Omega_1, \Sigma_1) \times_m (\Omega_2, \Sigma_2)$.
+
+Given $\sigma$-finite measures $\mu_1$ on $\Sigma_1$ and $\mu_2$ on $\Sigma_2$, there is a unique \emph{product measure}
+$\mu_1 \otimes \mu_2$ on $\Sigma_1 \otimes \Sigma_2$ determined on rectangles by
+\[
+(\mu_1 \otimes \mu_2)(A \times B) = \mu_1(A)\,\mu_2(B),
+\]
+so the measure of a rectangle is the product of the side measures (for uniqueness see \citet[Chapter 5A]{axler}). Specialising to $\mathbb{R}$, the $n$-fold product of $(\mathbb{R}, B_\mathbb{R})$ with itself gives the standard Borel
+$\sigma$-algebra $B_{\mathbb{R}^n} = B_\mathbb{R}^{\otimes n}$, and the $n$-fold product of the Lebesgue measure gives the
+$n$-dimensional Lebesgue measure, $\lambda_n = \lambda^{\otimes n}$, assigning to a \emph{measurable rectangle} $\prod_{i=1}^n (a_i, b_i)$ its size
+$\prod_{i=1}^n (b_i - a_i)$ as one would expect.
+
+\subsection{Probability Theory}
+\label{sec:indep}
+Probability theory emerges from measure theory, and is centred around the probability space which is a tuple $(\Omega, \Sigma_\Omega, \mu)$, of a set equipped with a measurable space,
+and a probability measure. Random variables play a key role as well so we provide a little more intuition on their relation to the measurable space in their (co)domain. 
+To bolster the intuition that the measurability condition is less restrictive over a finer measurable space in the domain, imagine a coarse measurable space in the domain. The pre-image
+of the function is less likely to be a measurable set in the domain, and so less likely to satisfy the measurability condition. Hence coarser measurable spaces in the domain are more restrictive.
+Take the premise that we want to be as permissive as possible in the random variables we are allowed to define. Then we want their domain to be as general as possible, so we take a measurable space which is very 
+fine grained; in other words it is very large as it
+contains a large number of sets. In practice this is often achieved by equipping the domain with the standard Borel measurable space, though this is not necessarily the finest (greatest) measurable space available
+(indeed, a greatest measurable space does not exist for general $\Omega$).
+
+Two random variables $X : \Omega \rightarrow \Omega_1$ and $Y : \Omega \rightarrow \Omega_2$ on a probability space $(\Omega, \Sigma_\Omega, \mu)$ are
+\emph{independent} when knowing the value of one tells us nothing about the other, that is, their joint distribution factors into the
+product of their distributions:
+\[
+\mu\big(X^{-1}(A) \cap Y^{-1}(B)\big) = \mu\big(X^{-1}(A)\big)\,\mu\big(Y^{-1}(B)\big) \qquad \forall A \in \Sigma_1,\ B \in \Sigma_2.
+\]
+
+Finally, the \emph{expectation} of a real-valued random variable $X : \Omega \rightarrow \mathbb{R}$ is its average value weighted by the
+probability measure, given by the Lebesgue integral
+\[
+\mathbb{E}[X] := \int_{\Omega} X \,d\mu.
+\]
 
 
 % \subsection{Pi-lambda theorem}
@@ -108,142 +194,267 @@ of the function is less likely to be a measurable set in the domain, and satisfy
 
 We first present Appl \citep[appendix A]{lilac}, a probabilistic programming language without Bayesian updates. Syntactically it looks like a basic WHILE language.
 In Appl, there isn't an explicit \texttt{sample} construct. Sampling is realised in the semantics of sequencing as explained later. Though the language is
-first order, PPLs still have a non-trivial, novel denotational semantics. The central difference is that types are interpreted as \texttt{MeasurableSpace} rather than
-just \texttt{Set} from which everything else follows. Concretely $\llbracket A \rrbracket = (\mathbb{A}, \Sigma_{\mathbb{A}})$. In our PPL we would like to express
-measures and manipulate measures. The type constructor $\mathcal{G} A$
-is interpreted as type of probability measures $\text{ProbMeasure} \llbracket A \rrbracket$, the
-\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$. So in order for $\mathcal{G} A$ to be a valid Appl type, there must
-exist some canonical \texttt{MeasurableSpace} $\Sigma_{\mathcal{G} A} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed 
-true~\citep{giry}\footnote{An excellent blogpost introducing the Giry monad can be found here \url{https://jtobin.io/giry-monad-foundations}}.
+first order, PPLs still have a non-trivial, novel denotational semantics. The central difference is that:
+\begin{enumerate}
+\item Types are interpreted in \texttt{Meas}, the category of measurable spaces rather than
+just \texttt{Set}. Concretely each type is interpreted as a measurable space $\llbracket A \rrbracket = (\mathbb{A}, \Sigma_{\mathbb{A}})$.
+\item Probabilistic programs are have a monadic semantics, interpreted in the Giry monad, which expresses probabilistic computation as an effect. The Giry monad is a monad in \texttt{Meas}
+\end{enumerate}
+The interesting aspects of Appl, follow from these two points which we will explain thoroughly. 
+
+In Fig \ref{fig:type-syntax} we see the types of Appl which as noted must have as denotation a measurable space rather than a set, as given in
+Fig \ref{fig:type-denotations}. We recognize many familiar $\sigma$-algebras in the denotation such as the Borel $\sigma$ algebra on the reals and the product
+measurable space (see Sec \ref{sec:measure-theory}). Note that in discrete spaces such as $\sem{\mathrm{bool}}$, the power set is a valid measurable space,
+and clearly the greatest one (ordered by subset inclusion). In our PPL we would like to express
+measures and manipulate measures.
+Understanding the type constructor $\mathbb{G}$, is key to answering this question.
 
 \begin{figure}[tb]
   \centering
-  \begin{math}
-  \begin{aligned}
-  A, B &::= A \times B \mid bool \mid  real \mid A^n \mid \mathcal{G} A \\
-  p &\in [0,1] \\
-  r &\in \mathbb{R} \\
-  n &\in \mathbb{N} \\
-  \oplus &\in \mathrm{Arith} := \{+, -, \times, /, \hat{}\} \\
-  < &\in \mathrm{Cmp} := \{<, \leq, =\} \\
-  M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
-  &\quad (M, N) \mid \mathrm{fst}\ M \mid \mathrm{snd}\ M \mid \\
-  &\quad \mathrm{T} \mid \mathrm{F} \mid \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \mid \mathrm{flip}\ p \mid \\
-  &\quad r \mid M \oplus N \mid M < N \mid \mathrm{unif}\ [0,1] \mid \\
-  &\quad [M,\ldots,M] \mid [M|N] \mid \mathrm{for}(n, M_{\mathrm{init}}, i\ X.\, M_{\mathrm{step}})
-  \end{aligned}
-  \end{math}
-  \caption{Syntax of Appl}
-  \label{fig:syntax}
-\end{figure}
-
-\begin{figure}[tb]
-  \centering
-  \[
-  \begin{aligned}
-  \llbracket A \times B \rrbracket &= \llbracket A \rrbracket \otimes \llbracket B \rrbracket \\
-  \llbracket \mathbf{bool} \rrbracket &= (\{T,F\}, \mathcal{P}(\{T,F\})) \\
-  \llbracket \mathbf{real} \rrbracket &= (\mathbb{R}, \mathcal{B}(\mathbb{R})) \\
-  \llbracket A^n \rrbracket &= \underbrace{\llbracket A \rrbracket \otimes \cdots \otimes \llbracket A \rrbracket}_{n\ \text{times}} \\
-  \llbracket \mathbf{GA} \rrbracket &= \mathcal{G}[\![A]\!] \\
-  \llbracket \mathbf{1} \rrbracket &= \text{the one-point space}
-  \end{aligned}
-  \]
-  \caption{Denotational semantics of types}
-  \label{fig:denotations}
-\end{figure}
-
-\begin{figure}[tb]
-  \centering
-  \[
-  \begin{aligned}
-  \llbracket X \rrbracket \rho &= \rho(X) \\
-  \llbracket \mathrm{ret}\ M \rrbracket \rho &= \mathrm{ret}\ \llbracket M \rrbracket \rho \\
-  \llbracket X \leftarrow M;\ N \rrbracket \rho &= v \leftarrow \llbracket M \rrbracket \rho;\ \llbracket N \rrbracket [X \mapsto v] \\
-  \llbracket (M,N) \rrbracket \rho &= (\llbracket M \rrbracket \rho,\ \llbracket N \rrbracket \rho) \\
-  \llbracket \mathrm{fst}\ M \rrbracket \rho &= \pi_1(\llbracket M \rrbracket \rho) \\
-  \llbracket \mathrm{snd}\ M \rrbracket \rho &= \pi_2(\llbracket M \rrbracket \rho) \\
-  \llbracket \mathrm{T} \rrbracket \rho &= \mathrm{T} \\
-  \llbracket \mathrm{F} \rrbracket \rho &= \mathrm{F} \\
-  \llbracket \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \rrbracket \rho &=
-  \begin{cases}
-    \llbracket N \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{T} \\
-    \llbracket O \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{F}
-  \end{cases} \\
-  \llbracket \mathrm{flip}\ p \rrbracket \rho &= \mathrm{Ber}\,p \\
-  \llbracket r \rrbracket \rho &= r \\
-  \llbracket M \oplus N \rrbracket \rho &= (\llbracket M \rrbracket \rho) \oplus (\llbracket N \rrbracket \rho) \\
-  \llbracket \mathrm{unif}\ [0,1] \rrbracket \rho &= \mathrm{Unif}\,[0,1] \\
-  \llbracket [M_1,\ldots,M_n] \rrbracket \rho &= (\llbracket M_1 \rrbracket \rho,\ldots,\llbracket M_n \rrbracket \rho) \\
-  \llbracket [M[N] : A] \rrbracket \rho &=
-  \begin{cases}
-    \pi_N \bigl(\llbracket M \rrbracket \rho\bigr), & 1 \leq \llbracket N \rrbracket \rho \leq n \\
-    \mathrm{arbitrary}(A), & \text{otherwise}
-  \end{cases} \\
-  \llbracket \mathrm{for}(n, M_i, i\ X.\, M_s) \rrbracket \rho
-  &= \mathrm{loop}\!\left(1,\ \llbracket M_i \rrbracket \rho,\ \lambda k.\ \llbracket M_s \rrbracket \rho[i \mapsto k,\ X \mapsto v]\right) \\
-  \text{where }\mathrm{loop}(k,u,f) &=
-  \begin{cases}
-    \mathrm{ret}\ u, & k > n \\
-    v' \leftarrow f(k,v);\ \mathrm{loop}(k+1,v',f), & \text{otherwise}
-  \end{cases}
-  \end{aligned}
-  \]
-  \caption{Denotational semantics of terms}
-  \label{fig:denotational-semantics}
-\end{figure}
-
-\subsection{Types in BPPL}
-The setting is the category of Measurable Spaces, \texttt{Meas}. All types in our language is interpreted as an object in 
-this category. Syntactically:
+  \begin{subfigure}[t]{0.95\linewidth}
+    \centering
 \[ 
-\mathbb{A}, \mathbb{B} ::= \mathbb{R} \mid \mathcal{P}(\mathbb{A}) \mid 1 \mid \mathbb{A} \times \mathbb{B} \mid \cdots
+A, B ::= \mathbb{A} \times \mathbb{B} \mid \mathrm{bool} \mid \mathrm{real} \mid \mathbb{G}(\mathbb{A}) \mid 1
 \]
+    \caption{Syntax}
+    \label{fig:type-syntax}
+  \end{subfigure}
 
-Objects in this category are of the form $(A, \Sigma_A)$. Morphisms are measurable functions. The interesting type here is $\mathcal{P}(\mathbb{A})$.
-It's the type of probability distributions over $\mathbb{A}$. Actually not quite, since we allow any measure $\mu : \Sigma_A \rightarrow [0, \infty]$,
-rather than $\Sigma_A \rightarrow [0, 1]$. Now in order to be an object in the category, $\mathcal{P}(\mathbb{A})$, the set of all measures on $\mathbb{A}$,
-must itself form a measurable space. There is a construction to form a $\sigma$-algebra for $\mathcal{P}(\mathbb{A})$ satisfying all the
-requirements (we don't go into it here).
+  \begin{subfigure}[t]{0.95\linewidth}
+    \centering
+\[
+\begin{aligned}
+\llbracket A \times B \rrbracket &= \llbracket A \rrbracket \otimes \llbracket B \rrbracket \\
+\llbracket \mathrm{bool} \rrbracket &= (\{T,F\}, \mathcal{P}(\{T,F\})) \\
+\llbracket \mathrm{real} \rrbracket &= (\mathbb{R}, \mathcal{B}_\mathbb{R}) \\
+\llbracket \mathbb{G} \mathbb{A} \rrbracket &= \mathcal{G}\sem{A} \\
+\llbracket 1 \rrbracket &= \text{the one-point space}
+\end{aligned}
+\]
+    \caption{Denotational semantics}
+    \label{fig:type-denotations}
+  \end{subfigure}
+  \caption{Types in Appl}
+\end{figure}
 
-A natural next question is how these measures can be created and manipulated. The semantics of PPLs are given in a monadic framework (in other words probabilistic
-programs can be thought of as effectful computations). In practice this means that there is are \texttt{ret} and \texttt{bind} type constructors to construct terms
-of (object) type $mathrm{G} ?$, such that
+The type constructor $\mathbb{G} A$
+is interpreted as the type of probability measures $\text{ProbMeasure} \llbracket A \rrbracket$, the
+\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$, denoted $\sem{\mathbb{G} A} = \mathcal{G} \sem{A}$ So in order for $\mathbb{G} A$ to be a valid Appl type, there must
+exist some canonical \texttt{MeasurableSpace} $\Sigma_{\mathcal{G} \sem{A}} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed 
+true~\citep{giry}\footnote{An excellent blogpost introducing the Giry monad can be found here \url{https://jtobin.io/giry-monad-foundations}}
+established that $\mathbb{G} = \mathcal{G}$ is a functor, the Giry functor.
+
+A natural next question is how these measures can be created and manipulated. To answer that we first introduce the syntax and denotational semantics of terms in Appl, in Fig \ref{sec:appl}.
+Our semantics is compositional, meaning we allow for the denotation of \emph{open} terms, terms which have free variables. To allow this, Appl uses the standard technique of
+introducing a variable context. This is shown in Fig \ref{fig:type-context}, where a novelty of lilac is that $\sem{M}$ is not just a function from the context, but a measurable
+function from the context. We are starting to see the probabilistic nature of Appl. The denotations of open terms of Appl type $\mathbb{A}$ are \emph{random variables} of type $\sem{\mathbb{A}}$.
+
+Let us present the more straightforward terms in Appl. In Fig \ref{fig:term-semantics}, it is apparent that $\rho : \sem{\Delta}$, so with the variable construct we are
+able to choose a variable from the context, denoted $\rho(X)$. As in a standard language, we are able to create tuples, take projections on them, perform standard binary operations, and denote true and false.
+\texttt{flip} and \texttt{unif} are specific to a PPL, both allowing us to construct a terms of type $\mathrm{G}\, \mathbb{A}$. \texttt{flip p : G bool} and $unif[0,1] : \mathrm{G} \mathrm{real}$.
+Plainly. \texttt{unif[0,1]} denotes the uniform distribution on the interval $[0,1]$, while \texttt{flip p} denoted the Bernoulli distribution, which is just a the distribution of a (possibly biased) coin flip.
+
+We have so far seen constructs which are standard in any programming, (noting that their interpretation does have some added measurability structure), and we have also seen how to construct to primitive
+measures using \texttt{unif[0,1]} and \texttt{flip p}. But expressivity of Appl for manipulating measures stems from its monadic term constructors \texttt{ret} and \texttt{bind}. We pursue a layered presentation
+in understanding the semantics of these constructs, first presenting the semantic \texttt{ret} and \texttt{bind} operations of the Giry monad, where we do not have to worry about variable contexts.
+then the actual denotation the two constructs. We will revisit it in Sec \ref{sec:appl-lean}, where we mechanise it in Lean, in point free form to make it amenable to equational reasoning 
+(used plentifully in the proofs to come).
+
+
+% but we have not seen how to construct and
+% manipulate measures
+
+% As mentioned the semantics of terms in Appl are interpreted in a monad.
+% In practice this means that there is are syntactic constructs \texttt{ret} and \texttt{bind}, whose semantics correspond to the monadic \texttt{ret}
+% and \texttt{bind} in the Giry monad. We will give a layered presentation to understanding the semantics of \texttt{ret} and \texttt The syntax and semantics of Appl terms are shown in Fig \ref{fig:terms}. We work through those that are novel to probabilistic programming.
+
+% \[
+% \begin{array}{l@{\qquad}l}
+% \llbracket \mathrm{ret} \rrbracket : A \to \mathcal{G}A
+% &
+% \llbracket \mathrm{bind} \rrbracket : \mathcal{G}A \to (A \to \mathcal{G}B) \to \mathcal{G}B
+% \end{array}
+% \]
+
+% The core intuition of how probabilistic programs work is gained by studying the semantics of let bindings \ref{bind}. But first let's explain how variables work
+% in Appl. A standard technique for representing variables is to use a variable context. A map from this context to the denotation of an AST would be considered
+% a program. However, in Appl, the context is a measurable space, and the map is also measurable. Precisely the context and interpretation of well-typedness in context
+% is given as:
+
+% \[
+% \begin{array}{l@{\qquad}l}
+% \llbracket \Gamma, X\!:\!A \rrbracket = \llbracket \Gamma \rrbracket \otimes \llbracket A \rrbracket
+% &
+% \llbracket M \rrbracket : \llbracket \Gamma \rrbracket \xrightarrow{\text{m}} \llbracket A \rrbracket
+% \end{array}
+% \]
+
+\begin{figure}[tbp]
+  \centering
+  \begin{subfigure}[t]{0.95\linewidth}
+    \centering
+\[
+\begin{aligned}
+p &\in [0,1] \\
+r &\in \mathbb{R} \\
+n &\in \mathbb{N} \\
+\oplus &\in \mathrm{Arith} := \{+, -, \times, /, \hat{}\} \\
+< &\in \mathrm{Cmp} := \{<, \leq, =\} \\
+M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
+&\quad (M, N) \mid \mathrm{fst}\ M \mid \mathrm{snd}\ M \mid \\
+&\quad \mathrm{T} \mid \mathrm{F} \mid \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \mid \mathrm{flip}\ p \mid \\
+&\quad r \mid M \oplus N \mid M < N \mid \mathrm{unif}\ [0,1] \mid \\
+&\quad \mathrm{for}(n, M_{\mathrm{init}}, i\ X.\, M_{\mathrm{step}})
+\end{aligned}
+\]
+    \caption{Syntax}
+    \label{fig:term-syntax}
+  \end{subfigure}
+
+  \begin{subfigure}[t]{0.95\linewidth}
+    \centering
+\[
+\begin{gathered}
+\Delta ::= {} \cdot \mid \Delta, X : \mathbb{A} \\
+\sem{\Delta} = \mathbb{A}_1 \times_m \cdots \times_m \mathbb{A}_n \\
+\sem{M : \mathbb{A}} : \sem{\Delta} \marrow \sem{\mathbb{A}}
+\end{gathered}
+\]
+    \caption{The type of denotation of terms inn a variable context}
+    \label{fig:type-context}
+  \end{subfigure}
+
+  \begin{subfigure}[t]{0.95\linewidth}
+    \centering
+\[
+\begin{aligned}
+\llbracket X \rrbracket \rho &= \rho(X) \\
+\llbracket \mathrm{ret}\ M \rrbracket \rho &= \mathrm{ret}\ \llbracket M \rrbracket \rho \\
+\llbracket X \leftarrow M;\ N \rrbracket \rho &= v \leftarrow \llbracket M \rrbracket \rho;\ \llbracket N \rrbracket [X \mapsto v] \\
+\llbracket (M,N) \rrbracket \rho &= (\llbracket M \rrbracket \rho,\ \llbracket N \rrbracket \rho) \\
+\llbracket \mathrm{fst}\ M \rrbracket \rho &= \pi_1(\llbracket M \rrbracket \rho) \\
+\llbracket \mathrm{snd}\ M \rrbracket \rho &= \pi_2(\llbracket M \rrbracket \rho) \\
+\llbracket \mathrm{T} \rrbracket \rho &= \mathrm{T} \\
+\llbracket \mathrm{F} \rrbracket \rho &= \mathrm{F} \\
+\llbracket \mathrm{if}\ M\ \mathrm{then}\ N\ \mathrm{else}\ O \rrbracket \rho &=
+\begin{cases}
+  \llbracket N \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{T} \\
+  \llbracket O \rrbracket \rho, & \llbracket M \rrbracket \rho = \mathrm{F}
+\end{cases} \\
+\llbracket \mathrm{flip}\ p \rrbracket \rho &= \mathrm{Ber}\,p \\
+\llbracket r \rrbracket \rho &= r \\
+\llbracket M \oplus N \rrbracket \rho &= (\llbracket M \rrbracket \rho) \oplus (\llbracket N \rrbracket \rho) \\
+\llbracket \mathrm{unif}\ [0,1] \rrbracket \rho &= \mathrm{Unif}\,[0,1] \\
+\llbracket \mathrm{for}(n, M_{\mathrm{init}}, i\ X.\, M_{\mathrm{step}}) \rrbracket \rho
+&= \mathrm{loop}\!\left(1,\ \llbracket M_{\mathrm{init}} \rrbracket \rho,\ \lambda k.\ \llbracket M_{\mathrm{step}} \rrbracket \rho[i \mapsto k,\ X \mapsto v]\right) \\
+\text{where }\mathrm{loop}(k,u,f) &=
+\begin{cases}
+  \mathrm{ret}\ u, & k > n \\
+  v' \leftarrow f(k,v);\ \mathrm{loop}(k+1,v',f), & \text{otherwise}
+\end{cases}
+\end{aligned}
+\]
+    \caption{Denotational semantics}
+    \label{fig:term-semantics}
+  \end{subfigure}
+  \caption{Terms in Appl}
+  \label{fig:terms}
+\end{figure}
+
+\subsection{The Giry Monad}
+Our intuition is that syntactic \texttt{ret} and let-binding should have something to do with the Giry monads operations. denoted as:
+
+$\mathrm{ret}_\G : A \to \G A \qquad\qquad \bind : \mathcal{G} A \to (A \to \mathcal{G} B) \to \mathcal{G} A$
+
+Here we are assuming $A$ and $B$ have the form $A = \sem{\mathbb{A}}$ and $B = \sem{\mathbb{B}}$
+Let us see how we can construct these operations and validate the monad laws. We define $\mathrm{ret}_\G x = dirac x$. The Dirac measure concentrates all its probability at a single
+point. Given a measurable set E, $dirac x E = \text{if} x \in E \text{then} 1 \text{else} 0$.
+
+Now the type $(A \to \G A)$ is defined as $\text{Kernel} A B$. Mathlib uses this type as the primitive on which most of its probability theory library is built.
+We explore a diagrammatic exploration of probabilistic programs to see why kernels are so compelling:
+
+For a measurable space $(A, \Sigma_A)$, a probability measure is of type
+$\mu : \Sigma_A \rightarrow [0, 1]$. This gives a distribution on A. The intuition is that given $\mu$ we can sample some value from it.
+Each triangle below is a kernel. And the types of its input and
+output are indicated. We compose the kernels along the type B as $\kappa \underset{B}{\circ} \iota$. The types of the individual kernels and composed kernel of Fig \ref{fig:semantics},
+is given below:
+
+\begin{align}
+\iota &: A \to \G B \\
+\kappa &: B \to \G C \\
+\kappa \underset{B}{\circ} \iota &: A \to \G C
+\end{align}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\linewidth]{background/simple-semantics.png}
+    \label{fig:semantics}
+    \caption{A simple probabilistic program}
+\end{figure}
+
+The interpretation of the kernel $\iota$ is that for every (deterministic) value of $A$ it gets, it will give you a (probabilistic value) distribution over type $B$.
+So composition here, is sampling from the $\G B$, getting a deterministic value of type $B$ and passing that to the kernel $\kappa$. This sampling
+is done ranging over all the values of $B$ in proportion to their distribution, and taking a weighted average of the values of type $\G C$. More precisely,
+this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a. \int \lambda b. \; \kappa(b) \; d\iota(a)$ 
+
+Notice that $\circ$ has a type very similar to the $\bind$ (in the Giry monad).
+% We now write $\mathcal{G}(A)$ instead of \texttt{Measure} $A$, for the Giry functor. 
+$\circ : ((B) \to \mathcal{G}(C)) \to ((A) \to \mathcal{G}(B)) \to \mathcal{G}(C)$. If we just swap the arguments and partially apply an $a : A$ on $\iota$, we see
+that the bind of the Giry monad composes a measure with a kernel like so $\iota(a) \bind \kappa : \mathcal{G}(C)$
+We now take a step back, and have a look at a more general problem.
+
+Having gained some intuition for how $\bind$ works let's provide its definition. In Lean, it is defined as follows in Mathlib:
+
+\begin{leancode}
+def bind (μ : Measure α) (κ : α → Measure β) : Measure β :=
+  join (map κ μ)
+\end{leancode}
+
+\texttt{map} refers to taking a pushforward, so $\mathrm{map}\, \mu\, \kappa = \kappa_\#\mu : \G\, (\G\, \beta)$. This makes sense; for each $a : \alpha$ we get some $\G \beta$ following $\kappa$, so the measure on $\alpha$
+naturally turns into a measure on measures on $\beta$. \texttt{join}\footnote{\texttt{bind} is derived from join in a usual categorical presentation of a monad} collapses the type: $\mathrm{join} : \G (\G \beta) \to \G \beta$.
+It takes some measurable set $E : \Sigma_\beta$ and the measure it
+returns is the weighted sum of all the measures in $\kappa_\#\mu : \G\, (\G\, \beta)$. Precisely it is the integral
+
+$\mathrm{join}\, \mu'\, E = \int (\lambda\, \mu \mapsto \mu(E))\ d\mu'$
+
+Unfolding the definitions we have:
+$(\mu_\alpha \bind \kappa)\, E = \int (\lambda\, \mu_\beta \mapsto \mu_\beta(E))\ d(\kappa_\#\mu)$.
+
+We prove one of the monad laws to check that these definitions make sense. Let us prove that $\mathrm{join}\, (\mathrm{ret}\, \mu) = \mu$. Take an arbitrary measurable set $E$, and we prove through
+extensionality:
+
+$\mathrm{join}\, (\mathrm{ret}\, \mu) E = \int (\lambda\, \mu' \mapsto \mu'(E))\ d(\mathrm{dirac}\ \mu)$
 
 \[
-\begin{array}{l@{\qquad}l}
-\llbracket \mathrm{ret} \rrbracket : A \to \mathcal{G}A
-&
-\llbracket \mathrm{bind} \rrbracket : \mathcal{G}A \to (A \to \mathcal{G}B) \to \mathcal{G}B
-\end{array}
+\begin{aligned}
+\mathrm{join}\, (\mathrm{ret}\, \mu) E 
+&= \int (\lambda \mu' \mapsto \mu'(E))\ d(\mathrm{dirac} \mu)
+&= (\lambda \mu' \mapsto \mu'(E))\ \mu
+&= \mu(E)
+\end{aligned}
 \]
 
-The core intuition of how probabilistic programs work is gained by studying the semantics of let bindings \ref{bind}. But first let's explain how variables work
-in Appl. A standard technique for representing variables is to use a variable context. A map from this context to the denotation of an AST would be considered
-a program. However, in Appl, the context is a measurable space, and the map is also measurable. Precisely the context and interpretation of well-typedness in context
-is given as:
+As expected. We justify the step dropping the integral, with the fact that $\mathrm{dirac} \mu$ concentrates all of its probability on $\mu$. Viewing the integral as a weighted sum, a weight of 1 is given
+to $\mu$. Next we take a step back from Appl and consider a wider setting.
 
-\[
-\begin{array}{l@{\qquad}l}
-\llbracket \Gamma, X\!:\!A \rrbracket = \llbracket \Gamma \rrbracket \otimes \llbracket A \rrbracket
-&
-\llbracket M \rrbracket : \llbracket \Gamma \rrbracket \xrightarrow{\text{m}} \llbracket A \rrbracket
-\end{array}
-\]
-
+% \subsection{Types in BPPL}
 \subsection{The let binding problem}
 
-Staton provided a compositional semantics for first-order Bayesian probabilistic programs in \cite{prob-semantics}, which forms the foundation of program logics,
-validation of inference algorithms, etc. The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
-are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. So in the following, we present
-the relevant excerpt of the semantics.
+\cite{prob-semantics} provided a compositional semantics for first-order Bayesian probabilistic programming language (Bppl), which forms the foundation of program logics, for modern probabilistic
+programming languages. Note that Bppl, is Appl with the \texttt{observe} construct, and its semantics is more general than that of Appl. However, we choose to present a fundamental difficulty
+plaguing the semantics of Bppl, which was solved in \citep{prob-semantics} through the introduction of \texttt{s-finite kernels}. It will give us a picture of the surrounding landscape of probabilistic
+program semantics, the difficulty in establishing even the most basic properties of programs in this paradigm, and topic to further build our intuition of \emph{kernels}.
+% The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
+% are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. So in the following, we present
+% the relevant excerpt of the semantics.
 
 % BaSL uses exactly Staton's
 % semantics. Note that supporting bayesian updates, involves the constructs \texttt{observe} and \texttt{normalize} in the language. We will present here the
 % Staton's semantics.
-The key contribution of the paper is the introduction of \texttt{s-finite kernels}, motivated by validating a basic commutativity property that programmers expect.
-Specifically:
-\begin{figure}[h]
+In search of the right semantics we lay down the criteria, that
+we would like to validate the following basic commutativity property that programmers expect of a let binding.
+Specifically, when neither x is free in u nor y is free in t:
+\begin{figure}[tb]
 \[
 \begin{array}{c@{\qquad=\qquad}c}
 \begin{array}{l}
@@ -259,65 +470,29 @@ v
 \end{array}
 \end{array}
 \]
-    \caption{commutative program transformation}
+    \caption{Commutativity of let bindings}
     \label{fig:commute-syntax}
 \end{figure}
-when neither x is free in u nor y is free in t. Another benefit of this semantics is a term-wise compositionality, ie, the semantics of every subterm
-in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
-as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
-s-finite kernels denote open programs and s-finite measures denote closed programs.
+%  Another benefit of this semantics is a term-wise compositionality, ie, the semantics of every subterm
+% in a program is well-defined, not just whole programs. This is just another way of saying the semantics of open programs (those with free variables), as well
+% as closed programs is well-defined, respectively. Validating proof rules in a logic is much better formulated in terms of such a compositional semantics.
+% s-finite kernels denote open programs and s-finite measures denote closed programs.
 
-% In Lilac due to the absence of bayesian updates we do not need to work
-At this point it is important to disseminate the difference between Lilac's lack of bayesian updates (call this APPL) and the more general language with
-bayesian updates (call this BPPL). As justified in the \ref{sec:bayes}, it is necessary to work with (unnormalised) measures when 
+% % In Lilac due to the absence of bayesian updates we do not need to work
+% At this point it is important to disseminate the difference between Lilac's lack of bayesian updates (call this APPL) and the more general language with
+% bayesian updates (call this BPPL). As justified in the \ref{sec:bayes}, it is necessary to work with (unnormalised) measures when 
 
-\subsection{Semantics of Let binding}
-\ref{sec:bind}
-Probabilistic programs are interpreted using the Giry monad \cite{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
-This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
-also naturally show up in type of the monadic bind, which motivates it. 
-
-The Giry functor takes some object (measurable space) $(A, \Sigma_A)$
-to a measurable space on the measures of $(\Sigma_A \rightarrow [0, \infty], \, \cdots)$ (the $\sigma$-algebra is ommitted). We'll denote $\Sigma_A \rightarrow [0, \infty]$ as \texttt{Measure A},
-for readability.
-
-The explanation focuses on intuition through diagrams. For a measurabe space $(A, \Sigma_A)$, a probability measure is of type
-$\mu : \Sigma_A \rightarrow [0, 1]$. This gives a distribution on A. The intuition behind $\mu$ is that we can sample some event using it.
-A kernel from $A$ to $B$ has type $\kappa : A \rightarrow Measure B$. Each triangle below is a kernel. And the types of it input and
-output are indicated, and we compose the kernels along the type B as $\kappa \underset{B}{\circ} \iota$. The types of the induvidual kernels and composed kernel of Fig \ref{fig:semantics},
-is given below
-
-\begin{align}
-\iota &: A \to \text{Measure } B \\
-\kappa &: B \to \text{Measure } C \\
-\kappa \underset{B}{\circ} \iota &: A \to \text{Measure } C
-\end{align}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.4\linewidth]{background/simple-semantics.png}
-    \label{fig:semantics}
-    \caption{A simple probabilistic program}
-\end{figure}
-
-The interpretation of the kernel $\iota$ is that for every (deterministic) value of $A$ it gets, it will give you a (probabilistic value) distribution over type $B$.
-So composition here, is sampling from the \texttt{Measure }$B$, getting a deterministic value of type $B$ and passing that to the kernel $\kappa$. This sampling
-is done ranging over all the values of $B$ in proportion to their distribution, and taking a weighted average of the values of type \texttt{Measure }$C$. More precisely,
-this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a. \int \lambda b. \; \kappa(b) \; d\iota(a)$ 
-(integral will be explained in \ref{sec:measure_theory} in the final draft). Notice that $\circ$ has a type very similar to the monadic bind (in the Giry monad).
-We now write $\mathcal{G}(A)$ instead of \texttt{Measure} $A$, for the Giry functor. 
-$\circ : ((B) \to \mathcal{G}(C)) \to ((A) \to \mathcal{G}(B)) \to \mathcal{G}(C)$. If we just swap the arguments and partially apply an $a : A$ on $\iota$, we see
-that the bind of the Giry monad composes a measure with a kernel like so $\iota(a) \bind \kappa : \mathcal{G}(B) \to (B \to \mathcal{G}(C)) \to \mathcal{G}(C)$
-
-The most interesting part of Staton's commutative semantics is that when kernels have multiple inputs (this does extend into the realm of multi-categories but
-we don't go into that here). To clarify, these kernels have multiple deterministic values they take in order to return a single probabilistic value (a measure).
+We can represent each of these programs as a kernel having two inputs; one coming from each let binding\footnote{In our actual semantics this is not fully accurate since at every line all preceding
+let bindings (the full context) are visible. But here we have taken care to state that the variable introduced by the first let binding is not visible in the second one, so the diagrams presented are a valid
+simplification of the actual semantics}.
+To clarify, these kernels have multiple deterministic values they take in order to return a single probabilistic value (a measure).
 The commutativity property illustrated by the equality of the two programs in Fig \ref{fig:commute-semantics}. 
 
-\begin{figure}[h]
+\begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\linewidth]{background/commute-semantics.png}
+    \caption{Commutativity of let bindings diagrammatically}
     \label{fig:commute-semantics}
-    \caption{Commutativity of let bindings }
 \end{figure}
 
 $\kappa \underset{B}{\circ} \iota$ is given by the following on the left and right respectively
@@ -326,15 +501,48 @@ $\lambda a \; c. \int \lambda e. \; \left(\int \lambda b. \; \kappa(b, e) \; d\i
 
 $\lambda a \; c. \int \lambda b. \; \left(\int \lambda e. \; \kappa(b, e) \; d\eta(c)\right) d\iota(a)$
 
-Though these look rather unreadable, all that's happening is swapping the order of integration, and there is a theorem which allows us to this in certain conditions.
-In \cite{prob-semantics} it is shown that this theorem holds if instead of general kernels, we restrict ourselves to s-finite-kernels. A kernel
- $\kappa : A \to \mathcal{G}(B)$ is ﬁnite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
-$\kappa$ is s-ﬁnite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
+Though the integrals may look intimidating, all that's happening is swapping the order of integration. Fubini's theorem allows us to swap the order of integration under certain conditions.
+Though we presented the kernel as a single type, there is in fact a taxonomy of different types of kernels, based on the restrictions on the measure of their output type. In Appl, we are
+actually using \emph{Markov kernels} of type $A \to \mathrm{ProbMeasure}\, B$, kernels where the output must be a probability measure. In general a kernel has type $A \to \mathrm{Measure}\, B$.
+Fubini's theorem holds for Markov kernels~\citep{fubini}, but Bppl programs can't restrict themselves to Markov kernels\footnote{This is due to Bayes theorem yielding unnormalised measures which are
+in general computationally intractable to normalise (convert to a probability measure)}. 
+In \cite{prob-semantics} it is shown that this theorem holds if instead of general kernels, we restrict ourselves to \texttt{s-finite kernels}. A kernel
+ $\kappa : A \to \mathcal{G}(B)$ is finite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
+$\kappa$ is s-finite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
 kernels and $\Sigma_{i=1\ldots \infty} \; \kappa_i = \kappa$.
 
 In short topological transformations of these diagrams corresponding to the motivating example in \ref{fig:commute-syntax} do not change the semantics.
 
-% \begin{align}
+Mathlib's probability theory ``API'' provides many theorems with s-finiteness of kernels as a side-condition since it operates at the greatest level of generality,
+so it is useful to know about them even if in this project we are only concerned with Markov kernels.
+
+\subsection{Semantics of Let binding}
+\label{sec:bind}
+
+We are now in a position to understand the whole semantics of Appl terms in  Fig \ref{fig:term-semantics} in particular that of let bindings. Note that we refer to a term as a program if
+it has a type $\mathrm{G} ty$. In this definition M and N must be programs.
+
+$\llbracket X \leftarrow M;\ N \rrbracket \rho = v \leftarrow \llbracket M \rrbracket \rho;\ \llbracket N \rrbracket [X \mapsto v]$
+
+The denotation of a program is precisely a Markov kernel, which allows us to understand the semantics simply as a diagram:
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{background/binding-semantics.png}
+\end{figure}
+
+Here we are copying the value $\rho : \sem{\Delta}$ into both kernels. We can define this copying operation with a copying kernel which is provided by Mathlib. As can be seen
+kernels provide a primitive that is ideally suited to compositionally building complex probabilistic models. Which is exactly what we do in our probabilistic programming languages! 
+
+% Probabilistic programs are interpreted using the Giry monad \cite{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
+% This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
+% also naturally show up in type of the monadic bind, which motivates it. 
+
+% The Giry functor takes some object (measurable space) $(A, \Sigma_A)$
+% to a measurable space on the measures of $(\Sigma_A \rightarrow [0, \infty], \, \cdots)$ (the $\sigma$-algebra is ommitted). We'll denote $\Sigma_A \rightarrow [0, \infty]$ as \texttt{Measure A},
+% for readability.
+
+% The explanation focuses on intuition through diagrams. % \begin{align}
 % \iota &: A \to \text{Measure } B \\
 % \kappa &: B \times C \to \text{Measure } D \\
 % \kappa \underset{B}{\circ} \iota &: A \times C \to \text{Measure } D
