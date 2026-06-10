@@ -1,6 +1,6 @@
 \chapter{Introduction}
 There has been an exciting amount of progress recently in the area of \emph{probabilistic separation logics} (PSL).
-Separation logic first introduced in \cite{og_sl} has since been tremendously successful in formally proving the correctness of
+Separation logic first introduced by \citet{og_sl} has since been tremendously successful in formally proving the correctness of
 heap manipulating programs \citep{} and concurrent programs \citep{}. 
 Iris \citep{iris} introduced a
 language-generic framework of separation logics for reasoning about programming languages with concurrency and higher order state,
@@ -174,7 +174,7 @@ applications in the continuous domain which also introduces the need for probabi
 verification of algorithms at the heart of the enterprise: Probabilistic Inference. In Chapter \ref{sec:future}, we present a novel idea for how BaSL can be used to verify the correctness of a certain class of Probabilistic
 Inference Algorithm, MCMC (Markov Chain Monte Carlo). Probabilistic inference is a well-established field of research, and often the innovation of a research paper may be the usage of a novel inference algorithm. It is thus
 interesting to have an expressive level logic for verification of various inference algorithms. The verification of inference algorithms, which may also be referred to as the interpreter/compiler of a probabilistic programs,
-has been carried out previously in \cite{tassarotti,scibior_2017}. Both previous approaches used the operational or denotational semantics directly and did not reason in a PSL. We hypothesise that verification
+has been carried out previously \citep{tassarotti,scibior_2017}. Both previous approaches used the operational or denotational semantics directly and did not reason in a PSL. We hypothesise that verification
 in a PSL with separation as independence, support for conditioning and bayesian reasoning, may significantly reduce the complexity of proof obligations. If true, we envision a Lean library of verified inference algorithms,
 providing confidence in algorithms belonging to an area where the only assurance of correctness emerges from an implementation being well-established or ``battle-tested''. 
 
@@ -194,11 +194,11 @@ providing confidence in algorithms belonging to an area where the only assurance
 % The specification is the source code, obtained by composing distributions \texttt{sample} and
 % \texttt{observe} operations. The calculation is from the inference algorithms which  
 
-% Statisticians use languages such as Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican}, to build complex statistical models
+% Statisticians use languages such as Stan citep{stan}, Hakaru citep{hakaru} and Anglican citep{anglican}, to build complex statistical models
 % succinctly using the expressivity of a programming language.
 
 % this paradigm code represents statistical models which are use for simulation and prediction in complex systems  
-% Some examples of such languages include Stan \cite{stan}, Hakaru \cite{hakaru} and Anglican \cite{anglican} 
+% Some examples of such languages include Stan citep{stan}, Hakaru citep{hakaru} and Anglican citep{anglican} 
 
 
 \section{Lean and related formalisation projects}

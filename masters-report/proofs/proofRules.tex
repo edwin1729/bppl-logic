@@ -6,14 +6,14 @@ connective (in order to validate their soundness). \texttt{wp\_bind} motivated t
 and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
 measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube.}
 
-
+\fleuron{8}
 % Some of the development of these proofs
 % happened simultaneously with surprising progress in LLM-based auto-formalisation in Lean. We report on how these tools were used with success in simpler
 % sub proofs (which are time consuming to work out but not conceptually hard), but they are not particularly good or successful, when the rich grounding of Mathlib's
 % Api is not present and a library of lemmas needs to first be built in order to carry out a proof as was the case for \texttt{wp\_unif}. It is worth noting
 % that as past contributor of Mathlib, Mathlib has exacting code quality standards, for the generalisability and suitable abstractions used in contributed
 % code, and as seen the success of such autoformalisation is in part due to the availability of such an excellent library. The ambitions of this mechanisation
-% is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic \cite{},
+% is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic citep{},
 % so we try to maintain good abstractions and remark on the extensibility at points in the chapter.}
 
 \Todo{Proof irrelavance for closed\_krm\_subtype also for conditioning}
@@ -45,7 +45,7 @@ substantial body of fundamental results in Lean about Hilbert cubes with finite 
 not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that Finite footprints
 were invented for validating these proof rules, and isn't of general mathematical interest to be supported by Mathlib.
 
-\textbf{Definition B.5 \cite[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
+\textbf{Definition B.5 citep[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
 is of the form $F' \times [0,1]^\mathbb{N}$ for some $F' \subseteq [0,1]^n$.
 
 The intuition behind this definition goes back to the slogan ``measurability is ownership''. Finite footprint restricts the set of measurable functions from the
@@ -93,10 +93,10 @@ from the infinite part). We offer a way to visualise a measurable space over the
 \begin{figure}[tb]
   \centering
 
-\TwoPhasePartitionGraph{1234}{15}{8}{10}
-\TwoPhasePartitionGraph{42}{15}{8}{10}
-\TwoPhasePartitionGraph{43}{15}{8}{10}
-\TwoPhasePartitionGraph{44}{15}{8}{10}
+% \TwoPhasePartitionGraph{1234}{15}{8}{10}
+% \TwoPhasePartitionGraph{42}{15}{8}{10}
+% \TwoPhasePartitionGraph{43}{15}{8}{10}
+% \TwoPhasePartitionGraph{44}{15}{8}{10}
 \caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
 makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
 on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}
@@ -156,7 +156,7 @@ which simultaneously supports an arbitrary number of random variables $Y_i$.
 
 We end this section with the definition of a finite footprint for a measurable function:
 
-\textbf{Definition B.6 \cite[Appendix B]{lilac}} A random variable $X : (I^\mathbb{N}, \Sigma_{I^\mathbb{N}}) \to (A, \Sigma_A)$ has finite footprint if the pullback $\sigma$-algebra $\{X^{-1}(E) \mid E \in \Sigma_A\}$ has finite footprint.
+\textbf{Definition B.6 citep[Appendix B]{lilac}} A random variable $X : (I^\mathbb{N}, \Sigma_{I^\mathbb{N}}) \to (A, \Sigma_A)$ has finite footprint if the pullback $\sigma$-algebra $\{X^{-1}(E) \mid E \in \Sigma_A\}$ has finite footprint.
 
 The need for this definition is a technical detail: sometimes we will not always have access to a measurable space with finite footprint to define a measurable map from. Even when a measurable function
 is from the Borel $\sigma$-algebra on the Hilbert cube, this definition allows us to only consider those measurable maps, which still behave as if they were mapping from some $\sigma$-algebra
@@ -237,15 +237,15 @@ lists all the \texttt{wp} of Lilac. The soundness of these rules has been proven
 \begin{mathpar}
 \inferrule*[right=\textsc{wp-consequence}]
   {P \vdash Q}
-  {\mathrm{wp}(M,X,P) \vdash wp(M,X,Q)}
+  {\mathrm{wp}(M,X,P) \vdash \mathrm{wp}(M,X,Q)}
 
 \inferrule*[right=\textsc{wp-frame}]
   {X \notin F}
-  {F * \mathrm{wp}(M,X,Q) \vdash wp(M,X,F * Q)}
+  {F * \mathrm{wp}(M,X,Q) \vdash \mathrm{wp}(M,X,F * Q)}
 
 \inferrule*[right=\textsc{wp-disjunction}]
   {}
-  {\mathrm{wp}(M,X,P) \lor wp(M,X,Q) \vdash wp(M,X,P \lor Q)}
+  {\mathrm{wp}(M,X,P) \lor \mathrm{wp}(M,X,Q) \vdash \mathrm{wp}(M,X,P \lor Q)}
 
 \inferrule*[right=\textsc{wp-ret}]
   {}
@@ -253,19 +253,19 @@ lists all the \texttt{wp} of Lilac. The soundness of these rules has been proven
 
 \inferrule*[right=\textsc{wp-bind}]
   {}
-  {\mathrm{wp}([\![M]\!],X,wp([\![N]\!],Y,Q)) \vdash wp([\![X \leftarrow M;\,N]\!],Y,Q)}
+  {\mathrm{wp}([\![M]\!],X,\mathrm{wp}([\![N]\!],Y,Q)) \vdash \mathrm{wp}([\![X \leftarrow M;\,N]\!],Y,Q)}
 
-\inferrule*[right=\textsc{wp-uniform}]
+\inferrule*[right=\textsc{wp-unif}]
   {}
-  {(\forall_{rv}\,X\!:\!A.\;X\sim\mathrm{Unif}[0,1]\multimap Q)\vdash \mathrm{wp}([\![\mathrm{unif}\,[0,1]]\!],X\!:\!A,Q)}
+  {(\forall\,X\!:\!\RV \mathbb{R}.\;X\sim\mathrm{Unif}[0,1]\wand Q)\vdash \mathrm{wp}([\![\mathrm{unif}\,[0,1]]\!],X\!:\!A,Q)}
 
 \inferrule*[right=\textsc{wp-flip}]
   {}
-  {(\forall_{rv}\,X\!:\!A.\;X\sim\mathrm{Ber}\,p\multimap Q)\vdash \mathrm{wp}([\![\mathrm{flip}\;p]\!],X\!:\!A,Q)}
+  {(\forall\,X\!:\!\RV \mathrm{Bool}.\;X\sim\mathrm{Ber}\,p\wand Q)\vdash \mathrm{wp}([\![\mathrm{flip}\;p]\!],X\!:\!A,Q)}
 
 \inferrule*[right=\textsc{wp-if}]
   {}
-  {\mathrm{wp}([\![M]\!],X\!:\!A.\,wp([\![N]\!],Y\!:\!A.\,Q(\mathrm{if}\;E\;\mathrm{then}\;X\;\mathrm{else}\;Y))) \vdash wp([\![\mathrm{if}\;E\;M\;N]\!],X\!:\!A.\,Q)}
+  {\mathrm{wp}([\![M]\!],X\!:\!A.\,\mathrm{wp}([\![N]\!],Y\!:\!A.\,Q(\mathrm{if}\;E\;\mathrm{then}\;X\;\mathrm{else}\;Y))) \vdash \mathrm{wp}([\![\mathrm{if}\;E\;M\;N]\!],X\!:\!A.\,Q)}
 
 \inferrule*[right=\textsc{wp-for}]
   {}
@@ -293,9 +293,21 @@ In the lean code too we have a point free formulation of the equation, which ess
 ``kernel API'', Mathlib's preferred style~\citep{remy} for expressing these kinds of equations. The ``kernel API'' has vast library of lemmas, and one can imagine
 how using a point free style facilitates prerequisites for applying a lemma to be more easily inferred (less parameters less things to infer), by the workhorse of type-class inference~\citep{spitters}.
 Again we explain the notation. We have merged the two equations from Eq \ref{eq:simplified}, using the
-$\times_k = \text{Kernel.prod} : \text{Kernel} \alpha \beta \to \text{Kernel} \alpha \gamma \to Kernel \alpha (\beta \times \gamma)$. Remember that a kernel is defined $\text{Kernel} \alpha \beta := \alpha \marrow \mathcal{G} \beta$.
+$\times_k = \text{Kernel.prod} : \mathrm{Kernel}\, \alpha\, \beta \to \mathrm{Kernel}\, \alpha\, \gamma \to \mathrm{Kernel}\, \alpha\, (\beta \times \gamma)$. Remember that a kernel is defined $\mathrm{Kernel}\, \alpha\, \beta := \alpha \marrow \G \beta$.
 $M$ has type isomorphic to that of a Kernel\footnote{\texttt{toMK} is a manual coercion to a kernel, which is required since denotation of Appl programs are not in general kernels, only those with Appl type \texttt{Ty.g ty}}.
-\texttt{det} makes a $\RV \langle\langle A\rangle\rangle$ into a Kernel.
+\texttt{det} makes a $\RV \tysem{A}$ into a Kernel. Remember that $\RV$ is a measurable function, and a measurable function $f: \alpha \marrow \beta$ can be converted
+to a kernel by lifting the output into the corresponding Dirac measure: 
+$\lambda x \mapsto \mathrm{dirac}\, (f\, x) : \mathrm{Kernel}\, \alpha\, \beta$. Let us expand our diagrammatic representation to include both \texttt{det} and $\times_k$.
+The latter, doesn't have any special shape associated with it and is just a splitting of wires. The former we denote with an oval inside the kernel symbol (which is the triangle, see Sec \ref{sec:appl}).
+We present in Fig \ref{fig:wp-calc} the equation in the definition of \texttt{wp} that we have just discussed.
+We modify our notation to be vertical instead of horizontal in preparation for writing the much larger equational reasoning arguments we will be seeing in Sec \ref{sec:wp-meas}.
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.65\linewidth]{proofs/wp-calc.png}
+    \caption{Equational reasoning in definition of \texttt{wp}}
+    \label{fig:wp-calc}
+\end{figure}
 
 \section{wp\_meas}
 \label{sec:wp-meas}
@@ -387,6 +399,21 @@ There was a slight omission in the above presentation
 
 \section{wp\_bind}
 \label{sec:wp-bind}
+This is the second (and last) proof rule that we will present in the report. As in the presentation of \texttt{wp\_meas} we will focus on getting the intuition
+across to the reader, without getting weighed down by the technicalities of the Lean code. \texttt{wp\_bind} is chosen since it prominently features a different style of reasoning
+that is a significant aspect in many of the \texttt{wp} proof rules' soundness. \texttt{wp\_meas} has many measure theoretic proof obligations falling more into the mathematician's
+plate, while in \texttt{wp\_bind} a major portion of the proof employs equational reasoning (on probability kernels), which is more familiar to the computer scientists. We employ
+the diagrammatic notation again for a remarkably easy to understand proof translated into this point-free style from the original proof in \citep{lilac}.
+
+Unlike \texttt{wp\_meas}, \texttt{wp\_bind} is a standard rule
+in any weakest precondition based separation logic. However, it is deeply intertwined with the semantics of \texttt{wp}, adding the extra book keeping of
+\texttt{D\_ext} that we saw in the previous section. Indeed \texttt{wp\_meas} and \texttt{wp\_bind} can be understood as reinforcing each other's
+difficulty! We first proved soundness of \texttt{wp\_meas}, whilst redefining \texttt{wp} by removing all occurrences of \texttt{D\_ext}. At that point,
+reducing the complexity of \texttt{wp} brought the soundness proof of \texttt{wp\_meas} within approachable distance, so it was deemed necessary even if we needed to
+add \texttt{D\_ext} back in later and rework the proof. Then on attempting to prove \texttt{wp\_bind} and realising why it is unprovable without \texttt{D\_ext}, \texttt{D\_ext}
+was added back in, and both proofs completed.
+
+
 
 \Todo{Draw the kernel diagram and explain just what is needed of the proof for that to make sense}
 
@@ -402,7 +429,7 @@ There is a parallel line of work in relational separation logics. One could argu
 probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
 from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
 expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
-in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here \cite{relational-logic}.
+in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here citep{relational-logic}.
 More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
 
 \section{Pi-lambda-theorem as an induction principle}

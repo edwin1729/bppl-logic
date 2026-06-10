@@ -1,10 +1,10 @@
 \section{Separation Logic}
-Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \cite{og_sl}.
+Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \citep{og_sl}.
 The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
 usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it: the most fundamental one being
 a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
-later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool toreason about imperative programs mutating heap based memory
-at a suitable level of abstraction. It then found success also in reasoning about concurrent programs \cite{csl}.
+later works \citep{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool to reason about imperative programs mutating heap based memory
+at a suitable level of abstraction. It then also found success in reasoning about concurrent programs \citep{csl}.
 
 \subsection{Classical separation logic}
 The first separation logic was proposed by \citet{og_sl} for reasoning about programs which manipulate a heap. Before we move to probabilistic separation logic which is the main topic
@@ -127,7 +127,7 @@ generated from a KRM, which is the approach taken in the Lilac formalisation.
 \subsubsection{Logic of Bunched Implications}
 \label{sec:bi}
 Abstracting even further, we would like to get rid of explicit mentions of the resource and the satisfiability relation ($s, h \models P$) and talk instead about
-entailments of the form $\vdash P$ or $P \vdash Q$. The \emph{logic of bunched implications} (BI) as presented by \cite{bi} was what classical separation logic was
+entailments of the form $\vdash P$ or $P \vdash Q$. Indeed, \emph{logic of bunched implications} (BI) as presented by \citep{bi} is what classical separation logic is
 based on. It can be described as a logic in which the familiar ``intuitionistic'' connectives of first order logic are combined with $\mathrm{emp}$, $*$ and $\wand$ (called spatial connectives, alluding to heaps),
 in the same logic. We can recover the notion of resources by our interpretation of logical entailment: $P \vdash Q$ is defined as (using connectives in the meta-logic)
 $\forall s,h (s,h \models P \Rightarrow s, h \models Q)$. The definition of $\vdash$ is in general specific to each logic, but in practice (for separation logic) usually

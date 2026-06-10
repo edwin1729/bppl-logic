@@ -6,6 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{tikz}
 \usetikzlibrary{fadings}
+\usepackage{pgfornament} % decorative vector ornaments (fleurons)
 
 %% Sets page size and margins
 \usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
@@ -36,6 +37,15 @@
 \usepackage[square]{natbib}
 \usepackage[normalem]{ulem}
 \usepackage{xstring}
+
+% Centred ornament placed after a chapter's italic intro paragraph.
+% Change the design number (1--128, see pgfornament docs) to taste.
+\newcommand{\fleuron}[1]{%
+  \par\bigskip
+  \begin{center}
+    \pgfornament[width=1.2cm]{#1}%
+  \end{center}
+  \bigskip}
 
 \newcommand{\rcite}{\textcolor{red}{CITE}}
 \newcommand{\Todo}[1]{\textcolor{red}{Todo: #1}}
@@ -146,8 +156,7 @@
 \input{background/background.tex}
 % \input{project/project.tex}
 \input{lilac/lilac.tex}
-\input{lilac/proofRules.tex}
-foo
+\input{proofs/proofRules.tex}
 \input{examples/examples.tex}
 \input{future/future.tex}
 % \input{evaluation/evaluation.tex}

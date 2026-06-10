@@ -1,6 +1,7 @@
 \chapter{Examples}
 \emph{In this chapter we demonstrate a few simple examples of how our embedding of Lilac in Iris can be used for interactively proving specifications of APPL programs.
-We develop some proof automation, and reflect on more divergences from the Lilac paper \cite{lilac}}
+We develop some proof automation, and reflect on more divergences from the Lilac paper \citep{lilac}}
+\fleuron{75}
 
 
 First in sec \ref{sec:uniform} we verify the most basic programs which we had struggled to verify under the original definitions in Chapter \ref{sec:definitions}. Next
@@ -8,7 +9,7 @@ in sec \ref{sec:expectation} we outline difficulties faced with reasoning about 
 We develop some proof rules regarding expectation and some custom tactics for ergonomic reasoning.
 
 Most notably we use this example to remark on how in our mechanised proofs we completely sidestep the usage of almost surely equals connective ($\circeq$) and substitutions using the congruence rule.
-This is not specific to this particular example and is a general phenomenon. Indeed, the Lilac paper \cite{lilac} has not provided proof rules for introduction of
+This is not specific to this particular example and is a general phenomenon. Indeed, the Lilac paper \citep{lilac} has not provided proof rules for introduction of
 $\circeq$\footnote{the original notation from the paper for the almost surely equals connective is $\overset{as}{=}$. We use $\circeq$ in the lean formalisation}, and uses it rather intuitively
 in the proof sketches. In our formalisation, we have required it at all.
 

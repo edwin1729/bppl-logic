@@ -16,7 +16,7 @@ interactive verification: the foundations in dependent type theory, and the meta
 % bayesian perspective underpinned by Baye's law which describes how we update a probability distribution based
 
 
-% A simple example taken from \cite{prob-semantics} is reproduced below to show how 
+% A simple example taken from citep{prob-semantics} is reproduced below to show how 
 
 % \section{Preliminaries}
 \subsection{Monads}
@@ -102,7 +102,7 @@ cover is chosen as finely (small measure) as possible.
 \subsection{Borel spaces and Lebesgue measures}
 Intuitively a measure is supposed to be a length, volume or in general a ``size'' in a higher dimensional counterpart. 
 The standard borel $\sigma$-algebra on $\mathbb{R}$, $B_\mathbb{R}$, corresponds to our notion of those subsets of $\mathbb{R}$ which have a ``size''. Again we refer
-to~\cite[Chapter 2 of]{axler}, for examples of subsets of $\mathbb{R}$ which are not measurable sets, which are rather obscure. In general
+to~\citet[Chapter 2]{axler}, for examples of subsets of $\mathbb{R}$ which are not measurable sets, which are rather obscure. In general
 most subsets that we care about: open and closed interval, singletons and of course unions and complements of the previous, are all included in $B_\mathbb{R}$.
 We define the $\sigma$-algebra, \emph{generated} out of some $S : Set (Set A)$, $\sigma(S)$ as the smallest set containing A and is closed under complements
 and countable unions. We can see what $B_\mathbb{R}$ includes by seeing various ways of defining it:
@@ -447,7 +447,7 @@ to $\mu$. Next we take a step back from Appl and consider a wider setting.
 % \subsection{Types in BPPL}
 \subsection{The let binding problem}
 
-\cite{prob-semantics} provided a compositional semantics for first-order Bayesian probabilistic programming language (Bppl), which forms the foundation of program logics, for modern probabilistic
+\citet{prob-semantics} provided a compositional semantics for first-order Bayesian probabilistic programming language (Bppl), which forms the foundation of program logics, for modern probabilistic
 programming languages. Note that Bppl, is Appl with the \texttt{observe} construct, and its semantics is more general than that of Appl. However, we choose to present a fundamental difficulty
 plaguing the semantics of Bppl, which was solved in \citep{prob-semantics} through the introduction of \texttt{s-finite kernels}. It will give us a picture of the surrounding landscape of probabilistic
 program semantics, the difficulty in establishing even the most basic properties of programs in this paradigm, and topic to further build our intuition of \emph{kernels}.
@@ -513,7 +513,7 @@ Though we presented the kernel as a single type, there is in fact a taxonomy of 
 actually using \emph{Markov kernels} of type $A \to \mathrm{ProbMeasure}\, B$, kernels where the output must be a probability measure. In general a kernel has type $A \to \mathrm{Measure}\, B$.
 Fubini's theorem holds for Markov kernels~\citep{fubini}, but Bppl programs can't restrict themselves to Markov kernels\footnote{This is due to Bayes theorem yielding unnormalised measures which are
 in general computationally intractable to normalise (convert to a probability measure)}. 
-In \cite{prob-semantics} it is shown that this theorem holds if instead of general kernels, we restrict ourselves to \texttt{s-finite kernels}. A kernel
+\citet{prob-semantics} shows that this theorem holds, if instead of general kernels, we restrict ourselves to \texttt{s-finite kernels}. A kernel
  $\kappa : A \to \G(B)$ is finite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
 $\kappa$ is s-finite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
 kernels and $\Sigma_{i=1\ldots \infty} \; \kappa_i = \kappa$.
@@ -541,7 +541,7 @@ The denotation of a program is precisely a Markov kernel, which allows us to und
 Here we are copying the value $\rho : \sem{\Delta}$ into both kernels. We can define this copying operation with a copying kernel which is provided by Mathlib. As can be seen
 kernels provide a primitive that is ideally suited to compositionally building complex probabilistic models. Which is exactly what we do in our probabilistic programming languages! 
 
-% Probabilistic programs are interpreted using the Giry monad \cite{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
+% Probabilistic programs are interpreted using the Giry monad citep{giry} in the category of Measurable Space, \texttt{Meas}. Probability is an effect.
 % This interpretation gives us the semantics of sequencing (let-binding) so we go through it below. Kernels
 % also naturally show up in type of the monadic bind, which motivates it. 
 

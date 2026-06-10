@@ -85,7 +85,7 @@ theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
   obtain ⟨Y, Ω_Y, Ω_fr_Y, μY, Ω_fr_Y_le_μY, calc_inner, post_cond⟩ :=
     wp_inner Ω_fr Ω_fr_X μX Ω_fr_X_le_μX D_ext
   refine ⟨Y, Ω_Y, Ω_fr_Y, μY, Ω_fr_Y_le_μY, ?calc_left, post_cond⟩
-  calc
+  calc -- ←
     -- unfold denotation of syntactic bind into semantic bind
     _ = ((Kernel.comap (toMK (M.bind N).den) D D.meas) ×ₖ det D_ext) ∘ₘ μ := by rfl
     _ = (((toMK N.den) ∘ₖ (toMK M.den ×ₖ Kernel.id)).comap D.toFun D.meas ×ₖ det D_ext) ∘ₘ μ := by
