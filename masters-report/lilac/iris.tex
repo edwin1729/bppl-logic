@@ -12,7 +12,7 @@ would have sufficed to prove formally the correctness of all the proofs in the p
 but also to create a usable tool for proving properties of actual probabilistic programs ergonomically (using tactics). The best way to do so is to instantiate the Iris
 framework. And the interface provided by Iris was not compatible with current definitions. Below we explain why it wasn't compatible and how Iris' interface is motivated.
 
-\subsection{Deep vs Shallow Embeddings}
+\subsection{Deep vs shallow embeddings}
 When defining a language or logic, within a meta-language (lean in our case), we are presented with 2 choices. A deep embedding; inductively define the syntax,
 and the denotational semantics becomes an inductive definition over the syntax. For clarity, here is an excerpt from a deep embedding of the Lilac logic:
 
@@ -107,7 +107,7 @@ of \texttt{PROP} we construct a \texttt{PROP}. The reason for this less intuitiv
 (sExists). And the quantified types are not restricted to a predetermined universe \texttt{u'}.
 
 
-\subsection{First Attempt: Deeply embedded logic instantiation}
+\subsection{First attempt: deeply embedded logic instantiation}
 There is a result in Lilac \cite[see Appendix B.10]{lilac} called the substitution lemma which uses induction over the syntax of Lilac propositions. Supposing
 that induction over the syntax of the logic is important/necessary, a next step is to try to instantiate \texttt{BIBase} above with the deep embedding from Fig 
 \ref{fig:deep-embedding}. We may try something like so:
@@ -221,7 +221,7 @@ not with $\RV A$ as domain, the types just won't line up.
 
 % entails fixing an arbitrary value for that variable and 
 % from the random context, converts the random variable to a deterministic
-\subsection{Definitions of LProp, random variables and WP rules}
+\subsection{Definitions of LProp, random variables and \texttt{wp} rules}
 \label{sec:parametrised}
 The definition of \texttt{LProp} after moving to a shallow embedding had the signature\footnote{The code in this section is obtained from an older commit \url{https://github.com/edwin1729/bppl-logic/tree/cd19b5ff454abaf05f959ba8abfe0961518d02d3}}:
 

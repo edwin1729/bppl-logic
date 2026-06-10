@@ -237,6 +237,6 @@ to give an element of a measurable space -/
   --   ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
 notation "〚" M "⟧" => Term.den M
-⟦Δ⟧
+
 end
 end Appl

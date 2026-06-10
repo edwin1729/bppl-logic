@@ -1,2 +1,20 @@
 \appendix
-\chapter{First Appendix}
+\chapter{Declarations}
+\section{Use of Generative AI}
+Generative AI was not used in the writing of this report. It was however used to speed up theorem proving in Lean and a discussion of my experience is provided in Sec \ref{sec:wp-meas}. The only
+use of Generative AI was through \href{https://aristotle.harmonic.fun/}{Aristotle}, a tool available publicly available online, free of cost. 
+
+\section{Ethical Considerations}
+This project pushes the boundary of for formal correctness guarantees of a certain class of programs called probabilistic programs. The applications are strictly in increasing the safety of software systems,
+so there is no notable ethical considerations.
+
+\section{Sustainability}
+The most computationally resource intensive tool used in this project is expected to be \href{https://aristotle.harmonic.fun/}{Aristotle}, a Generative AI based tool for writing Lean code.
+The energy usage of this tool is not publicly made available, however it is completely free to the public, which suggests that its energy usage cannot be too high. In line with the goals of this
+project for extending the Lean development into more complex logics, Aristotle was only used ``trivial constructions'' or ``obvious sub-lemmas'', since it produces convoluted proofs which are not line with our
+requirements for more significant tasks. A detailed discussion can be found in Sec \ref{sec:wp-meas}. But the takeaway here is that the principle followed, should curtail compute-intensive situations
+where the system is unable to solve the tasks and goes in circles till timeout. 
+Other than that, and the compilation of Lean and Latex files on a local PC, there are no other sustainability considerations.
+
+\section{Availability of Materials}
+This report is submitted with a GitHub repository containing the Lean artefact, which is made publicly available: \url{https://github.com/edwin1729/bppl-logic/tree/submission}.
