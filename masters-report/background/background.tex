@@ -63,23 +63,23 @@ A probability measure on the other hand is more restrictive: $\mu : \Sigma_\Omeg
 It gives the probability of an event $E \in \Sigma\_\Omega$ ocurring. 
 A similar but more general notion than what a measure gives us, is a random variable: a measurable
 function between two measurable spaces. We say "more general notion", since using the identity measurable function
-yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \marrow (\Omega_2, \mathcal{G})$
+yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \marrow (\Omega_2, \G)$
 $f : \Omega_1  \marrow \Omega_2$ is well-defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
-and $(\Omega_2, \mathcal{G})$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
+and $(\Omega_2, \G)$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
 $\Omega_1 = \{1,\ldots,6\}^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = \{1,\ldots,12\}$.
-A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\Omega)$ to the pushforward measure $\mu'$ on $(\Omega_2, \mathcal{G})$.
+A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\Omega)$ to the pushforward measure $\mu'$ on $(\Omega_2, \G)$.
 In order for this to be well-defined we require the following measurability condition to be satisfied by all measurable functions:
-$\forall G \in \mathcal{G}, f^{-1}(G) \in \Sigma_\Omega$.
+$\forall G \in \G, f^{-1}(G) \in \Sigma_\Omega$.
 We denote the pushforward as $\mu' = f_\#\mu$.
 
 A related notion to the pushforward measure, is the pullback $\sigma$-algebra. Instead of constraining the measurable function to behave according to the $\sigma$-algebra
 on the domain, the pullback asks what $\sigma$-algebra do we require on the domain to support some measurable function. Given a function $f : \Omega \rightarrow \Omega'$
-and a $\sigma$-algebra $\mathcal{G}$ on the codomain $\Omega'$, the pullback $\sigma$-algebra on $\Omega$ is
+and a $\sigma$-algebra $\G$ on the codomain $\Omega'$, the pullback $\sigma$-algebra on $\Omega$ is
 \[
-f^{*}\mathcal{G} := \{\, f^{-1}(G) \mid G \in \mathcal{G} \,\}.
+f^{*}\G := \{\, f^{-1}(G) \mid G \in \G \,\}.
 \]
 This is the coarsest (smallest) $\sigma$-algebra on $\Omega$ making $f$ measurable, and we are guaranteed is closed under complements and
-countable unions since $\mathcal{G}$ is a $sigma$-algebra. 
+countable unions since $\G$ is a $sigma$-algebra. 
 
 A Lebesgue integral is a generalisation of the standard (Reimann) integral. Intuitively the lebesgue and reimann integral will coincide on the spaces such as $\mathbb{R}$,
 where the domain of integration is continuous. The lebesgue integral relaxes that requirement. The lesbesgue integral of a measurable function $f : \Omega \rightarrow [0, \infty]$
@@ -197,24 +197,26 @@ In Appl, there isn't an explicit \texttt{sample} construct. Sampling is realised
 first order, PPLs still have a non-trivial, novel denotational semantics. The central difference is that:
 \begin{enumerate}
 \item Types are interpreted in \texttt{Meas}, the category of measurable spaces rather than
-just \texttt{Set}. Concretely each type is interpreted as a measurable space $\llbracket A \rrbracket = (\mathbb{A}, \Sigma_{\mathbb{A}})$.
-\item Probabilistic programs are have a monadic semantics, interpreted in the Giry monad, which expresses probabilistic computation as an effect. The Giry monad is a monad in \texttt{Meas}
+just \texttt{Set}. Concretely each type is interpreted as a measurable space $(A, \Sigma_A)$.
+\item Probabilistic programs are have a monadic semantics, interpreted in the Giry monad, which expresses probabilistic computation as an effect. The Giry monad is a monad in \texttt{Meas}.
 \end{enumerate}
-The interesting aspects of Appl, follow from these two points which we will explain thoroughly. 
+The interesting aspects of Appl, follow from these two points which we will explain thoroughly.
+
+A note on notation: we deliberately overload a single letter, writing $A$ both for a syntactic type of Appl and for its denotation $\sem{A}$, the measurable space it is interpreted as. Which is meant is always clear from context, since the syntactic type constructor is written $\mathbf{G}$ while its semantic counterpart, the Giry functor, is written $\G$.
 
 In Fig \ref{fig:type-syntax} we see the types of Appl which as noted must have as denotation a measurable space rather than a set, as given in
 Fig \ref{fig:type-denotations}. We recognize many familiar $\sigma$-algebras in the denotation such as the Borel $\sigma$ algebra on the reals and the product
 measurable space (see Sec \ref{sec:measure-theory}). Note that in discrete spaces such as $\sem{\mathrm{bool}}$, the power set is a valid measurable space,
 and clearly the greatest one (ordered by subset inclusion). In our PPL we would like to express
 measures and manipulate measures.
-Understanding the type constructor $\mathbb{G}$, is key to answering this question.
+Understanding the type constructor $\mathbf{G}$, is key to answering this question.
 
 \begin{figure}[tb]
   \centering
   \begin{subfigure}[t]{0.95\linewidth}
     \centering
 \[ 
-A, B ::= \mathbb{A} \times \mathbb{B} \mid \mathrm{bool} \mid \mathrm{real} \mid \mathbb{G}(\mathbb{A}) \mid 1
+A, B ::= A \times B \mid \mathrm{bool} \mid \mathrm{real} \mid \mathbf{G}\,A \mid 1
 \]
     \caption{Syntax}
     \label{fig:type-syntax}
@@ -227,7 +229,7 @@ A, B ::= \mathbb{A} \times \mathbb{B} \mid \mathrm{bool} \mid \mathrm{real} \mid
 \llbracket A \times B \rrbracket &= \llbracket A \rrbracket \otimes \llbracket B \rrbracket \\
 \llbracket \mathrm{bool} \rrbracket &= (\{T,F\}, \mathcal{P}(\{T,F\})) \\
 \llbracket \mathrm{real} \rrbracket &= (\mathbb{R}, \mathcal{B}_\mathbb{R}) \\
-\llbracket \mathbb{G} \mathbb{A} \rrbracket &= \mathcal{G}\sem{A} \\
+\llbracket \mathbf{G} A \rrbracket &= \G\sem{A} \\
 \llbracket 1 \rrbracket &= \text{the one-point space}
 \end{aligned}
 \]
@@ -237,21 +239,21 @@ A, B ::= \mathbb{A} \times \mathbb{B} \mid \mathrm{bool} \mid \mathrm{real} \mid
   \caption{Types in Appl}
 \end{figure}
 
-The type constructor $\mathbb{G} A$
+The type constructor $\mathbf{G} A$
 is interpreted as the type of probability measures $\text{ProbMeasure} \llbracket A \rrbracket$, the
-\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$, denoted $\sem{\mathbb{G} A} = \mathcal{G} \sem{A}$ So in order for $\mathbb{G} A$ to be a valid Appl type, there must
-exist some canonical \texttt{MeasurableSpace} $\Sigma_{\mathcal{G} \sem{A}} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed 
+\sout{\texttt{Set}} \texttt{MeasurableSpace} of measures over $\llbracket A \rrbracket$, denoted $\sem{\mathbf{G} A} = \G \sem{A}$ So in order for $\mathbf{G} A$ to be a valid Appl type, there must
+exist some canonical \texttt{MeasurableSpace} $\Sigma_{\G \sem{A}} \subseteq \mathcal{P}(\Sigma_A \rightarrow [0, 1])$. This is indeed 
 true~\citep{giry}\footnote{An excellent blogpost introducing the Giry monad can be found here \url{https://jtobin.io/giry-monad-foundations}}
-established that $\mathbb{G} = \mathcal{G}$ is a functor, the Giry functor.
+established that $\mathbf{G} = \G$ is a functor, the Giry functor.
 
 A natural next question is how these measures can be created and manipulated. To answer that we first introduce the syntax and denotational semantics of terms in Appl, in Fig \ref{sec:appl}.
 Our semantics is compositional, meaning we allow for the denotation of \emph{open} terms, terms which have free variables. To allow this, Appl uses the standard technique of
 introducing a variable context. This is shown in Fig \ref{fig:type-context}, where a novelty of lilac is that $\sem{M}$ is not just a function from the context, but a measurable
-function from the context. We are starting to see the probabilistic nature of Appl. The denotations of open terms of Appl type $\mathbb{A}$ are \emph{random variables} of type $\sem{\mathbb{A}}$.
+function from the context. We are starting to see the probabilistic nature of Appl. The denotations of open terms of Appl type $A$ are \emph{random variables} of type $\sem{A}$.
 
 Let us present the more straightforward terms in Appl. In Fig \ref{fig:term-semantics}, it is apparent that $\rho : \sem{\Delta}$, so with the variable construct we are
 able to choose a variable from the context, denoted $\rho(X)$. As in a standard language, we are able to create tuples, take projections on them, perform standard binary operations, and denote true and false.
-\texttt{flip} and \texttt{unif} are specific to a PPL, both allowing us to construct a terms of type $\mathrm{G}\, \mathbb{A}$. \texttt{flip p : G bool} and $unif[0,1] : \mathrm{G} \mathrm{real}$.
+\texttt{flip} and \texttt{unif} are specific to a PPL, both allowing us to construct a terms of type $\mathbf{G}\, A$. \texttt{flip p : $\mathbf{G}$ bool} and \texttt{unif[0,1] : $\mathbf{G}$ real}.
 Plainly. \texttt{unif[0,1]} denotes the uniform distribution on the interval $[0,1]$, while \texttt{flip p} denoted the Bernoulli distribution, which is just a the distribution of a (possibly biased) coin flip.
 
 We have so far seen constructs which are standard in any programming, (noting that their interpretation does have some added measurability structure), and we have also seen how to construct to primitive
@@ -270,9 +272,9 @@ then the actual denotation the two constructs. We will revisit it in Sec \ref{se
 
 % \[
 % \begin{array}{l@{\qquad}l}
-% \llbracket \mathrm{ret} \rrbracket : A \to \mathcal{G}A
+% \llbracket \mathrm{ret} \rrbracket : A \to \GA
 % &
-% \llbracket \mathrm{bind} \rrbracket : \mathcal{G}A \to (A \to \mathcal{G}B) \to \mathcal{G}B
+% \llbracket \mathrm{bind} \rrbracket : \GA \to (A \to \GB) \to \GB
 % \end{array}
 % \]
 
@@ -315,9 +317,9 @@ M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
     \centering
 \[
 \begin{gathered}
-\Delta ::= {} \cdot \mid \Delta, X : \mathbb{A} \\
-\sem{\Delta} = \mathbb{A}_1 \times_m \cdots \times_m \mathbb{A}_n \\
-\sem{M : \mathbb{A}} : \sem{\Delta} \marrow \sem{\mathbb{A}}
+\Delta ::= {} \cdot \mid \Delta, X : A \\
+\sem{\Delta} = A_1 \times_m \cdots \times_m A_n \\
+\sem{M : A} : \sem{\Delta} \marrow \sem{A}
 \end{gathered}
 \]
     \caption{The type of denotation of terms inn a variable context}
@@ -361,16 +363,21 @@ M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
   \label{fig:terms}
 \end{figure}
 
-\subsection{The Giry Monad}
+\subsection{The Giry monad}
 Our intuition is that syntactic \texttt{ret} and let-binding should have something to do with the Giry monads operations. denoted as:
 
-$\mathrm{ret}_\G : A \to \G A \qquad\qquad \bind : \mathcal{G} A \to (A \to \mathcal{G} B) \to \mathcal{G} A$
+\[
+\begin{array}{c@{\qquad\qquad}c}
+\mathrm{ret}_\G : A \to \G A  & \bind : \G A \to (A \to \G B) \to \G B
+\end{array}
+\]
 
-Here we are assuming $A$ and $B$ have the form $A = \sem{\mathbb{A}}$ and $B = \sem{\mathbb{B}}$
-Let us see how we can construct these operations and validate the monad laws. We define $\mathrm{ret}_\G x = dirac x$. The Dirac measure concentrates all its probability at a single
-point. Given a measurable set E, $dirac x E = \text{if} x \in E \text{then} 1 \text{else} 0$.
 
-Now the type $(A \to \G A)$ is defined as $\text{Kernel} A B$. Mathlib uses this type as the primitive on which most of its probability theory library is built.
+Here we are assuming $A$ and $B$ have the form $A = \sem{A}$ and $B = \sem{B}$
+Let us see how we can construct these operations and validate the monad laws. We define $\mathrm{ret}_\G\, x = \mathrm{dirac}\, x$. The Dirac measure concentrates all its probability at a single
+point. Given a measurable set $E$, $\mathrm{dirac} x E = \text{if } x \in E \text{then } 1 \text{else } 0$.
+
+Now the type $(A \to \G A)$ is defined as $\text{Kernel } A\, B$. Mathlib uses this type as the primitive on which most of its probability theory library is built.
 We explore a diagrammatic exploration of probabilistic programs to see why kernels are so compelling:
 
 For a measurable space $(A, \Sigma_A)$, a probability measure is of type
@@ -379,17 +386,17 @@ Each triangle below is a kernel. And the types of its input and
 output are indicated. We compose the kernels along the type B as $\kappa \underset{B}{\circ} \iota$. The types of the individual kernels and composed kernel of Fig \ref{fig:semantics},
 is given below:
 
+\begin{figure}[tb]
 \begin{align}
 \iota &: A \to \G B \\
 \kappa &: B \to \G C \\
 \kappa \underset{B}{\circ} \iota &: A \to \G C
 \end{align}
 
-\begin{figure}[h]
     \centering
     \includegraphics[width=0.4\linewidth]{background/simple-semantics.png}
-    \label{fig:semantics}
     \caption{A simple probabilistic program}
+    \label{fig:semantics}
 \end{figure}
 
 The interpretation of the kernel $\iota$ is that for every (deterministic) value of $A$ it gets, it will give you a (probabilistic value) distribution over type $B$.
@@ -398,9 +405,9 @@ is done ranging over all the values of $B$ in proportion to their distribution, 
 this is the integral: $\kappa \underset{B}{\circ} \iota = \lambda a. \int \lambda b. \; \kappa(b) \; d\iota(a)$ 
 
 Notice that $\circ$ has a type very similar to the $\bind$ (in the Giry monad).
-% We now write $\mathcal{G}(A)$ instead of \texttt{Measure} $A$, for the Giry functor. 
-$\circ : ((B) \to \mathcal{G}(C)) \to ((A) \to \mathcal{G}(B)) \to \mathcal{G}(C)$. If we just swap the arguments and partially apply an $a : A$ on $\iota$, we see
-that the bind of the Giry monad composes a measure with a kernel like so $\iota(a) \bind \kappa : \mathcal{G}(C)$
+% We now write $\G(A)$ instead of \texttt{Measure} $A$, for the Giry functor. 
+$\circ : (B \to \G C) \to (A \to \G B) \to \G C$. If we just swap the arguments and partially apply an $a : A$ on $\iota$, we see
+that the bind of the Giry monad composes a measure with a kernel like so $\iota(a) \bind \kappa : \G C$
 We now take a step back, and have a look at a more general problem.
 
 Having gained some intuition for how $\bind$ works let's provide its definition. In Lean, it is defined as follows in Mathlib:
@@ -410,10 +417,10 @@ def bind (μ : Measure α) (κ : α → Measure β) : Measure β :=
   join (map κ μ)
 \end{leancode}
 
-\texttt{map} refers to taking a pushforward, so $\mathrm{map}\, \mu\, \kappa = \kappa_\#\mu : \G\, (\G\, \beta)$. This makes sense; for each $a : \alpha$ we get some $\G \beta$ following $\kappa$, so the measure on $\alpha$
+\texttt{map} refers to taking a pushforward, so $\mathrm{map}\, \mu\, \kappa = \kappa_\#\mu : \G (\G \beta)$. This makes sense; for each $a : \alpha$ we get some $\G \beta$ following $\kappa$, so the measure on $\alpha$
 naturally turns into a measure on measures on $\beta$. \texttt{join}\footnote{\texttt{bind} is derived from join in a usual categorical presentation of a monad} collapses the type: $\mathrm{join} : \G (\G \beta) \to \G \beta$.
 It takes some measurable set $E : \Sigma_\beta$ and the measure it
-returns is the weighted sum of all the measures in $\kappa_\#\mu : \G\, (\G\, \beta)$. Precisely it is the integral
+returns is the weighted sum of all the measures in $\kappa_\#\mu : \G (\G \beta)$. Precisely it is the integral
 
 $\mathrm{join}\, \mu'\, E = \int (\lambda\, \mu \mapsto \mu(E))\ d\mu'$
 
@@ -427,9 +434,9 @@ $\mathrm{join}\, (\mathrm{ret}\, \mu) E = \int (\lambda\, \mu' \mapsto \mu'(E))\
 
 \[
 \begin{aligned}
-\mathrm{join}\, (\mathrm{ret}\, \mu) E 
-&= \int (\lambda \mu' \mapsto \mu'(E))\ d(\mathrm{dirac} \mu)
-&= (\lambda \mu' \mapsto \mu'(E))\ \mu
+\mathrm{join}\, (\mathrm{ret}\, \mu) E \\ 
+&= \int (\lambda \mu' \mapsto \mu'(E))\ d(\mathrm{dirac}\, \mu) \\
+&= (\lambda \mu' \mapsto \mu'(E))\ \mu \\
 &= \mu(E)
 \end{aligned}
 \]
@@ -507,7 +514,7 @@ actually using \emph{Markov kernels} of type $A \to \mathrm{ProbMeasure}\, B$, k
 Fubini's theorem holds for Markov kernels~\citep{fubini}, but Bppl programs can't restrict themselves to Markov kernels\footnote{This is due to Bayes theorem yielding unnormalised measures which are
 in general computationally intractable to normalise (convert to a probability measure)}. 
 In \cite{prob-semantics} it is shown that this theorem holds if instead of general kernels, we restrict ourselves to \texttt{s-finite kernels}. A kernel
- $\kappa : A \to \mathcal{G}(B)$ is finite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
+ $\kappa : A \to \G(B)$ is finite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
 $\kappa$ is s-finite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
 kernels and $\Sigma_{i=1\ldots \infty} \; \kappa_i = \kappa$.
 
@@ -516,11 +523,11 @@ In short topological transformations of these diagrams corresponding to the moti
 Mathlib's probability theory ``API'' provides many theorems with s-finiteness of kernels as a side-condition since it operates at the greatest level of generality,
 so it is useful to know about them even if in this project we are only concerned with Markov kernels.
 
-\subsection{Semantics of Let binding}
+\subsection{Semantics of let binding}
 \label{sec:bind}
 
 We are now in a position to understand the whole semantics of Appl terms in  Fig \ref{fig:term-semantics} in particular that of let bindings. Note that we refer to a term as a program if
-it has a type $\mathrm{G} ty$. In this definition M and N must be programs.
+it has a type $\mathbf{G}\, ty$. In this definition M and N must be programs.
 
 $\llbracket X \leftarrow M;\ N \rrbracket \rho = v \leftarrow \llbracket M \rrbracket \rho;\ \llbracket N \rrbracket [X \mapsto v]$
 

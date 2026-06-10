@@ -7,7 +7,7 @@ later works \cite{abstract_sl, abstract_sl2}. Separation logic was identified as
 at a suitable level of abstraction. It then found success also in reasoning about concurrent programs \cite{csl}.
 
 \subsection{Classical separation logic}
-The first separation logic was proposed by \cite{og_sl} for reasoning about programs which manipulate a heap. Before we move to probabilistic separation logic which is the main topic
+The first separation logic was proposed by \citet{og_sl} for reasoning about programs which manipulate a heap. Before we move to probabilistic separation logic which is the main topic
 of the report, we first present separation logic in a simpler setting. Intuitively, separation logic is just first order logic with the
 additional connectives of the separating conjunction and separating implication (notation: $*$ and $\wand$). These separating connectives
 are defined with respect to a \emph{resource}. In the original separation logic we have a simple resource which is a finite partial function from some 
@@ -30,7 +30,6 @@ programs and assertions we make about the program. We do not go into the specifi
   \label{fig:sl}
     \centering
     \begin{subfigure}[t]{0.95\textwidth}
-      \label{fig:sla}
         \centering
         \[
         \begin{array}{rcl@{\qquad\qquad}rcl}
@@ -39,6 +38,7 @@ programs and assertions we make about the program. We do not go into the specifi
         \end{array}
         \]
         \caption{Basic sets and structures}
+      \label{fig:sla}
     \end{subfigure} 
 
     \begin{subfigure}[t]{0.95\textwidth}
