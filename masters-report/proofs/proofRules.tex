@@ -93,10 +93,10 @@ from the infinite part). We offer a way to visualise a measurable space over the
 \begin{figure}[tb]
   \centering
 
-% \TwoPhasePartitionGraph{1234}{15}{8}{10}
-% \TwoPhasePartitionGraph{42}{15}{8}{10}
-% \TwoPhasePartitionGraph{43}{15}{8}{10}
-% \TwoPhasePartitionGraph{44}{15}{8}{10}
+\TwoPhasePartitionGraph{1234}{15}{8}{10}
+\TwoPhasePartitionGraph{42}{15}{8}{10}
+\TwoPhasePartitionGraph{43}{15}{8}{10}
+\TwoPhasePartitionGraph{44}{15}{8}{10}
 \caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
 makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
 on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}
@@ -168,8 +168,8 @@ We restate and motivate the definition of the \texttt{wp} connective in this sec
 
 \[
 \begin{aligned}
-(\mathcal{F},\mu) \vDash \mathrm{wp}(M,X\!:\!A.\,Q) &\iff \text{for all } \mathcal{P}_{\mathrm{frame}} \text{ and } \mu \text{ with } \mathcal{P}_{\mathrm{frame}}\bullet\mathcal{P} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu) \text{ and all } D_{\mathrm{ext}} : \mathrm{RV}\,\llbracket \Delta_{\mathrm{ext}} \rrbracket, \\
-&\quad \text{there exists } X : \mathrm{RV}\,A \text{ and } \mathcal{P}' \text{ and } \mu' \text{ with } \mathcal{P}_{\mathrm{frame}}\bullet\mathcal{P}' \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu') \text{ such that } \\
+(\mathcal{F},\mu) \vDash \mathrm{wp}(M,X\!:\!A.\,Q) &\iff \text{for all } \mathcal{P}_{\mathrm{frame}} \text{ and } \mu \text{ with } \mathcal{P}_{\mathrm{frame}}\star\mathcal{P} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu) \text{ and all } D_{\mathrm{ext}} : \mathrm{RV}\,\llbracket \Delta_{\mathrm{ext}} \rrbracket, \\
+&\quad \text{there exists } X : \mathrm{RV}\,A \text{ and } \mathcal{P}' \text{ and } \mu' \text{ with } \mathcal{P}_{\mathrm{frame}}\star\mathcal{P}' \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu') \text{ such that } \\
 &\quad \left( \begin{array}{l} \omega \leftarrow \mu;\\ v \leftarrow M(\omega);\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega),v\bigr) \end{array} \right) = \left( \begin{array}{l} \omega \leftarrow \mu';\\ \mathrm{ret}\bigl(D_{\mathrm{ext}}(\omega),X(\omega)\bigr) \end{array} \right), \\
 &\quad \text{and } \mathcal{P}' \vDash Q[X]
 \end{aligned}
@@ -400,74 +400,136 @@ There was a slight omission in the above presentation
 \section{wp\_bind}
 \label{sec:wp-bind}
 This is the second (and last) proof rule that we will present in the report. As in the presentation of \texttt{wp\_meas} we will focus on getting the intuition
-across to the reader, without getting weighed down by the technicalities of the Lean code. \texttt{wp\_bind} is chosen since it prominently features a different style of reasoning
-that is a significant aspect in many of the \texttt{wp} proof rules' soundness. \texttt{wp\_meas} has many measure theoretic proof obligations falling more into the mathematician's
-plate, while in \texttt{wp\_bind} a major portion of the proof employs equational reasoning (on probability kernels), which is more familiar to the computer scientists. We employ
-the diagrammatic notation again for a remarkably easy to understand proof translated into this point-free style from the original proof in \citep{lilac}.
+across to the reader, without getting weighed down by the technicalities of the Lean code. \texttt{wp\_bind} is chosen since it prominently features a different style of proof from \texttt{wp\_meas},
+that is significant in many of the soundness proofs of \texttt{wp} rules. \texttt{wp\_meas} was dominated by measure theoretic proof obligations falling more into the mathematician's
+plate, while in \texttt{wp\_bind} a major portion of the proof employs equational reasoning (on probability kernels), which is more familiar to the computer scientist. We employ
+the diagrammatic notation again, for a remarkably easy to understand proof, translated into this point-free style from the original proof in \citep{lilac}.
+
+Recall that \texttt{wp\_bind} is defined:
+\[
+\inferrule*[right=\qquad\textsc{wp-bind}]{}{{\color{ForestGreen} \mathrm{wp}(\sem{M},X,{\color{RoyalBlue}\mathrm{wp}(\sem{N},Y,Q)})} \vdash \mathrm{wp}(\sem{X \leftarrow M;\,N},Y,Q)}
+\]
+where we have colour-coded the premise with the \textcolor{ForestGreen}{outer \texttt{wp}}, and \textcolor{RoyalBlue}{inner \texttt{wp}} each yielding an equation which we will use in establishing the goal.
+Recalling Sec \ref{sec:wp} in a nutshell, given a $\mu$ and program $M$, a \texttt{wp} gives back a $\mu'$ and random variable $X$ (where the $\mu$ and $\mu'$ are each associated with the old and new resource, $\mathcal{P}$ and $\mathcal{P'}$
+respectively). This corresponds to the Lean code:
+
+\begin{leancode}
+theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
+    (M : Term rs A.G) (N : Term (A::rs) B.G)
+    : wp (M.den ∘ᵣ D) (fun X ↦ (wp (N.den ∘ᵣ (X ;; D)) Q))
+      ⊢ wp ((M.bind N).den ∘ᵣ D) Q := by
+\end{leancode}
+
+Our goal is to prove:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.65\linewidth]{proofs/bind-goal.png}
+\end{figure}
+
+We first note that we need to construct both a $\mu Y$ (a more sensible name than the usual $\mu'$) and $Y$ to satisfy the proof obligation. We notice some new notation, an oval outside a triangle?. This represents a measurable function, in our case $D$, is random variable context. $D$ is implicit in the informal presentation but is explicit
+in the Lean code. We bring clarity through the types denoting, noting that $\circ_r$ is just straightforward function composition.
+
+\begin{align*}
+\mathrm{(M.bind N).den} &: \mathrm{Kernel}\, (\mathrm{TProd}\, \tysem{\cdot}\, \mathrm{rs})\, \tysem{B} \\
+\mathrm{(M.bind N).den} \circ_r D &: \mathrm{Kernel}\, I^\mathbb{N}\, \tysem{B}
+\end{align*}
+
+Continuing with the proof, we feed $\mu$ into the \textcolor{ForestGreen}{outer \texttt{wp}}, to obtain a $\mu X$ and $X$ such this equation holds:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{proofs/bind-outer.png}
+\end{figure}
+
+Notice that since \texttt{D\_ext} is universally quantified for \texttt{wp} \texttt{LProp}, we rename to $D_1$ here to avoid names clashes. The above result can be with used with any $D_1$ instantiation.
+
+From the \textcolor{ForestGreen}{outer \texttt{wp}} we will obtain that the resource associated with $\mu X$, satisfies the \textcolor{RoyalBlue}{inner \texttt{wp}}. So feeding $\mu X$ to the \textcolor{RoyalBlue}{inner \texttt{wp}},
+further provides $\mu Y$ and $Y$ such that this equation holds:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.65\linewidth]{proofs/bind-inner.png}
+\end{figure}
+
+Notice that it seems like $N$ is receiving two inputs but that is just the usual random variable context, extending with the $X$ obtained from running $M$. We put everything together 
+to achieve the goal (given above in black) in Fig \ref{fig:bind-proof}.
+
+Notice that we refer to application of the premises in our proof using their respective colours. When applying \textcolor{ForestGreen}{outer \texttt{wp}}, we instantiate $D_1 =$ \texttt{D;;D\_ext}, and
+when applying \textcolor{RoyalBlue}{inner \texttt{wp}} we instantiate $D_1 =$ \texttt{D\_ext}.
+
+\begin{figure}[bp]
+    \centering
+    \includegraphics[width=1.0\linewidth]{proofs/bind-proof.png}
+    \caption{A proof of soundness of the \texttt{wp\_bind} rule in our custom diagrammatic notation for (point-free) equational reasoning}
+    \label{fig:bind-proof}
+\end{figure}
+
+So in order to prove the goal we receive a $\mu$, which we feed into the 
 
 Unlike \texttt{wp\_meas}, \texttt{wp\_bind} is a standard rule
-in any weakest precondition based separation logic. However, it is deeply intertwined with the semantics of \texttt{wp}, adding the extra book keeping of
+in any weakest precondition based logic. However, it is deeply intertwined with the semantics of \texttt{wp}, adding the extra book keeping of
 \texttt{D\_ext} that we saw in the previous section. Indeed \texttt{wp\_meas} and \texttt{wp\_bind} can be understood as reinforcing each other's
 difficulty! We first proved soundness of \texttt{wp\_meas}, whilst redefining \texttt{wp} by removing all occurrences of \texttt{D\_ext}. At that point,
 reducing the complexity of \texttt{wp} brought the soundness proof of \texttt{wp\_meas} within approachable distance, so it was deemed necessary even if we needed to
 add \texttt{D\_ext} back in later and rework the proof. Then on attempting to prove \texttt{wp\_bind} and realising why it is unprovable without \texttt{D\_ext}, \texttt{D\_ext}
 was added back in, and both proofs completed.
 
+% \section{To overview}
+% \subsection{Reviewing Probabilistic Separation Logics}
+% More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
+% \citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
+% updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
+% probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
+
+% There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
+% probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
+% from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
+% expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
+% in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here citep{relational-logic}.
+% More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
+
+% \section{Pi-lambda-theorem as an induction principle}
+% \emph{This stuff is old from december. Can skip when reviewing}
+% \label{pi-lambda}
+% The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
+% used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.
+% It is similar to an induction principle on the structure of a $\sigma$-algebra. So we need prove some property C holds in the base and inductive cases
+% of a $\sigma$-algebra. However there isn't an inductive type underlying this
+% induction principle! The reason is two fold 1) when generating a measurable set from some base measurable sets, a specific
+% set can be shown to be measurable by multiple different permutations of application of the axioms. For reference below
+% is included an inductive definition generating a $\sigma$-algebra from base measurable seats.
+
+% \begin{leancode}
+% /-- The smallest σ-algebra containing a collection `s` of basic sets -/
+% inductive GenerateMeasurable (s : Set (Set α)) : Set α → Prop
+%   | protected basic : ∀ u ∈ s, GenerateMeasurable s u
+%   | protected empty : GenerateMeasurable s ∅
+%   | protected compl : ∀ t, GenerateMeasurable s t → GenerateMeasurable s tᶜ
+%   | protected iUnion : ∀ f : ℕ → Set α, (∀ n, GenerateMeasurable s (f n)) →
+%       GenerateMeasurable s (⋃ i, f i)
+% \end{leancode}
+
+% 2) The $\pi$-$\lambda$-theorem provides a relaxation on our proof obligation. We dont prove that the property C holds for countable unions 
+% (\texttt{iUnion} above) if it holds for each of the sets we're taking a union over. Instead we only need to do so for countably pairwise disjoint unions.
+
+% Being closed under disjoint unions instead of unions, is the difference between a $\lambda$-system compared to a $\sigma$-algebra. This relaxtion is the 
+% content of the $\pi$-$\lambda$-theorem which we don't go into here.
+% However there is an alternative "inductive" definition of a $\lambda$ system with the following axioms: 
+% \begin{enumerate}
+% \item The system $\mathcal{C}$ containt the base measurable sets we chose
+% \item be closed under proper difference, for $\forall V, U \in \mathcal{C}, V \subseteq U \rightarrow U \setminus V \in \mathcal{C}$
+% \item closed under increasing limits, take $i \in \mathbb{N}$ and $U_i \in \mathcal{C}$ then $\bigcup_{i \in \mathbb{N}} U_i \in \mathcal{C}$
+% \end{enumerate}
+
+% Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it doesn't provide the "induction principle" according to this definition.
+% For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
+% measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
 
 
-\Todo{Draw the kernel diagram and explain just what is needed of the proof for that to make sense}
 
 
-\section{To overview}
-\subsection{Reviewing Probabilistic Separation Logics}
-More recently there has been a lot of research into probabilistic separation logics: \citep{og_psl}, introduced separation as probabilistic independence.
-\citep{lilac} introduced Lilac, which allowed usage of continuous distributions, providing a measure theoretic definition of resources. \citep{basl} introduced reasoning about bayesian
-updates (supporting the \texttt{observe} and \texttt{normalize} constructs), thereby providing an axiomatic semantics for the general form of first order
-probabilistic programs (ie, BPPL as introduced by \citep{prob-semantics}).
 
-There is a parallel line of work in relational separation logics. One could argue that relational logics are more important in the probabilistic domain, since in bayesian
-probabilistic programing (so including \texttt{observe} and \texttt{normalize}), frequently generates probability distributions which have no closed form solution! Sampling
-from these can only be done using approximation methods like Variational Inference. The justification for relational logics classical is that relational properties are
-expressed more naturally, but could perhaps still be done using unary reasoning, in an inelegant way. In probabilistic programs however, relational reasoning might
-in fact be more expressive making it important. Relational reasoning for probabilistic programs (though not using a separation logic) can be found here citep{relational-logic}.
-More recently there has been a novel combination of relational and unary reasoning for probabilistic programs in a separation logic by \citep{bluebell}.
-
-\section{Pi-lambda-theorem as an induction principle}
-\emph{This stuff is old from december. Can skip when reviewing}
-\label{pi-lambda}
-The $\pi$-$\lambda$-theorem is tool in measure theory which can be used for equality of two measures. We use it prove a certain uniqueness of measures theorem,
-used to establish that separating conjunction yeilds a PCM (partial commutative monoid) structure.
-It is similar to an induction principle on the structure of a $\sigma$-algebra. So we need prove some property C holds in the base and inductive cases
-of a $\sigma$-algebra. However there isn't an inductive type underlying this
-induction principle! The reason is two fold 1) when generating a measurable set from some base measurable sets, a specific
-set can be shown to be measurable by multiple different permutations of application of the axioms. For reference below
-is included an inductive definition generating a $\sigma$-algebra from base measurable seats.
-
-\begin{leancode}
-/-- The smallest σ-algebra containing a collection `s` of basic sets -/
-inductive GenerateMeasurable (s : Set (Set α)) : Set α → Prop
-  | protected basic : ∀ u ∈ s, GenerateMeasurable s u
-  | protected empty : GenerateMeasurable s ∅
-  | protected compl : ∀ t, GenerateMeasurable s t → GenerateMeasurable s tᶜ
-  | protected iUnion : ∀ f : ℕ → Set α, (∀ n, GenerateMeasurable s (f n)) →
-      GenerateMeasurable s (⋃ i, f i)
-\end{leancode}
-
-2) The $\pi$-$\lambda$-theorem provides a relaxation on our proof obligation. We dont prove that the property C holds for countable unions 
-(\texttt{iUnion} above) if it holds for each of the sets we're taking a union over. Instead we only need to do so for countably pairwise disjoint unions.
-
-Being closed under disjoint unions instead of unions, is the difference between a $\lambda$-system compared to a $\sigma$-algebra. This relaxtion is the 
-content of the $\pi$-$\lambda$-theorem which we don't go into here.
-However there is an alternative "inductive" definition of a $\lambda$ system with the following axioms: 
-\begin{enumerate}
-\item The system $\mathcal{C}$ containt the base measurable sets we chose
-\item be closed under proper difference, for $\forall V, U \in \mathcal{C}, V \subseteq U \rightarrow U \setminus V \in \mathcal{C}$
-\item closed under increasing limits, take $i \in \mathbb{N}$ and $U_i \in \mathcal{C}$ then $\bigcup_{i \in \mathbb{N}} U_i \in \mathcal{C}$
-\end{enumerate}
-
-Unfortunately this is not the definition of $\lambda$-system in Mathlib, and it doesn't provide the "induction principle" according to this definition.
-For the case of probability measures ($\mu$ (universal set) = 1), there is a simple workaround, which is sufficient for Lilac. However BaSL uses unnormalised
-measures since it support bayesian conditioning, and so, there may be no simple workaround but reproving this alternative induction principle.
 
 % \section{Binder Discipline}
 % The choice between Dependent De Brujin Indices and Parametric Abstract Higher Order Syntax (PHOAS).

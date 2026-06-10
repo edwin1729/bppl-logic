@@ -75,7 +75,7 @@ variable [MeasurableSpace α] [MeasurableSpace β]
 /-- helper needed since we use `RV` instead of as a wrapper around measurable functions. -/
 lemma h_det_prod (f : RV α) (g : RV β) : det f ×ₖ det g = det (f ;; g) :=
           Kernel.deterministic_prod_deterministic f.meas g.meas
-
+--₂
 theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
     (M : Term rs A.G) (N : Term (A::rs) B.G)
     : wp (M.den ∘ᵣ D) (fun X ↦ (wp (N.den ∘ᵣ (X ;; D)) Q)) ⊢ wp ((M.bind N).den ∘ᵣ D) Q := by

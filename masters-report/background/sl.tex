@@ -45,8 +45,8 @@ programs and assertions we make about the program. We do not go into the specifi
         \centering
         \[
         \begin{array}{rcll}
-        B & ::= & True \mid False \\
-        E,F & ::= & \mathbb{N} \\
+        E,F,G & ::= & x,y,\ldots \mid 0 \mid 1 \mid E + F \mid E \times F \mid E - F & \text{Numeric Expressions} \\[0.4em]
+        B & ::= & \mathrm{false} \mid B \Rightarrow B \mid E = F \mid E < F  & \text{Boolean Expressions} \\[0.4em]
         P,Q,R & ::= & B \mid E \mapsto F & \text{Atomic Formulae} \\[0.4em]
               & \mid & \mathrm{false} \mid P \Rightarrow Q \mid \forall x.P & \text{Classical Logic} \\[0.4em]
               & \mid & \mathrm{emp} \mid P * Q \mid P \wand Q & \text{Spatial Connectives}
