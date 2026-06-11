@@ -1,11 +1,11 @@
 \chapter{Background}
 
-Probabilistic programming is a paradigm where we are defining statistical models using code. It is a means of describing
+Probabilistic programming is a paradigm where we define statistical models using code. It is a means of describing
 complex distributions over some space in a structured way. Probabilistic programming languages (PPLs) also come with an interpreter
 (probabilistic inference engine) which allows the programmer to sample a term from the distribution denoted by a program
 and indeed sample distributions while constructing new distributions.
  More interestingly, Bayesian probabilistic programming languages (Bppl) also allow one to ``observe'' some data and update
-their belief of the world (update the probability distribution they associate with some occurrence). Lilac does not support Bayesian
+one's belief of the world (update the probability distribution one associates with some occurrence). Lilac does not support Bayesian
 updates, so we will not be seeing much of this important feature of probabilistic programming.
 
 In order to understand the semantics of probabilistic programming we first need a crash course on measure theory, and then explore a compositional
@@ -20,18 +20,18 @@ interactive verification: the foundations in dependent type theory, and the meta
 
 % \section{Preliminaries}
 \subsection{Monads}
-The reader is assumed to have had been exposed to a monadic style of programming (for example Haskell). Mathematical/categorical perspective
+The reader is assumed to have been exposed to a monadic style of programming (for example Haskell). Mathematical/categorical perspective
 is not strictly necessary, and is thus omitted.
 
 Here we give a brief refresher on the computational perspective of monads. It is relevant to understand the semantics of probabilistic
 programming (Giry Monad) and Lean's metaprogramming library (MetaM monad).
 
-Nevertheless the categorical/mathematical perspective on monads though not strictly necessary to understand this work, it's a valuable alternative
- perspective. For example the justification for the semantics of higher order probabilistic programs being an open problem till 2017, is given
+Nevertheless the categorical/mathematical perspective on monads, though not strictly necessary to understand this work, is a valuable alternative
+ perspective. For example the justification for the semantics of higher order probabilistic programs being an open problem till 2017 is given
  naturally in categorical language (the category of measurable spaces in which types are interpreted is not Cartesian closed).
 
 From the computational perspective,
-A monad can be understood as a map from type A to M A. It is additionally associated with two functions Ret and bind, with the following
+a monad can be understood as a map from type A to M A. It is additionally associated with two functions Ret and bind, with the following
  signatures. Monads are actually monoids with Ret acting as unit and bind acting as the binary operation. The laws that Ret and bind obey are 
  as follows which should remind one of the monoid laws.
 
@@ -40,7 +40,7 @@ Readers are also assumed to have some familiarity with type theory, in particula
 
 \section{Measure Theory}
 \label{sec:measure-theory}
-In order to understand the semantics of a probabilistic programming, a formal definition for probability is needed.
+In order to understand the semantics of probabilistic programming, a formal definition for probability is needed.
 Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
 probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
 variable we first need to define measures and measurable spaces. A measurable space is a pair $(\Omega, \Sigma_\Omega)$,
@@ -65,7 +65,7 @@ A similar but more general notion than what a measure gives us, is a random vari
 function between two measurable spaces. We say "more general notion", since using the identity measurable function
 yields the measure we started with. A measurable function denoted $f : (\Omega_1, \Sigma_\Omega)  \marrow (\Omega_2, \G)$
 $f : \Omega_1  \marrow \Omega_2$ is well-defined when there is an ambient measurable space structure $(\Omega_1, \Sigma_\Omega)$
-and $(\Omega_2, \G)$. $f$ allows us to talk about the distribution of a particular attribute of in the event space. For example
+and $(\Omega_2, \G)$. $f$ allows us to talk about the distribution of a particular attribute in the event space. For example
 $\Omega_1 = \{1,\ldots,6\}^2$ may be the set of all events associated with playing 2 dice, while $f$ may map to the sum of the two dice, $\Omega_2 = \{1,\ldots,12\}$.
 A measurable function $f$, transforms any measure $\mu$ on $(\Omega_1, \Sigma_\Omega)$ to the pushforward measure $\mu'$ on $(\Omega_2, \G)$.
 In order for this to be well-defined we require the following measurability condition to be satisfied by all measurable functions:
@@ -78,7 +78,7 @@ and a $\sigma$-algebra $\G$ on the codomain $\Omega'$, the pullback $\sigma$-alg
 \[
 f^{*}\G := \{\, f^{-1}(G) \mid G \in \G \,\}.
 \]
-This is the coarsest (smallest) $\sigma$-algebra on $\Omega$ making $f$ measurable, and we are guaranteed is closed under complements and
+This is the coarsest (smallest) $\sigma$-algebra on $\Omega$ making $f$ measurable, and we are guaranteed it is closed under complements and
 countable unions since $\G$ is a $sigma$-algebra. 
 
 A Lebesgue integral is a generalisation of the standard (Riemann) integral. Intuitively the Lebesgue and Riemann integral will coincide on the spaces such as $\mathbb{R}$,
@@ -93,10 +93,10 @@ with respect to a measure $\mu : \Sigma_\Omega \rightarrow [0, \infty] $ is a nu
 \right\}.
 \]
 
-To get an intuition remember that integrals are supposed to add the values of function by breaking the domain up into infinitesimal pieces.
+To get an intuition remember that integrals are supposed to add the values of a function by breaking the domain up into infinitesimal pieces.
 Observe that the integral is a weighted sum of $f(\omega)$, weighted by the measure. The integral is iterating over the entire space
-by picking some choice of measurable disjoint sets whose union is the $\Omega$ (disjoint cover of $\Omega$). And for each measurable set ($U_i$) it picks a representative
-point $\omega$ evaluates f on $\omega$ and weights it by how large the set is ($\mu U_i)$. The supremum and infimum together enforce that the chosen disjoint
+by picking some choice of measurable disjoint sets whose union is $\Omega$ (disjoint cover of $\Omega$). And for each measurable set ($U_i$) it picks a representative
+point $\omega$, evaluates f on $\omega$ and weights it by how large the set is ($\mu U_i)$. The supremum and infimum together enforce that the chosen disjoint
 cover is chosen as finely (small measure) as possible.
 
 \subsection{Borel spaces and Lebesgue measures}
@@ -104,7 +104,7 @@ Intuitively a measure is supposed to be a length, volume or in general a ``size'
 The standard borel $\sigma$-algebra on $\mathbb{R}$, $B_\mathbb{R}$, corresponds to our notion of those subsets of $\mathbb{R}$ which have a ``size''. Again we refer
 to~\citet[Chapter 2]{axler}, for examples of subsets of $\mathbb{R}$ which are not measurable sets, which are rather obscure. In general
 most subsets that we care about: open and closed interval, singletons and of course unions and complements of the previous, are all included in $B_\mathbb{R}$.
-We define the $\sigma$-algebra, \emph{generated} out of some $S : Set (Set A)$, $\sigma(S)$ as the smallest set containing A and is closed under complements
+We define the $\sigma$-algebra, \emph{generated} out of some $S : Set (Set A)$, $\sigma(S)$ as the smallest set containing A and closed under complements
 and countable unions. We can see what $B_\mathbb{R}$ includes by seeing various ways of defining it:
 
 We have that the Borel $\sigma$-algebra $B_\mathbb{R} = \sigma(S)$, when $S$ is:
@@ -253,13 +253,13 @@ function from the context. We are starting to see the probabilistic nature of Ap
 
 Let us present the more straightforward terms in Appl. In Fig \ref{fig:term-semantics}, it is apparent that $\rho : \sem{\Delta}$, so with the variable construct we are
 able to choose a variable from the context, denoted $\rho(X)$. As in a standard language, we are able to create tuples, take projections on them, perform standard binary operations, and denote true and false.
-\texttt{flip} and \texttt{unif} are specific to a PPL, both allowing us to construct a terms of type $\mathbf{G}\, A$. \texttt{flip p : $\mathbf{G}$ bool} and \texttt{unif[0,1] : $\mathbf{G}$ real}.
-Plainly. \texttt{unif[0,1]} denotes the uniform distribution on the interval $[0,1]$, while \texttt{flip p} denotes the Bernoulli distribution, which is just the distribution of a (possibly biased) coin flip.
+\texttt{flip} and \texttt{unif} are specific to a PPL, both allowing us to construct terms of type $\mathbf{G}\, A$. \texttt{flip p : $\mathbf{G}$ bool} and \texttt{unif[0,1] : $\mathbf{G}$ real}.
+Plainly, \texttt{unif[0,1]} denotes the uniform distribution on the interval $[0,1]$, while \texttt{flip p} denotes the Bernoulli distribution, which is just the distribution of a (possibly biased) coin flip.
 
 We have so far seen constructs which are standard in any programming language, (noting that their interpretation does have some added measurability structure), and we have also seen how to construct primitive
 measures using \texttt{unif[0,1]} and \texttt{flip p}. But expressivity of Appl for manipulating measures stems from its monadic term constructors \texttt{ret} and \texttt{bind}. We pursue a layered presentation
 in understanding the semantics of these constructs, first presenting the semantic \texttt{ret} and \texttt{bind} operations of the Giry monad, where we do not have to worry about variable contexts.
-then the actual denotation the two constructs. We will revisit it in Sec \ref{sec:appl-lean}, where we mechanise it in Lean, in point free form to make it amenable to equational reasoning 
+Then the actual denotation of the two constructs. We will revisit it in Sec \ref{sec:appl-lean}, where we mechanise it in Lean, in point free form to make it amenable to equational reasoning 
 (used plentifully in the proofs to come).
 
 
@@ -364,7 +364,7 @@ M, N, O &::= X \mid \mathrm{ret}\ M \mid X \leftarrow M;\ N \mid \\
 \end{figure}
 
 \subsection{The Giry monad}
-Our intuition is that syntactic \texttt{ret} and let-binding should have something to do with the Giry monad's operations. denoted as:
+Our intuition is that syntactic \texttt{ret} and let-binding should have something to do with the Giry monad's operations, denoted as:
 
 \[
 \begin{array}{c@{\qquad\qquad}c}
@@ -378,11 +378,11 @@ Let us see how we can construct these operations and validate the monad laws. We
 point. Given a measurable set $E$, $\mathrm{dirac} x E = \text{if } x \in E \text{ then } 1 \text{ else } 0$.
 
 Now the type $(A \to \G A)$ is defined as $\text{Kernel } A\, B$. Mathlib uses this type as the primitive on which most of its probability theory library is built.
-We explore a diagrammatic exploration of probabilistic programs to see why kernels are so compelling:
+We give a diagrammatic exploration of probabilistic programs to see why kernels are so compelling:
 
 For a measurable space $(A, \Sigma_A)$, a probability measure is of type
 $\mu : \Sigma_A \rightarrow [0, 1]$. This gives a distribution on A. The intuition is that given $\mu$ we can sample some value from it.
-Each triangle below is a kernel. And the types of its input and
+Each triangle below is a kernel, and the types of its input and
 output are indicated. We compose the kernels along the type B as $\kappa \underset{B}{\circ} \iota$. The types of the individual kernels and composed kernel of Fig \ref{fig:semantics},
 is given below:
 
@@ -450,7 +450,7 @@ to $\mu$. Next we take a step back from Appl and consider a wider setting.
 \citet{prob-semantics} provided a compositional semantics for first-order Bayesian probabilistic programming language (Bppl), which forms the foundation of program logics, for modern probabilistic
 programming languages. Note that Bppl, is Appl with the \texttt{observe} construct, and its semantics is more general than that of Appl. However, we choose to present a fundamental difficulty
 plaguing the semantics of Bppl, which was solved in \citep{prob-semantics} through the introduction of \texttt{s-finite kernels}. It will give us a picture of the surrounding landscape of probabilistic
-program semantics, the difficulty in establishing even the most basic properties of programs in this paradigm, and topic to further build our intuition of \emph{kernels}.
+program semantics, the difficulty in establishing even the most basic properties of programs in this paradigm, and a topic to further build our intuition of \emph{kernels}.
 % The scope of this project is entirely within first-order probabilistic programs (probability distributions over function spaces
 % are not expressible). The programming language considered in Lilac uses a simpler semantics since it doesn't support bayesian updates. So in the following, we present
 % the relevant excerpt of the semantics.
@@ -493,7 +493,7 @@ We can represent each of these programs as a kernel having two inputs; one comin
 let bindings (the full context) are visible. But here we have taken care to state that the variable introduced by the first let binding is not visible in the second one, so the diagrams presented are a valid
 simplification of the actual semantics}.
 To clarify, these kernels have multiple deterministic values they take in order to return a single probabilistic value (a measure).
-The commutativity property illustrated by the equality of the two programs in Fig \ref{fig:commute-semantics}. 
+The commutativity property is illustrated by the equality of the two programs in Fig \ref{fig:commute-semantics}.
 
 \begin{figure}[tb]
     \centering
@@ -514,11 +514,11 @@ actually using \emph{Markov kernels} of type $A \to \mathrm{ProbMeasure}\, B$, k
 Fubini's theorem holds for Markov kernels~\citep{fubini}, but Bppl programs can't restrict themselves to Markov kernels\footnote{This is due to Bayes' theorem yielding unnormalised measures which are
 in general computationally intractable to normalise (convert to a probability measure)}.
 \citet{prob-semantics} shows that this theorem holds, if instead of general kernels, we restrict ourselves to \texttt{s-finite kernels}. A kernel
- $\kappa : A \to \G(B)$ is finite if there is finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
+ $\kappa : A \to \G(B)$ is finite if there is a finite $r \in [0, \infty)$ such that, for all a, $\kappa(a, B) < r$.
 $\kappa$ is s-finite if there is a sequence $\kappa_1 \; \ldots \; \kappa_n \; \ldots$ of finite
 kernels and $\Sigma_{i=1\ldots \infty} \; \kappa_i = \kappa$.
 
-In short topological transformations of these diagrams corresponding to the motivating example in \ref{fig:commute-syntax} do not change the semantics.
+In short, topological transformations of these diagrams corresponding to the motivating example in \ref{fig:commute-syntax} do not change the semantics.
 
 Mathlib's probability theory ``API'' provides many theorems with s-finiteness of kernels as a side-condition since it operates at the greatest level of generality,
 so it is useful to know about them even if in this project we are only concerned with Markov kernels.

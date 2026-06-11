@@ -1,10 +1,10 @@
 \chapter{Introduction}
 There has been an exciting amount of progress recently in the area of \emph{probabilistic separation logics} (PSL).
-Separation logic first introduced by \citet{og_sl} has since been tremendously successful in formally proving the correctness of
+Separation logic, first introduced by \citet{og_sl}, has since been tremendously successful in formally proving the correctness of
 heap manipulating programs \citep{verifast, cse-og, infer-pulse} and concurrent programs \citep{csl}.
 Iris \citep{iris} introduced a
 language-generic framework of separation logics for reasoning about programming languages with concurrency and higher order state,
-which spanned a significant class of mainstream programming languages. Notably the soundness of a significant subset
+which spanned a significant class of mainstream programming languages, notably the soundness of a significant subset
 of the Rust programming language \citep{rustbelt}. The popularity of Iris is due in part to the Iris Proof Mode (IPM) \citep{ipm},
 an ergonomic interface embedded in a host theorem prover, for proofs in separation logic, enabling the scaling of
 mechanisation of systems in a separation logic. The IPM was generalised away from Iris, and modularised to provide a frontend for any separation logic
@@ -12,11 +12,11 @@ in \citep{mosel}.
 The application of separation logics for reasoning about
 \emph{probabilistic programs} was first explored in \citep{og_psl}. At a high level a probabilistic program offers sampling
 from a probability distribution as a primitive of the language. A persuasive notion of separation: ``separation is independence of
-random variables'' was proposed by Lilac \citep{lilac}. Brielfy, propositions joined with the separating conjunct may not talk about inter-dependent random variables.
+random variables'' was proposed by Lilac \citep{lilac}. Briefly, propositions joined with the separating conjunct may not talk about inter-dependent random variables.
 This notion of separation has been adopted by most subsequent probabilistic separation logics.
 
 This project provides a complete mechanisation of Core Lilac, in Lean, along with the proof mode required to carry out interactive
-proofs in it. We know of two similar roughly simultaneous projects, which are along with this project one of the first mechanised
+proofs in it. We know of two similar roughly simultaneous projects, which, along with this project, are among the first mechanised
 probabilistic separation logics: Bluebell \citep{bluebell} and Amaryllis \citep{amaryllis}.
 
 
@@ -107,7 +107,7 @@ so discrete PPLs would not be of much use. So why are program logics for discret
 Probabilistic programs stretch far beyond the reaches of domain specific languages like Stan. They are in fact pervasive in modern software systems:
 cryptographic protocols, differential privacy, distributed systems and randomised algorithms. These were all examples where it would suffice to
 only support discrete probability distribution. Conventional techniques like software testing are much less applicable here; applying it naively
-would result in an outlier (correct) execution and a bug become indistinguishable. The above applications of probabilistic reasoning all require support
+would result in an outlier (correct) execution and a bug becoming indistinguishable. The above applications of probabilistic reasoning all require support
 only for discrete distributions, and generally fall firmly within traditional areas of computer science. This justifies the many logics which
 support only discrete distributions, including both Bluebell and Amaryllis. Examples requiring continuous distributions include
 Scientific computing (climate modelling, physics simulations for engineering applications) \citep{sci-comp}, Bayesian data analysis and probabilistic machine learning \citep{pml}.
@@ -128,7 +128,7 @@ can be found in the standard libraries of every major programming language, such
 
 
 \subsection{Comparison with contemporary mechanisations}
-Each of the 3 PSL mechanisation projects (that we are aware of) of Bluebell, Amaryllis and Lilac push the boundaries in distinct directions. Mechanisation of
+Each of the 3 PSL mechanisation projects (that we are aware of) of Bluebell, Amaryllis and Lilac pushes the boundaries in distinct directions. Mechanisation of
 PSLs is a non-trivial investment, since it also involves mechanisation of some bespoke prerequisite components.
 
 \textbf{Bluebell} \citep{bluebell} is a PSL, novel for combining both unary and relational styles of reasoning under a single logic. Unary logics like the original PSL \citep{og_psl} and Lilac are
@@ -136,12 +136,12 @@ highly expressive for reasoning about probabilistic programs. In some situations
 The outcomes of probabilistic programs follow some probability distribution. Imagine we have two probabilistic programs, and we are given a partial
 order over probability distributions, known as \emph{stochastic dominance}. A relational logic can help us establish that one program \emph{stochastically dominates} another.
 In order to achieve such a result using a unary logic, we would need to specify the output distribution of each program in sufficient detail using the unary logic first, 
-and as a next step prove that they are related by the stochastic dominance relation. This may be impossible if the programs are more complex than the logic is expressive, and otherwise
+and as a next step prove that they are related by the stochastic dominance relation. This may be impossible if the programs are more complex than the logic can express, and otherwise
 unrealistic, as we  may have convoluted proof obligations for each of the programs, which is entirely unnecessary under the relational paradigm. One can imagine how
 relational logics may be useful in proving correctness of cryptographic protocols, where the proof of correctness often takes the form of a game between defender and adversary
 (both modelled as probabilistic programs). It turns out that a family of modern cryptographic protocols, known as \emph{Succinct Non-interactive ARGuments} (SNARG) \citep{snarg},
 which is a proof system with probabilistic guarantees, requires a program logic with support for both unary and relational to prove its soundness \citep{vcvio}.
-SNARGs form an active area of research and has been developed almost entirely within the decade, due to their promise of solving the computational inefficiency plaguing
+SNARGs form an active area of research and have been developed almost entirely within the decade, due to their promise of solving the computational inefficiency plaguing
 blockchains\footnote{As outlined here \url{https://ethereum.org/roadmap/zkevm/}. Note that SNARGs are well known by a subclass called \emph{Zero Knowledge Proofs}}.
 The ongoing mechanisation of Bluebell \citep{bluebell-impl} falls under an umbrella project funded by Ethereum Foundation. In conclusion its formalisation
 is motivated by applications to securing the foundations of future blockchain systems. At the point of writing the ongoing bluebell formalisation has not begun integration
@@ -157,7 +157,7 @@ Amaryllis pushes the direction of reasoning about probabilistic programs written
 \textbf{Lilac} \citep{lilac} is the only PSL among the 3 which supports continuous distributions. It is implemented in Lean, due to Mathlib (Lean's mathematical library) having the richest and fastest growing support
 for measure and probability theory, since it strives to support formalisation of modern research-level mathematics in Lean. An important consequence of this is that results in Mathlib are generally stated at the broadest
 levels of generality, such as encompassing both discrete and continuous distributions\footnote{An example is given in Chapter \ref{sec:future}}. The mechanisation of Core Lilac makes the first step towards verifying
-the diverse set of systems which work in the continuous domain (as seen in Sec \ref{discont}). Bayesian Separation Logic (BaSL) \citep{basl}, extends Lilac with the bayesian reasoning, which is central (to every continuous application in Sec \ref{discont}),
+the diverse set of systems which work in the continuous domain (as seen in Sec \ref{discont}). Bayesian Separation Logic (BaSL) \citep{basl}, extends Lilac with bayesian reasoning, which is central (to every continuous application in Sec \ref{discont}),
  and also introducing the need for probabilistic inference (as explained in \ref{sec:motivation}). We also claim that logics in the vein of Lilac and BaSL, are capable of tackling
 verification of algorithms at the heart of the enterprise: probabilistic inference. In Chapter \ref{sec:future}, we present a novel idea for how BaSL, extended with some components which are yet to be invented, 
 can be used to verify the correctness of a certain class of probabilistic
@@ -236,9 +236,9 @@ This is the first mechanisation of a probabilistic separation logic which suppor
 \item Chapter \ref{sec:definitions} overcomes difficulties in embedding Lilac into Iris, by modifying Lilac's definition of variables. We thoroughly
 motivate the problem by showing how a correct specification on the simplest of programs (\texttt{unif1}) cannot be proven.
 \item Chapter \ref{chap:proofs} presents the intuition behind some of the most difficult soundness proofs, of proof rules in Lilac.
-\item Chapter \ref{chap:examples} presents verifies properties of fundamental probabilistic programs in Lilac using the Iris proof interface. We return to
+\item Chapter \ref{chap:examples} verifies properties of fundamental probabilistic programs in Lilac using the Iris proof interface. We return to
 the verification of \texttt{unif1} from Chapter \ref{sec:definitions}, and show that this is now easily achieved. Next we verify a specification
-on another program (\texttt{halve}) which involved stating and proving some new proof rules (about expectations) and custom tactics for Lilac-specific connectives
+on another program (\texttt{halve}) which involves stating and proving some new proof rules (about expectations) and custom tactics for Lilac-specific connectives
 through metaprogramming.
 \item Chapter \ref{sec:future} breaks away from the Lean mechanisation and reflects on what we think is a promising application of continuous PSLs.
 It introduces probabilistic inference (the algorithm at the core of the interpreter/compiler of a PPL), and poses rigorously, 2 research problems that

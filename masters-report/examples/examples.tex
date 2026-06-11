@@ -9,7 +9,7 @@ First in sec \ref{sec:uniform} we verify the most basic programs which we had st
 in sec \ref{sec:expectation} we outline difficulties faced with reasoning about \texttt{LProp}s which used the \texttt{expectation} ($\mathbb{E}[X]=e$) connective in the logic.
 We develop some proof rules regarding expectation and some custom tactics for ergonomic reasoning.
 
-Most notably we use this example to remark on how in our mechanised proofs we completely sidestep the usage of almost surely equals connective ($\circeq$) and substitutions using the congruence rule.
+Most notably we use this example to remark on how in our mechanised proofs we completely sidestep the usage of the almost surely equals connective ($\circeq$) and substitutions using the congruence rule.
 This is not specific to this particular example and is a general phenomenon. Indeed, the Lilac paper \citep{lilac} has not provided proof rules for introduction of
 $\circeq$\footnote{the original notation from the paper for the almost surely equals connective is $\overset{as}{=}$. We use $\circeq$ in the lean formalisation}, and uses it rather intuitively
 in the proof sketches. In our formalisation, we have not required it at all.
@@ -153,7 +153,7 @@ This concludes the first ever mechanised Lilac proof.
 \label{sec:expectation}
 
 Here we explore a more nuanced example where we first encountered difficulty with a notational side-stepping
-of an issue in the Lilac paper~\citep{lilac}. Next, we this opportunity to also comment on a pervasive
+of an issue in the Lilac paper~\citep{lilac}. Next, we use this opportunity to also comment on a pervasive
 simplification in proofs in our mechanisation and informal proofs provided in the paper. Here is a Hoare triple
 style proof annotation of the program \texttt{Halve} which we will next mechanise.
 
@@ -192,9 +192,9 @@ $\textcolor{blue}{\{\,Z.\ \exists e,\ \mathbb{E}[Z] = e/2 \land \mathbb{E}[X] = 
 % $\{\,Z.\ \exists e_Y e_x,\ \mathbb{E}[Y] = 1/2 \wedge \mathbb{E}[Z] = \mathbb{E}[X]\mathbb{E}[Y]\,\}$
 
 
-Is this merely an inconvenience or a more fundamental problem, which might make this theorem unprovable in the logic.
+Is this merely an inconvenience or a more fundamental problem, which might make this theorem unprovable in the logic?
 The latter was in-fact a concern since it is not actually possible to instantiate the above existential! For clarity,
-we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But the $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean), it is defined as an integral
+we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But the $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean); it is defined as an integral
 of the random variable X. We want to instantiate $e$ with this semantic $\mathbb{E}[X]$. Let us first present the partial proof until we hit this roadblock.
 
 \begin{leancode}
@@ -223,7 +223,7 @@ We would of course want to instantiate it with the semantic (Lean )
 
 \section{Removing the almost surely equals connective ($\circeq$)}
 As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analogous situations appear all throughout the paper,
-both in examples using Core Lilac (Lilac without conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
+both in examples using Core Lilac (Lilac without the conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
 conditioning modality. Simultaneously, we are demonstrating that the set of definitions for Core Lilac will translate naturally into full Lilac.
 We explain just what is relevant to showing that almost surely equals is not necessary, omitting the conditioning-specific proof rules. This is the first
 instance in this report where we present something which does not have corresponding end-to-end proofs in Lean. Below is a condensed version of \citet[Appendix C]{lilac}:
@@ -309,7 +309,7 @@ names rather than de Brujin indices to variables, as a consequence of this omiss
 the program in black and the LProp logical assertions in \textcolor{blue}{blue} to show the entire reduction of
 of the program using weakest precondition reasoning and our proof rules, never needs to use $\circeq$ the almost
 surely equals connective. The proof is not completed, and we have stopped at the point that we would have needed proof
-rules about the conditioning modality, the mechanisation of whose soundness proofs, we leave as future work\footnote{This
+rules about the conditioning modality, the mechanisation of whose soundness proofs we leave as future work\footnote{This
 is expected to be similar in difficulty to the formalisation of \texttt{wp\_unif} possibly requiring the mechanisation
 of relevant measure theoretic lemmas first before we can proceed with the soundness proof itself.
 }
@@ -322,6 +322,6 @@ and in Bluebell a fundamentally alternative approach was pursued in part to offe
 
 In particular Bluebell includes variables in its resource algebra. @Shing Hin can you confirm if these claims are correct?
 
-Because of this observation, I just want to state that it is strange I ended up not needed almost surely equals at all.
+Because of this observation, I just want to state that it is strange I ended up not needing almost surely equals at all.
 And I would want to try out more examples and implement full Lilac (with conditioning) before confirming if
 almost surely equals is indeed not necessary....

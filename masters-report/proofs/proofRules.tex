@@ -1,10 +1,10 @@
 \chapter{Mechanising Lilac II: Proofs}
 \label{chap:proofs}
-\emph{Having overcome the fundamental change in the definitions, consolidate inconsistencies and instantiating Iris, we present here the 2nd aspect
+\emph{Having overcome the fundamental change in the definitions, consolidated inconsistencies and instantiated Iris, we present here the 2nd aspect
 of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 2 of them
 in particular: \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
 connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use of Mathlib's Probability Kernels, with kernel style definitions
-and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
+and proofs. \texttt{wp\_unif}, the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
 measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube.}
 
 \fleuron{8}
@@ -41,8 +41,8 @@ Note that $(\lambda\ \_ \mapsto \mu) : A \marrow \mathcal{G} B$ which is correct
 The soundness of \texttt{wp\_meas} is the general theorem that we prove in lean and instantiate to \texttt{wp\_unif} and \texttt{wp\_flip}. The choice of the Hilbert Cube
 with finite footprint as a probability space was made to validate \texttt{wp\_meas}. In order to prove the soundness of this result, we first had to establish a
 substantial body of fundamental results in Lean about Hilbert cubes with finite footprint, to express transformations which are so intuitive that they do
-not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that Finite footprints
-were invented for validating these proof rules, and isn't of general mathematical interest to be supported by Mathlib.
+not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that finite footprints
+were invented for validating these proof rules, and aren't of general mathematical interest to be supported by Mathlib.
 
 \textbf{Definition B.5 \citep[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
 is of the form $F' \times [0,1]^\mathbb{N}$ for some $F' \subseteq [0,1]^n$.
@@ -97,7 +97,7 @@ from the infinite part). We offer a way to visualise a measurable space over the
 % \TwoPhasePartitionGraph{43}{15}{8}{10}
 % \TwoPhasePartitionGraph{44}{15}{8}{10}
 \caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
-makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
+makes up the measurable sets (or events) in the space. Each line represents an infinite tuple of reals in the unit interval, connecting dots which are single reals,
 on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}
 \label{fig:hc}
 \end{figure}
@@ -110,7 +110,7 @@ Let's say we know $X(0.1, 0.1, 0.1, \ldots) = false$.
 Then what is the pre-image of the measurable set {false} constrained to be, to remain measurable? The smallest possible answer is $X^{-1} (\{false\}) = (0.1, 0.1, a_0, a_1, a_2, \ldots)$
 for arbitrary $a_i \in I$. Referring to Fig \ref{fig:hc}, this is the same as saying that the region past n, is dense. Hopefully, this convinces the reader
 of the key fact that a random variable (which is a measurable function) from a finite footprint Hilbert cube, must ignore all the dimensions beyond n, in
-other words Finite footprint hilbert cube (FFHC) can't own every random variable and are restricted in some way. In particular, we are always able to easily construct
+other words Finite footprint hilbert cube (FFHC) can't own every random variable and is restricted in some way. In particular, we are always able to easily construct
 random variables that a FFHC does not own simply by having some $Y$ consider the values of dimensions greater than n.
 
 The above FFHC property of measurability interpretable as ownership, only used the fact that FFHC can be decomposed into a product. So it is just
@@ -140,16 +140,16 @@ into 3 pieces: before n, at n and after n.
 
 $(I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$
 
-We also need to define $\mu_n$. On the trivial measurable space $\bot = (I^x, {\phi, I^x})$ measurable space there is only one possible probability measure defined as $\mu_\bot := \{\phi \mapsto 0, \mathrm{univ} \mapsto 1\}$.
-$\mu_n := \mu_\bot \otimes \lambda_I \otimes \mu_\bot$. Where $\lambda_I$ is the Lebesgue measure on $I$ and $\otimes$ is the product of measures (see Sec \ref{sec:measure_theory}).
+We also need to define $\mu_n$. On the trivial measurable space $\bot = (I^x, \{\phi, I^x\})$ measurable space there is only one possible probability measure defined as $\mu_\bot := \{\phi \mapsto 0, \mathrm{univ} \mapsto 1\}$.
+$\mu_n := \mu_\bot \otimes \lambda_I \otimes \mu_\bot$. Where $\lambda_I$ is the Lebesgue measure on $I$ and $\otimes$ is the product of measures (see Sec \ref{sec:measure-theory}).
 
 Note that $\lambda_I$ expanded into a measure on $\mathbb{R}$ (mapping all new elements from its domain to 0), is precisely $\nu=\mathrm{Unif}[0,1]$. So if $Y$ is a map from
 $\mathcal{P}_n$, we get $Y_\#\mu_n = \mathrm{Unif[0,1]}$ as required. We wish that if we take the independent combination $\mathcal{P'} := \mathcal{P} \star \mathcal{P}_n$,
 then we will also have $Y_\#\mu' = \mathrm{Unif[0,1]}$
 
 We are now in a position to state a 3rd slogan: ``Hilbert Cubes with Finite Footprint are infinite random number generators''. Given some resource $\mathcal{P}$ representing
-the state of a program, we are always able to modify this state to some $\mathcal{P'}$ which supports one more random variable $Y$ of our choice. Each of these $Y$s are
-just straightforward projections of some dimension n, i.e. measure on each dimension is the source of randomness. And we can repeat this process arbitrarily, because
+the state of a program, we are always able to modify this state to some $\mathcal{P'}$ which supports one more random variable $Y$ of our choice. Each of these $Y$s is
+just a straightforward projection of some dimension n, i.e. measure on each dimension is the source of randomness. And we can repeat this process arbitrarily, because
 of the finite footprint condition, obtaining a resource
 which simultaneously supports an arbitrary number of random variables $Y_i$.
 
@@ -219,17 +219,17 @@ X_\#\mu'
 \end{align}
 
 
-Firstly we see that neither measure associated with the resources $\mathcal{P}$ or $\mathcal{P'}$ get used directly. Instead, we use $\mu$ and $\mu'$ respectively which is any larger measure
+Firstly we see that neither measure associated with the resources $\mathcal{P}$ or $\mathcal{P'}$ get used directly. Instead, we use $\mu$ and $\mu'$ respectively which are arbitrary larger measures
 on the Borel sigma algebra on the Hilbert cube. On the left, we see that if we choose arbitrarily some random variable $D_{ext}$ we can accommodate for the random variable to be unchanged,
 with our choice of $\mu'$\footnote{We are not saying that every random variable will remain unchanged, the ordering of the quantifiers in the semantics of \texttt{wp} is crucial}.
 This is in line with ``no unnecessary changes''. On the right we can see that the new measure $\mu'$ essentially encodes composition of the old resource and the program.
 
 We will see why $D_{ext}$ is required when explaining the soundness proof for the \texttt{wp\_bind} rule (Sec \ref{sec:wp-bind}). We notice that $\mu'$ is barely constrained; it is existentially quantified and only needs
-to satisfy $\mathcal{P'} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu')$. What is $\mathcal{P'}$ constrained by? The clause $\mathcal{P'} \vDash Q$. $\mathcal{P'}$ must satisfy $Q$ which having
-access to $X$ will likely make assertions about it.
+to satisfy $\mathcal{P'} \sqsubseteq (\Sigma_{I^\mathbb{N}},\mu')$. What is $\mathcal{P'}$ constrained by? The clause $\mathcal{P'} \vDash Q$. $\mathcal{P'}$ must satisfy $Q$, which, having
+access to $X$, will likely make assertions about it.
 
 We have not yet mentioned $\mathcal{P}_{\mathrm{frame}}$. This aspect of the semantics is in line with what is standard in separation logic to establish the frame rule \texttt{wp\_frame}. Fig \ref{sec:proof-rules}
-lists all the \texttt{wp} of Lilac. The soundness of these rules has been proven in Lean. However, we cannot go through all of them in this report.
+lists all the \texttt{wp} rules of Lilac. The soundness of these rules has been proven in Lean. However, we cannot go through all of them in this report.
 
 \begin{figure}[tb]
 \centering
@@ -290,15 +290,15 @@ $\downarrow$ denotes unwrapping of the value within an \texttt{Option} when we k
 As suggested in Equations \ref{eq:original} and \ref{eq:simplified}, the large ``do-notation'' based equation from the informal definition of the \texttt{wp} connective can
 be converted to point-free form.
 In the lean code too we have a point free formulation of the equation, which essentially merges the two point free forms above. This style is adopted since it uses the
-``kernel API'', Mathlib's preferred style~\citep{remy} for expressing these kinds of equations. The ``kernel API'' has vast library of lemmas, and one can imagine
-how using a point free style facilitates prerequisites for applying a lemma to be more easily inferred (less parameters less things to infer), by the workhorse of type-class inference~\citep{spitters}.
+``kernel API'', Mathlib's preferred style~\citep{remy} for expressing these kinds of equations. The ``kernel API'' has a vast library of lemmas, and one can imagine
+how using a point free style facilitates prerequisites for applying a lemma to be more easily inferred (fewer parameters, fewer things to infer), by the workhorse of type-class inference~\citep{spitters}.
 Again we explain the notation. We have merged the two equations from Eq \ref{eq:simplified}, using the
 $\times_k = \text{Kernel.prod} : \mathrm{Kernel}\, \alpha\, \beta \to \mathrm{Kernel}\, \alpha\, \gamma \to \mathrm{Kernel}\, \alpha\, (\beta \times \gamma)$. Remember that a kernel is defined $\mathrm{Kernel}\, \alpha\, \beta := \alpha \marrow \G \beta$.
-$M$ has type isomorphic to that of a Kernel\footnote{\texttt{toMK} is a manual coercion to a kernel, which is required since denotation of Appl programs are not in general kernels, only those with Appl type \texttt{Ty.g ty}}.
+$M$ has type isomorphic to that of a Kernel\footnote{\texttt{toMK} is a manual coercion to a kernel, which is required since denotations of Appl programs are not in general kernels, only those with Appl type \texttt{Ty.g ty}}.
 \texttt{det} makes a $\RV \tysem{A}$ into a Kernel. Remember that $\RV$ is a measurable function, and a measurable function $f: \alpha \marrow \beta$ can be converted
 to a kernel by lifting the output into the corresponding Dirac measure: 
 $\lambda x \mapsto \mathrm{dirac}\, (f\, x) : \mathrm{Kernel}\, \alpha\, \beta$. Let us expand our diagrammatic representation to include both \texttt{det} and $\times_k$.
-The latter, doesn't have any special shape associated with it and is just a splitting of wires. The former we denote with an oval inside the kernel symbol (which is the triangle, see Sec \ref{sec:appl}).
+The latter doesn't have any special shape associated with it and is just a splitting of wires. The former we denote with an oval inside the kernel symbol (which is the triangle, see Sec \ref{sec:appl}).
 We present in Fig \ref{fig:wp-calc} the equation in the definition of \texttt{wp} that we have just discussed.
 We modify our notation to be vertical instead of horizontal in preparation for writing the much larger equational reasoning arguments we will be seeing in Sec \ref{sec:wp-meas}.
 
@@ -315,7 +315,7 @@ We modify our notation to be vertical instead of horizontal in preparation for w
 In Sec \ref{sec:ff} on Finite Footprints we gave most of the intuition for the proof of the rule \texttt{wp\_meas} followed by defining precisely the semantics of \texttt{wp}, which appears in
 \texttt{wp\_meas}, in Sec \ref{sec:wp}. Now we can discuss the proof of soundness of \texttt{wp\_meas}, elaborating on Sec \ref{sec:ff} and showing parts of the Lean mechanisation.
 
-In our presentation of transformations on the Hilbert cube, we are being quite verbose with stating the isomorphisms (measurable equivalence), by ``splitting'' and ``unsplitting'' the Hilbert cube. In the
+In our presentation of transformations on the Hilbert cube, we are being quite verbose in stating the isomorphisms (measurable equivalence), by ``splitting'' and ``unsplitting'' the Hilbert cube. In the
 informal proof this isomorphism is not mentioned, and it is natural to fluidly move in between the two representations, not even noticing that there must in
 fact be two different representations in a type theory (since the types $I^\mathbb{N}$ and $I^n \times I^\mathbb{N}$ are not equal). At the base there is a measurable equivalence on measurable spaces,
 and on top of that there is also an isomorphism of measures over
@@ -357,7 +357,7 @@ lemma commute_with_add_dim {N : ℕ} (N_ms : MeasurableSpace (Fin N → I))
 \end{leancode}
 Recalling the development from Sec \ref{sec:ff} this proof is essentially $\mathcal{P}_n \star \mathcal{P} = \mathcal{P'}$ (in that order in the Lean code) but only showing the
 equality for the underlying measurable space, forgetting the measure. For example, if \texttt{.ms} denotes the underlying measurable space then
-$\mathcal{P}.ms = unSplitTri ((N\_nil N) ×ₘ I\_borel ×ₘ Inf\_nil) = (I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$.
+$\mathcal{P}.\mathrm{ms} = \mathrm{unSplitTri}((\mathrm{N\_nil}\; N) \times_m \mathrm{I\_borel} \times_m \mathrm{Inf\_nil}) = (I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$.
 Note that the independent combination $\star$, cast down to measurable spaces, is the sum of the two measurable spaces: the smallest $\sigma$-algebra generated from the union
 of the two spaces. This is also \texttt{join} $\sqcup$ (measurable spaces form a lattice), which is what we see in Lean.
 
@@ -427,7 +427,7 @@ Our goal is to prove:
     \includegraphics[width=0.65\linewidth]{proofs/bind-goal.png}
 \end{figure}
 
-We first note that we need to construct both a $\mu Y$ (a more sensible name than the usual $\mu'$) and $Y$ to satisfy the proof obligation. We notice some new notation, an oval outside a triangle?. This represents a measurable function, in our case $D$, in a random variable context. $D$ is implicit in the informal presentation but is explicit
+We first note that we need to construct both a $\mu Y$ (a more sensible name than the usual $\mu'$) and $Y$ to satisfy the proof obligation. We notice some new notation, an oval outside a triangle. This represents a measurable function, in our case $D$, in a random variable context. $D$ is implicit in the informal presentation but is explicit
 in the Lean code. We bring clarity through the types denoting, noting that $\circ_r$ is just straightforward function composition.
 
 \begin{align*}
@@ -435,7 +435,7 @@ in the Lean code. We bring clarity through the types denoting, noting that $\cir
 \mathrm{(M.bind N).den} \circ_r D &: \mathrm{Kernel}\, I^\mathbb{N}\, \tysem{B}
 \end{align*}
 
-Continuing with the proof, we feed $\mu$ into the \textcolor{ForestGreen}{outer \texttt{wp}}, to obtain a $\mu X$ and $X$ such this equation holds:
+Continuing with the proof, we feed $\mu$ into the \textcolor{ForestGreen}{outer \texttt{wp}}, to obtain a $\mu X$ and $X$ such that this equation holds:
 
 \begin{figure}[h]
     \centering

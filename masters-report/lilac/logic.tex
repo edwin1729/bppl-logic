@@ -28,7 +28,7 @@ makes up probabilistic programs.
 \subsection{Separation is probabilistic independence}
 \label{sec:sep-as-indep}
 Now we can present the notion of separation defined over probability spaces. One of the slogans is ``separation is probabilistic independence''.
-probability spaces admit a binary operation, say \( p \star q \) which can guarantee that the random variables defined through the resource p and those constructed through
+Probability spaces admit a binary operation, say \( p \star q \) which can guarantee that the random variables defined through the resource p and those constructed through
 q are independent. The definition of this binary operation is in a sense a generalisation of independence of random variables: (note we use $\mathcal{E}$ $\mathcal{F}$ and $\mathcal{G}$ for
 measurable spaces)
 
@@ -41,7 +41,7 @@ for all $E \in \mathcal{E}$ and $F \in \mathcal{F}$ it holds that $\rho(E \cap F
 The 2nd condition is familiar since it's the standard definition of independence of two events $E$ and $F$. The novelty is that, independence is lifted from single events to all possible events
 occurring in two different measurable spaces. And that's how we get separation; we can just say an arbitrary random variable from p and q respectively are independent.
 Remember that we desire a partial binary operation to define a Kripke resource monoid (KRM). It is non-trivial to prove that the independent combination
-when exists is unique, required to show that independent combination is a function not a relation. The ``pi-lambda-theorem'' to prove both this and several other laws of KRM are satisfied.
+when it exists, is unique, required to show that independent combination is a function not a relation. The ``pi-lambda-theorem'' is used to prove both this and several other laws of KRM are satisfied.
 
 \subsection{Measurable spaces and random variables on the Hilbert cube}
 Probability spaces are defined parametrically over some type $\Omega$, but Lilac makes a specific choice for $\Omega$ in order to define
@@ -50,8 +50,7 @@ Henceforth, denote the interval, $[0,1]$ as $I$.
 This type is known as the Hilbert Cube. The Hilbert Cube is a countably infinite sequence of intervals $I$,
 in other words $\mathbb{N} \to I$. First we must establish a measurable space over $I^{\mathbb{N}}$, to turn this into a probability space.
 Intuitively this would be obtained by taking the standard borel $\sigma$-algebra, $\Sigma_I$ over each dimension and taking the product measurable space iteratively over all dimensions.
-In other words a fold over $\mathbb{N}$. Mathlib offers a more general way to construct this measurable space, as it defines \texttt{Measurable.pi}, which can construct
-does not require a countable index, but works on any $\Pi$-type (function type). Like so:
+In other words a fold over $\mathbb{N}$. Mathlib offers a more general way to construct this measurable space, as it defines \texttt{Measurable.pi}, which does not require a countable index, but works on any $\Pi$-type (function type). Like so:
 
 \begin{leancode}
 instance MeasurableSpace.pi {X : δ → Type*} [m : ∀ a, MeasurableSpace (X a)]
@@ -86,7 +85,7 @@ P,Q ::=~& \top \mid \bot \mid P \land Q \mid P \lor Q \mid P \to Q \mid P \ast Q
 \]
 
 Notice that we have two sets of quantifiers: one for deterministic variables and one for random variables.
-Over the course of the mechanisation, I noticed that in Core Lilac (without the conditioning modality) does not use \emph{deterministic variables}.
+Over the course of the mechanisation, I noticed that Core Lilac (without the conditioning modality) does not use \emph{deterministic variables}.
 This simplifies our presentation here, omitting deterministic contexts and variables, and the two quantifiers $\forall$ and $\exists$ above. The following
 rules are helpful to understand, how to construct terms in the syntax. We have already omitted deterministic context and quantifiers here:
 
@@ -136,7 +135,7 @@ This leads to the intuition that a lilac proposition (henceforth \texttt{LProp})
 of a random variable as enforcing that no other separating conjunct may own a random variable which is not independent. But how do we enforce this using the semantics? Why is ownership \texttt{Own E},
 measurability \( E \text{ is } \mathcal{F}\text{-measurable} \)? First let us clarify that we already know that $E$ is a measurable function $RV E \triangle I^{\mathbb{N}} \marrow A$ so is
 \texttt{Own E} redundant? No. $RV E$ defines measurability w.r.t to $\Sigma_{I^\mathbb{N}},$ where  $\Sigma_{I^\mathbb{N}} \geq \mathcal{F}$, This measurability w.r.t $\mathcal{F}$ is a stronger condition.
-To see this simply take some function and notice that it's preimage on a set in the codomain, if contained in $\mathcal{F}$, must also be in $\Sigma_{I^\mathbb{N}}$.
+To see this simply take some function and notice that its preimage on a set in the codomain, if contained in $\mathcal{F}$, must also be in $\Sigma_{I^\mathbb{N}}$.
 
 To provide an intuition for why ownership is defined as \( E \text{ is } \mathcal{F}\text{-measurable} \), let's consider a scenario where some dimension in the Hilbert cube, $n$,
 is used to define a random variable. Take $\omega \in I^\mathbb{N} \triangleq \mathbb{N} \to I$. and $X : RV \mathbb{R} := \lambda \omega \mapsto \omega n$. This projection is a random
@@ -151,7 +150,7 @@ by focussing our attention on the nth dimension. The independent combination wou
 a measure! It would not satisfy the additivity condition on measure that taking the measure of a union of measurable sets is the sum of measure of the sets.
 The takeaway is that identical $\sigma$-algebras cannot form independent combinations, and in this example we illustrated how measurability was unique ownership of a dimension of the Hilbert cube.
 Measurability over coarser $\sigma$-algebra than $\Sigma_I$ is useful as well: take $Y : RV Bool := \lambda\ \omega \mapsto \omega\ n \le 0.5$. To validate \texttt{Own Y}, a much coarser $\sigma$-algebra on dimension n
-than $\Sigma_I$ would suffice: ${\phi, [0,0.5], [0.5,1], I}$. In general measurability can express complex ownership patterns single dimensions can be split across multiple separating conjuncts, and multiple dimensions can be mixed.
+than $\Sigma_I$ would suffice: ${\phi, [0,0.5], [0.5,1], I}$. In general measurability can express complex ownership patterns: single dimensions can be split across multiple separating conjuncts, and multiple dimensions can be mixed.
 
 \begin{figure}[htbp]
   \centering
@@ -184,7 +183,7 @@ Generally speaking a logic expresses propositions about a program in the languag
 into this mechanism, there is a novelty in the way Lilac has a different perspective on variables in the language vs the logic. A variable in the language may have
 the type \texttt{x : ty} (Appl type judgement) for some \texttt{ty : Ty} (meta language type judgement). One would then expect that if the logic were to construct an
 \texttt{LProp} in which this variable occurs, it would have type \texttt{x : ty.den}. However, as we saw above the type of variables in the logic is instead \texttt{X : RV ty.den}.
-using this variable. The conversion from \texttt{ty.den} to \texttt{RV ty.den} is a reflection of the perspective taken in probabilistic reasoning. Let's
+The conversion from \texttt{ty.den} to \texttt{RV ty.den} is a reflection of the perspective taken in probabilistic reasoning. Let's
 explain with an example. Take
 
 \[

@@ -23,7 +23,7 @@ under a heap $q_-$ if $P$ holds under some heap $p$ for which the combined resou
 
 Next observe the definitions of \emph{forall quantification}. We quantify over the set \texttt{Values} that the given variable used to define $P$ can take. Though we haven't
 introduced the programming language that this logic reasons about, note that the variables form the bridge between the language and logic, since these variables are shared between
-programs and assertions we make about the program. We do not go into the specifics of the introducing the programming language for this particular logic, since that takes us too far afield.
+programs and assertions we make about the program. We do not go into the specifics of introducing the programming language for this particular logic, since that takes us too far afield.
 
 
 \begin{figure}[htbp]
@@ -84,9 +84,9 @@ Identifying these characteristics and ``telling'' Iris about it, lets us effecti
 logic (which will be presented later).
 
 \subsubsection{Abstract resources}
-It was hinted in the previous section $\mathrm{emp}$ and $*$ is like a monoid. In general, what we mean by a ``resource'' can be modelled with some algebraic structure. The spatial connectives $*$ and $\wand$
+It was hinted in the previous section that $\mathrm{emp}$ and $*$ are like a monoid. In general, what we mean by a ``resource'' can be modelled with some algebraic structure. The spatial connectives $*$ and $\wand$
 are both defined using the binary operation $\star$. At the core of a separation logic is the partial commutative monoid (PCM) formed by $\mathrm{emp}$ and $\star$. A partial monoid
-is just a monoid accounting to the fact that $\star$ is a partial operation. So we guard all the laws with existence checks. This turns out to be quite messy in a formalism, as seen for example in the \texttt{assoc}
+is just a monoid accounting for the fact that $\star$ is a partial operation. So we guard all the laws with existence checks. This turns out to be quite messy in a formalism, as seen for example in the \texttt{assoc}
 law. The below code shows the formalisation used taken from \href{https://github.com/edwin1729/bppl-logic/blob/submission/Bppl/Lilac/Krm.lean}{Bppl.Lilac.Krm}.
 
 \begin{leancode}
@@ -105,7 +105,7 @@ class Krm (α : Type*) extends Pcm α, Preorder α where
     (x' ⋆ y' = some p') → ∃ p, (x ⋆ y = some p) ∧ p ≤ p'
 \end{leancode}
 
-Lean follows a haskell like syntax. Above we define the typeclass representing PCM and KRM.
+Lean follows a Haskell-like syntax. Above we define the typeclass representing PCM and KRM.
 \texttt{Pcm} extends \texttt{One}, which gives a ($1 : \alpha$) which we interpret as \texttt{emp}.
 \texttt{assoc} is using functor syntax (from haskell) and \lean{join : Option (Option α) → Option α}.
 This code is included to define precisely what is meant by partial monoid and krm, and to
@@ -165,12 +165,12 @@ P * Q \vdash Q * P \\[0.8em]
 
 Next we define the affine propositions: $P$ as any proposition satisfying $\forall Q.\ P * Q \vdash Q$. In other words $P$ can always be dropped. An affine 
 separation logic is one where all propositions are affine. Affine propositions can also be equivalently defined as $P * \mathrm{True} \bient P$ or $\mathrm{True} \bient \mathrm{emp}$.
-Another class of propositions is persistent propositions. Those propositions which may be duplicated to establish the goal. So for instance if $P$ is persistent than
+Another class of propositions is persistent propositions: those propositions which may be duplicated to establish the goal. So for instance if $P$ is persistent then
 $P \vdash P * P$.
 Intuitionistic propositions are a final class of propositions which are both affine and persistent. Working with intuitionistic propositions in the premise
 feels like working with the familiar first order (``intuitionistic'') logic, since we don't at all need to keep track of how many times these propositions are used.
 Because of this Iris treats intuitionistic propositions specially, keeping them separate from the rest of the ``spatial'' propositions in the premise. So a user
-of the iris proof-mode will see an ``intuitionistic context'', following rules familiar to them from using the host theorem prover (Rocq or Lean), and additionally
+of the Iris proof-mode will see an ``intuitionistic context'', following rules familiar to them from using the host theorem prover (Rocq or Lean), and additionally
 the spatial context, which they will need to treat more carefully. Examples follow in the next section.
 
 \subsection{Iris and MoSeL}
@@ -185,9 +185,9 @@ KRM -> BI                               ->                   Iris Proof Mode
 \end{verbatim}
 
 This is sort of the general structure of how Iris is meant to be used by someone instantiating it. You start with a KRM or similar algebraic structure which is the resource
-model, from which there is pre-determined construction of a BI (those connectives common to all separation logic). Given this Iris proof mode will be
-aware of the standard properties of a separation logic. For example, it is able to prove the following goal, note it has implicitly applied both commutativity 
-separating conjunct
+model, from which there is a pre-determined construction of a BI (those connectives common to all separation logic). Given this Iris proof mode will be
+aware of the standard properties of a separation logic. For example, it is able to prove the following goal, note it has implicitly applied both commutativity
+of the separating conjunct
 %  $\star$ and distributivity of $\star$ over $\and$.
 \Todo{example 1}
 We are also able to introduce both variables and premises with the same command, to build a context of everything we have to prove our goal.

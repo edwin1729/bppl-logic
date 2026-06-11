@@ -5,8 +5,8 @@
 
 Examples in this section are based on the excellent introduction to the calculus of inductive constructions by \citet{coc}.
 
-Foundational theorem proving is proving theorems with only the axioms (foundations) of mathematics assumed. Likewise foundational software verification
-for proving theorems (properties) of programs.
+Foundational theorem proving is proving theorems with only the axioms (foundations) of mathematics assumed. Likewise, foundational software verification is
+proving theorems (properties) of programs.
 
 Here we focus on the theory of foundational theorem proving and in the next (\ref{sec:meta}) we focus on how these ideas scale to large projects in practice.
 Note that we are interested in ``proving theorems'' as software verification is just a particular instance of theorem proving (using program logics, which
@@ -16,7 +16,7 @@ is covered in detail in the rest of this report).
 
 We now focus on a specific ``Foundation of Mathematics'' which has proved ideal for theorem proving in practice, as displayed by the most
 successful theorem provers - Rocq, Lean, Agda, Idris - all being based on dependent type theory. Dependent type theory has the remarkable property of encoding both
-propositions (synonymous to theorems) and proofs on one side and types and programs on the other, as part of the same language. These two sides are in-fact formally indistinguishable.
+propositions (synonymous to theorems) and proofs on one side and types and programs on the other, as part of the same language. These two sides are in fact formally indistinguishable.
 The Curry-Howard isomorphism (or propositions as types method) is an observation that the rules governing logic (introduction elimination rules), are much the same as the inference
 rules governing typing judgements. So the two can be used interchangeably. Certain types in our type theory will be interpreted as propositions, and terms of that type will be
 proofs of that proposition!
@@ -30,11 +30,11 @@ terms and the types are given by the \emph{same} syntax. This is known as a pure
 $A$ has type $\mathbf{Type_1}$ (or \emph{sort} $\mathbf{Type_1}$, to acknowledge that A is itself a type). There is actually an infinite hierarchy of these types:
 $A : \mathbf{Type_1} : \mathbf{Type_2} : \mathbf{Type_3} \ldots$, where the subscripts are indices known as \emph{universes}.
 
-The type of identity functions A is given by $\Pi (\_ : A), A$. We use the notation $A \to A$ in this case since it is not dependent. For completeness the identity function is typed
+The type of the identity function on A is given by $\Pi (\_ : A), A$. We use the notation $A \to A$ in this case since it is not dependent. For completeness the identity function is typed
 $(\lambda x : A \mapsto x) : \Pi (\_ : A), A$
 As a first example of a dependent type take the
 type of the polymorphic identity function, which takes a type and gives the identity function for that type: $\Pi (A : \mathbf{Type_i}), A \to A$. So $A \to A$ (or $\Pi (\_ : A), A$) is using $A$ in
-its definition therefore dependent. Again for completeness we type the term which is the polymorphic identity function: 
+its definition and is therefore dependent. Again for completeness we type the term which is the polymorphic identity function: 
 $\lambda A : \mathbf{Type} \mapsto \lambda x : A \mapsto x : \Pi (A : \mathbf{Type_i}), A \to A$. We will not go into the detail of universe polymorphism which
 strictly speaking should be considered since the index $i$ is unquantifed in the above expressions.
 
@@ -47,9 +47,9 @@ universally quantified statement we need a proof of $P(x)$ for every $x$, which 
 $\Pi (x : T), P(x)$, freely, as is standard in Lean.
 
 Dependent type theory as a foundation is an example of \emph{constructive mathematics} because proofs are always built by assembling the required data as seen in
-above example. With that intuition in mind lets show how some other logical connectives are represented:
+above example. With that intuition in mind, let's show how some other logical connectives are represented:
 
-As seen in this example, the standard recipe in constructive mathematics is to specify a proposition by what is required prove it. In the next example we
+As seen in this example, the standard recipe in constructive mathematics is to specify a proposition by what is required to prove it. In the next example we
 see representation also arises from what the connective enables us to prove. Take $\mathrm{False} := \forall (P : \mathbf{Prop}).\ P : \mathbf{Prop}$.
 First notice that if we have a proof of $\mathrm{False}$, that is a term of type $\forall (P : \mathbf{Prop}).\ P$, we would get the proof of any proposition $P$,
 out of that, encoding false entails anything. Also, it is not possible to construct a term of type $\forall (P : \mathbf{Prop}).\ P$, ie, there is no proof of $\mathrm{False}$.
@@ -132,8 +132,8 @@ As a final example lets have a look at $A \wedge B \triangleq \forall (P : \math
 $\wedge := \lambda (A\ B : \mathbf{Prop}) \mapsto \forall (P : \mathbf{Prop}).\ (A \to B \to P) \to P : \mathbf{Prop} \to \mathbf{Prop} \to \mathbf{Prop}$, where we are first using lambda abstractions and then a $\Pi$-type construction.
 
 \subsubsection{Proof Relevance}
-Finally, Proof Relevance separates the type theories of Lean and Rocq. Lean is Proof irrelevant meaning terms of types of Prop, are definitionally 
-equal\footnote{Rocq on the other hand is proof relevant by default. However, after noticing that Lean's proof relevance being indispensable for some projects,
+Finally, Proof Relevance separates the type theories of Lean and Rocq. Lean is proof irrelevant, meaning terms of types in Prop are definitionally
+equal\footnote{Rocq on the other hand is proof relevant by default. However, after noticing that Lean's proof relevance was indispensable for some projects,
 they decided to introduce a sort \texttt{SProp}, which is proof irrelevant}. So
 for instance if we have a structure bundling data and a proof of a property like so in Lean:
 
@@ -148,7 +148,7 @@ the equivalence of two \texttt{MeasurableFun}s is determined solely by the equal
 definitionally equal if \texttt{toFun} is equal. In practice this is incredibly convenient, and is applied automatically throughout the codebase to simplify proof
 objectives. It was always used in an elegant abstraction in establishing that certain constructions form a KRM, which we will detail later.
 
-The choices made in lean's type theory to bring about proof irrelevance does have some major theoretical drawbacks such as leading to undecidability of definitional
+The choices made in Lean's type theory to bring about proof irrelevance do have some major theoretical drawbacks such as leading to undecidability of definitional
 equality \citep[see chapter 3]{mario}, which however don't seem to matter too much in practice.
 
 \subsubsection{Calculus of Inductive Constructions}
@@ -157,20 +157,20 @@ Mention here that 1) Inductive families... 2) strict positivity
 
 In this section we hope to have gotten across that theorem proving in a dependent type theory is exactly type checking of terms constructed by the user. This is all that is needed
 to motivate the next section \label{sec:meta} on how this is partially automated and scaled in Rocq and Lean (going into more Lean specific detail). We also introduced the notions of
-predicativity and proof relevance, both of which I encountered over the course of the project without having previously heard of it. Interestingly they also cleanly separate 3
+predicativity and proof relevance, both of which were encountered over the course of the project. Interestingly they also cleanly separate 3
 of the most significant proof assistants. They will be mentioned briefly where relevant but are not particularly important in understanding most of this report.
 
 \subsection{Metaprogramming}
 \label{sec:meta}
 We now know that constructing a proof involves assembling many subproofs according to the typing rules to obtain a term of a desired Type (actually Prop).
 It is however extremely time-consuming and error-prone to go down to this level of detail when constructing a proof. Pen and paper proofs operate at a much
-higher level, and the use of metaprogramming in Proof assistants, is motivated by the desire to remove the mental overhead of mechanised proofs, move closer
+higher level, and the use of metaprogramming in Proof assistants, is motivated by the desire to remove the mental overhead of mechanised proofs, and move closer
 to the style of pen and paper proofs.
 
 ``Tactics'' are metaprograms meant for constructing proof terms. A Tactic block is started in Lean using $by$ syntax: in our code if we wanted
 a term (proof) of type $A : Prop$, we can write $(by \ldots) : A$ (though the type A, would usually be inferred by lean). So how does the $by$ tactic
 make it easier to construct the term? It provides a proof context, of premises and goals, which is actually additional state wrapped in a monad called
-\texttt{TacticM}. Inside a tactic block a sequence of \texttt{TacticM} monads are composed, each monad constructed using one Lean's ecosystem of tactics,
+\texttt{TacticM}. Inside a tactic block a sequence of \texttt{TacticM} monads are composed, each monad constructed using one of Lean's ecosystem of tactics,
 incrementally modifying the proof state until ``all goals are solved''. And at the end of a tactic block, using the information acquired in the monadic state
 a term of the desired type should be constructed using the information collected in the TacticM monad.
 
@@ -188,7 +188,7 @@ example {α} (a : α) (f : α → α) (h : ∀ a, f a = a) : f (f a) = a := by
 \end{leancode}
 
 Metavariables are used to represent unknown terms of known types, which may be holes in larger terms or a goal we want to prove (term of a certain Prop that
-we are looking to construct). As soon as the tactic block starts with \texttt{by}, a metavariable \texttt{?m1} which is unassigned but has type \lean{f (f a) = a}.
+we are looking to construct). As soon as the tactic block starts with \texttt{by}, a metavariable \texttt{?m1} is created which is unassigned but has type \lean{f (f a) = a}.
 Now we look at the state after the first \texttt{apply}. The types of \texttt{Eq.trans} and \texttt{?m1} can be unified, so the tactic succeeds and we have new proof
 state as follows:
 
@@ -204,7 +204,7 @@ To a user it would look like this:
 ⊢ α
 \end{leancode}
 
-But its helpful to see the state of metavariables explicitly: 
+But it's helpful to see the state of metavariables explicitly:
 
 \begin{leancode}
 ?m1 := Eq.trans α (f (f a)) ?b a ?m2 ?m3
@@ -225,5 +225,5 @@ which is not a Prop was created as well. After the second \texttt{apply}, which 
 ?m3 : ?b = a
 ?b  := f a
 \end{leancode}
-Only ?m3 needs to be assigned which is taken care of the final \texttt{apply}. At the end of the tactic block, we obtain the term
+Only ?m3 needs to be assigned which is taken care of by the final \texttt{apply}. At the end of the tactic block, we obtain the term
 \lean{Eq.trans α (f (f a)) (f a) a (h (f a)) (h a)} which is typed as \lean{f (f a) = a}, as desired!

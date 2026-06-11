@@ -48,7 +48,7 @@ Say we are given an unnormalised distribution $\overset{\sim}{\pi}(x)$. Then we 
 the integral in the denominator in the above equation.
 We can ask 3 concrete questions \citep{pml, ppl}
 \begin{enumerate}
-\item How to determine a closed form approximation $q(x)$ from a parametrised family of distributions $q \in Q_\theta$ such that $q$ is ``closest'' to $pi$, $q \approx \pi$ (Variational Inference)
+\item How to determine a closed form approximation $q(x)$ from a parametrised family of distributions $q \in Q_\theta$ such that $q$ is ``closest'' to $\pi$, $q \approx \pi$ (Variational Inference)
 \item Drawing samples distributed as $\pi(x)$ (MCMC: Markov Chain Monte Carlo)
 \item Approximating the expectation (or some other integral) over $\pi$ (SMC: Sequential Monte Carlo)
 \end{enumerate}
@@ -104,7 +104,7 @@ x_3 \leftarrow T(x_2); \\
 \cdots
 \]
 
-This is exactly an unrolling of the for loop construct from Appl \ref{sec:appl}. We recall the syntax here: $for (N, M_i, i X. M_s)$ where N is the number of times to iterate, $M_i : \mathcal{G} A$ from which the initial value is sampled and
+This is exactly an unrolling of the for loop construct from Sec \ref{sec:appl}. We recall the syntax here: $for (N, M_i, i X. M_s)$ where N is the number of times to iterate, $M_i : \mathcal{G} A$ from which the initial value is sampled and
 $\lambda i X. M_s : \mathbb{N} \to S \marrow \mathcal{G} S$. The last argument is a family of \emph{step kernels} indexed by the iteration index, $i$. In MCMC we only use a single step kernel ignoring the iteration index $i$. The previous value is fed
 into the step kernel, and the next value is sampled. So restating MCMC as a for loop in PPL we have:
 
@@ -115,10 +115,10 @@ associated with random variables $X_1, X_2, \ldots$, representing the distributi
 Markov chains because when each $x_{i+1}$ is sampled, the transition kernel is only passed the immediately preceding value $x_i$. This property of being dependent on just the previous step,
 is the Markovian property. For loops in Appl, by their definition, generate Markov chains if we ignore the iteration index $i$ as above.
 
-We had claimed that as $N \to \infty$, $X_N \sim \pi$, or equivalently $lim_{N \to \infty}\, T^N(X_0) \sim \pi$ But we haven't even mentioned how $\pi$ or $\overset{\sim}{\pi}$ gets involved in the construction of $T(x)$ for any of this to work out!
+We had claimed that as $N \to \infty$, $X_N \sim \pi$, or equivalently $\lim_{N \to \infty}\, T^N(X_0) \sim \pi$. But we haven't even mentioned how $\pi$ or $\overset{\sim}{\pi}$ gets involved in the construction of $T(x)$ for any of this to work out!
 In this presentation we lack the space to develop the basics of \emph{ergodic theory} which go into providing the condition on the transition kernel that ensures that the random variable $X_N$
 is eventually distributed according to $\pi$. So we state the result at a high level. As developed by \citet{meyn-tweedie}, if a transition kernel is \emph{ergodic} then it has an invariant measure,
-i.e. $\exists \pi'. lim_{N \to \infty}\, T^N(X_0) \sim \pi$. We omit the definition of \emph{ergodic} which is quite involved, as it is sufficient to state the following predicate on Kernels and know that it is a provable
+i.e. $\exists \pi'. \lim_{N \to \infty}\, T^N(X_0) \sim \pi$. We omit the definition of \emph{ergodic} which is quite involved, as it is sufficient to state the following predicate on Kernels and know that it is a provable
 property with much of the required theory already developed in Mathlib\footnote{}:
 
 \begin{leancode}
@@ -127,7 +127,7 @@ def HasInvariantMeasure (π' : Measure S) (T : Kernel S S) : Prop
 
 (Note that we intend for $\pi'$ to mean $\overset{\sim}{pi}$ in Lean code.) The astute reader may notice that in the above definition, in Appl, we must have\\ \lean{(π' : ProbabilityMeasure S)}. BaSL~\citep{basl} is a program logic which
 is able to reason about unnormalised measures as well, which do indeed arise exactly in the manner they did in our bent coin example from Sec \ref{sec:future-motivation},
-through the application of the Baye's rule. The programming language which BaSL reasons about, Bppl, is a generalisation of Appl. So to understand this chapter, it
+through the application of Bayes' rule. The programming language which BaSL reasons about, Bppl, is a generalisation of Appl. So to understand this chapter, it
 suffices to think of BaSL as Lilac but with support for constructing unnormalised distributions as programs.
 
 
@@ -139,19 +139,19 @@ We now have the components to establish a new \texttt{wp} proof rule that will a
   { \mathrm{HasInvariantMeasure} \overset{\sim}{\pi} \vdash \mathrm{wp}([\![\mathrm{for}(n,e,\_i\,X.\,M)]\!],X\!:\!A.\,X \sim \pi)}
 \]
 
-Is that true? Not quite since $N$ has to approach infinity for this rule to hold. And in any executable program we cannot have N approach infinity. We could prove the correctness of an inference
+Is that true? Not quite since $N$ has to approach infinity for this rule to hold. And in any executable program we cannot have $N$ approach infinity. We could prove the correctness of an inference
 algorithm by proving the above given $N \to \infty$. However, that is done entirely in the meta-logic and there is nothing that using a separation logic would contribute here.
 We want to reason about the \texttt{for} loop in the above program when it is part of a larger program, as realistic inference algorithms can indeed involve sub-inference procedures as part of it.
 $N$ not going to $\infty$ in practice is why these inference methods are called ``approximate''. 
 
-\textbf{Research Problem 1} : Can we develop a modification of the above rule which is sound by introducing in the logic, a method for tracking and bounding the approximation error.
-The pure measure theoretic component, quantitative convergence of Markov is well-established~\citep{meyn-tweedie}. The logical component can be based on similar
+\textbf{Research Problem 1} : Can we develop a modification of the above rule which is sound by introducing into the logic a method for tracking and bounding the approximation error?
+The pure measure theoretic component, quantitative convergence of Markov chains, is well-established~\citep{meyn-tweedie}. The logical component can be based on similar
 previous ``error-bounding'' logics such as Approxis~\citep{approxis}.
 
 \section{Metropolis Hastings}
 MCMC is seldom used directly. It is generally hard to find a transition kernel $T$, which has an invariant measure which we can specify. The Metropolis-Hastings
-algorithm is one of the simplest family of MCMC algorithms. In general there are several parametrised families of MCMC algorithms where the parameters are
-not as difficult to provide than directly providing a transition kernel $T$ with an invariant measure.
+algorithm is perhaps the simplest family of MCMC algorithms. In general there are several parametrised families of MCMC algorithms where the parameters are
+not as difficult to provide as directly providing a transition kernel $T$ with an invariant measure.
 We start first with an example, adapted from the \emph{island problem} of~\citet{eliot}.
 
 \textbf{Teleportation Museum: } To celebrate the advances in instantaneous teleportation, a museum dedicated to the technology has just opened in town. There are no lifts
@@ -163,13 +163,13 @@ artificial. The visitors to the museum are principled people, operating on their
 every unit of time, they take their current floor $x$, and sample a new floor $x' \sim Q\, x$.
 Let us focus on a single visitor Alice (transition kernel $Q_A$), and the museum's protocol for automatically
 handling her teleportation requests. The algorithm itself is simple: the museum wishes that the ratio of people across the floors which can be understood as a distribution of people $\pi$
-be maintained. They devise an acceptance ratio A which depends on $Q_A$, $\pi$ $x$ and $x'$. If the acceptance ratio is high the protocol is
+be maintained. They devise an acceptance ratio A which depends on $Q_A$, $\pi$, $x$ and $x'$. If the acceptance ratio is high the protocol is
 more likely to accept the proposed move and if not Alice must stay at the current floor $x$. The museum staff, with a lot of clever mathematics, prove that they can pick
 a particular acceptance ratio A, such that after infinitely long, the distribution of Alice's positions is exactly $\pi$. They can repeat their protocol for every visitor
 to reach their requirements. The protocol was scrapped since no one could wait infinitely long for a guarantee.
 
 The analogy provides some core intuition on MCMC: obtain the probability distribution, by observing a single person's movements, which at any point in time approximates the true
-distribution, becoming exact at infinity. And it also provides the intuition behind Metropolis-Hastings, which is breaking building a transition kernel into a sub-problems:
+distribution, becoming exact at infinity. And it also provides the intuition behind Metropolis-Hastings, which breaks building a transition kernel into sub-problems:
 building a \emph{proposal transition kernel} and an \emph{acceptance ratio}, which put together creates the actual transition kernel. It turns out that the \emph{proposal transition kernel}
 can be arbitrary.
 Let's fill in the details. Under the Metropolis-Hastings algorithm, the acceptance ratio is given as:
@@ -199,7 +199,7 @@ method since it is proven that when $T$ is constructed in such a way, it has the
 
 We now motivate our 2nd research problem. A complex target distribution, $\overset{\sim}{\pi}$, is required to admit a density for
 Metropolis-Hastings (and any MCMC method in general) to be well-defined. And $\overset{\sim}{\pi}$ is the semantics of a program constructed using Bppl. Can we guarantee that the denotation of every program in Bppl (a measure) admits a density?
-Not in general. Say that $\sem{M} \pi$ admits a density w.r.t to a base measure, $\lambda$:
+Not in general. Say that $\sem{M} \pi$ admits a density w.r.t. a base measure, $\lambda$:
 
 \begin{equation}\label{eq:dens-assumption}
 \forall E \in B_{\mathbb{R}}.\ \lambda(E) = 0 \to \overset{\sim}{\pi}(E) = 0

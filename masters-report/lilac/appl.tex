@@ -6,17 +6,17 @@ of specifying properties of programs. We would always have to guard for the poss
 proliferation of exception handling. Fortunately we are working in a dependently typed language, which is expressive enough to circumvent the problem by
 letting us define a syntax (AST) that is well-typed by construction.
 
-We need to disambiguate, references to types in Lean and types of Appl (which are in-fact terms in Lean). We will refer to the former as types in
+We need to disambiguate references to types in Lean and types of Appl (which are in-fact terms in Lean). We will refer to the former as types in
 the \emph{meta language} and to the latter as types in the \emph{object language}.
 
 There are several standard ways to define object languages which are well-typed by construction, which all differ in the crucial problem of representing
 (object language) variables. This seemingly innocent problem of how to represent variables is one of the biggest issues encountered in this project, and
 standard techniques don't quite work for Appl, because of its non-standard interpretation of (object language) types.
 
-The final (Lean) representation chosen for Appl follows a technique called dependent de Bruijn indices~\citep[see chap 17, Reasoning about programming language syntax]{cpdt}
+The final (Lean) representation chosen for Appl follows a technique called dependent de Bruijn indices~\citep[see chap 17, Reasoning about programming language syntax]{cpdt}.
 The reference also covers Parametric Higher Order Abstract Syntax which was heavily considered, along with the simple string based approach to variables,
 which is standard in Iris projects. For both alternatives it is not straightforward or perhaps not even possible to express that the denotation of
-a program is not an ordinary function from a variable context but a measurable function. Among these, only de Bruijn indices make this map explicit. So that
+a program is not an ordinary function from a variable context but a measurable function. Among these, only de Bruijn indices make this map explicit, so that
 we can express measurability.
 
 First we present the types of Appl along with its denotational semantics, taken from \repo{Appl}.
@@ -41,7 +41,7 @@ MeasurableSpace, rather than \lean|Type| as for most other object languages. It 
 typechecker to unfold \lean|Ty.den| when checking if two types are definitionally equal. The importance of this will be made clear once we describe
 the denotation of terms.
 
-First we describe the machinery for dependent de Bruijn indices. De Brujin indices is a system of variable naming that facilitates guarantees
+First we describe the machinery for dependent de Bruijn indices. De Bruijn indices are a system of variable naming that facilitates guarantees
 by the type system that there is no usage of undeclared variables. The idea is to use natural numbers as names, where 0 refers to the nearest (rightmost)
 binding, 1 refers to the next one and so on. $(\lambda.\, \lambda. \#1 + \#0)$ would represent $(\lambda x.\, \lambda y. x + y)$ for example.
 
@@ -55,7 +55,7 @@ inductive Member : α → List α → Type
   | tail {a b bs}: Member a bs → Member a (b::bs)
 \end{leancode}
 
-Note that \texttt{{a}} is syntax for an inferred argument. Here is the definition of terms. Note how \texttt{var} is defined use a \texttt{Member} as
+Note that \texttt{{a}} is syntax for an inferred argument. Here is the definition of terms. Note how \texttt{var} is defined using a \texttt{Member} as
 an index.
 
 \begin{leancode}
@@ -78,7 +78,7 @@ inductive Term : List Ty → Ty → Type
 
 In Lean's dot notation, \texttt{.G} will elaborate into \texttt{Ty.G} since the expected type at that location can be inferred.
 We can anticipate that the semantics of a term $te : .G ty$ (object language typing), would be a Kernel.  % Appl is interpreted in a monad (the Giry)
-\texttt{bind}  \texttt{Arith} and \texttt{Cmp}
+\texttt{Arith} and \texttt{Cmp}
 are types for the syntax of operators like $+$, $-$, $\leq$, etc, so we omit them. The syntax follows straightforwardly from Fig \ref{fig:term-syntax}, presented in sec \ref{sec:appl}.
 In the Lean code, we also see that the syntax is typed (for example \texttt{arith} only takes terms of types \texttt{Ty.real} as arguments), so that all terms are correct by
 construction. Below we provide the denotation of selected terms:
@@ -136,7 +136,7 @@ are both kernels, so we cast them into the kernel type provided by Mathlib and c
 \end{figure}
 
 Notes on the notation: \texttt{toMK}
-is short for ``to Markov Kernel'', and is simply a cast\footnote{We attempted using an implicit coercion, which are implemented using typeclasses in Lean, but the required types could not be inferred automatically}.
+is short for ``to Markov Kernel'', and is simply a cast\footnote{We attempted using an implicit coercion, which is implemented using typeclasses in Lean, but the required types could not be inferred automatically}.
 Given two kernels $P$ and $Q$, the kernel product $P \times_m Q$, copies the inputs and return the output of each of $P$ and $Q$ as a tuple 
 (product measure on a product measurable space). Again we represent it diagrammatically, this time within a dotted box in Fig \ref{fig:kernel-prod}:
 
@@ -150,6 +150,6 @@ Given two kernels $P$ and $Q$, the kernel product $P \times_m Q$, copies the inp
 Finally, \texttt{Kernel.id} the identity kernel, can achieve the effect of just passing on its deterministic input if we define it as $\text{Kernel.id}\, x = \text{dirac}\, x$.
 Our original definition was
 the definition from the paper, but it was very difficult to prove the measurability of the construct; there was no suitable Mathlib lemma, and proving measurability from scratch
-is involved, requiring finding relevant helper lemma in Mathlib, and long. Thankfully, measurable functions compose to measurable functions, and we only had to realise this perspective,
+is involved, requiring finding relevant helper lemmas in Mathlib, and was long. Thankfully, measurable functions compose to measurable functions, and we only had to realise this perspective,
 of the definition of \texttt{bind}, before it became more natural to state the definition using kernels compositionally and get measurability for free!
 
