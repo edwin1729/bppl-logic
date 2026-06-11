@@ -45,7 +45,7 @@ substantial body of fundamental results in Lean about Hilbert cubes with finite 
 not even get mentioned in proof in Lilac's appendix, but nevertheless, took weeks of effort. The reason for this difficulty boils down to the fact that Finite footprints
 were invented for validating these proof rules, and isn't of general mathematical interest to be supported by Mathlib.
 
-\textbf{Definition B.5 citep[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
+\textbf{Definition B.5 \citep[Appendix B]{lilac}} A sub-$\sigma$-algebra $\mathcal{F}$ of $\Sigma_{I^\mathbb{N}}$ has finite footprint if there is some n such that every $F \in \mathcal{F}$
 is of the form $F' \times [0,1]^\mathbb{N}$ for some $F' \subseteq [0,1]^n$.
 
 The intuition behind this definition goes back to the slogan ``measurability is ownership''. Finite footprint restricts the set of measurable functions from the
@@ -93,10 +93,10 @@ from the infinite part). We offer a way to visualise a measurable space over the
 \begin{figure}[tb]
   \centering
 
-\TwoPhasePartitionGraph{1234}{15}{8}{10}
-\TwoPhasePartitionGraph{42}{15}{8}{10}
-\TwoPhasePartitionGraph{43}{15}{8}{10}
-\TwoPhasePartitionGraph{44}{15}{8}{10}
+% \TwoPhasePartitionGraph{1234}{15}{8}{10}
+% \TwoPhasePartitionGraph{42}{15}{8}{10}
+% \TwoPhasePartitionGraph{43}{15}{8}{10}
+% \TwoPhasePartitionGraph{44}{15}{8}{10}
 \caption{A suggestion for visualising a Finite footprint measurable space over a hilbert cube. The entire diagram is a single measurable space. Each strip
 makes up the measurable sets (or events) in the space. Each line in represents an infinite tuple of reals in the unit interval, connecting dots which single reals,
 on a vertical number line. Note that beyond the finite footprint, the lines get dense. In a fully faithful diagram, that part would be entirely filled in.}

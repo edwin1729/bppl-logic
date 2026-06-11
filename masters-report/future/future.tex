@@ -1,43 +1,102 @@
 \chapter{Verification of Probabilistic Inference using Separation Logic}
 \label{sec:future}
+\emph{This chapter outlines a separate effort from the previous chapters where we had mechanised Core Lilac \citep{lilac}. Here we sketch a novel theoretical contribution, proposing
+to apply probabilistic separation logic to the verification of not only PPLs but also their compiler/interpreter. We argue why a successor of Lilac, Bayesian Separation Logic (BaSL) \citep{basl}, brings us
+one step closer to the verification of probabilistic inference algorithms in a separation logic. Two research well-motivated \texttt{research problems} which lie at the intersection of measure theory
+and the semantics of PPLs are posed.}
+%  \texttt{research directions} the open questions that remain to be answered}
 
-\emph{In this section we demonstrate how existing probabilistic separation logics (PSL) are capable of reasoning about probabilistic inference, the core of an interpreter/compiler of probabilistic programming languages (PPL).
-We outline first steps and identify an overall structure of the work highlighting two future research questions.
-We briefly argue why the use of PSL as opposed to reasoning directly in the meta logic on the semantics of a PPL, may be a promising direction of future research}
 \fleuron{33}
 
-\section{Motivation: what is the challenge with probabilistic inference?}
+The importance of verification of probabilistic inference, which lies at the heart of the compilers or interpreters of PPLs has already been established by \citet{scibior_2017} and \citet{tassarotti}.
+The former undertakes more foundational work expressing probabilistic inference in higher order probabilistic programs and verifying correctness properties directly using the denotational semantics.
+The latter verifies correctness of key passes in the compiler of the Stan PPL \citep{stan}. Both approaches prove properties of the denotational semantics directly and do not work in a PSL.
+Our hypothesis that is that it is beneficial to work at the higher level of abstraction of a separation logic, which has not been attainable before the recent introduction of BaSL \citep{basl}. This is because
+reasoning about unnormalised probability distributions is crucial for probabilistic inference, as we will explain below, and no logic before BaSL was capable of that. If our hypothesis that PSL
+offers a scalable framework for reasoning about probabilistic inference is correct, then we would unlock being able to produce foundational correctness proofs for the latest probabilistic inference algorithms
+published every year in an active field of research \cite ... 
+% Our hypothesis is motivated by the fact that 
 
-\Todo{1) Give some example of Bayesian inference, i.e. some interesting problem with a prior distribution and a posterior acquired using Bayes rule}
 
-\Todo{Say that in some situation we have conjugate priors and obtain an analytic closed form solution}
 
-But in general we do not. A major goal of probabilistic inference is to work with unnormalised distributions. Concretely
-we may be interested in 
+% \emph{In this section we demonstrate how existing probabilistic separation logics (PSL) are capable of reasoning about probabilistic inference, the core of an interpreter/compiler of probabilistic programming languages (PPL).
+% We outline first steps and identify an overall structure of the work highlighting two future research questions.
+% We briefly argue why the use of PSL as opposed to reasoning directly in the meta logic on the semantics of a PPL, may be a promising direction of future research}
+
+\section{Motivation}%: what is the challenge with probabilistic inference?}
+\label{sec:future-motivation}
+Bayesian inference is the problem of updating our beliefs about some unknown quantity once we have seen some data. As a concrete example, suppose we receive a bent coin
+and want to infer its bias $\theta \in [0,1]$, the probability that it lands heads. Before tossing it we have some prior belief about $\theta$, given by the prior
+distribution $p(\theta)$; a convenient choice here is the $\mathrm{Beta}(\alpha, \beta)$ distribution, whose two parameters let us tune how confident we are that the
+coin is fair. We then flip the coin $n$ times and observe $k$ heads, which we collect into our data $\mathcal{D}$. The probability of seeing this data for a given bias
+is the likelihood $p(\mathcal{D} \mid \theta) = \theta^k (1 - \theta)^{n - k}$. What we actually want is the \emph{posterior} $p(\theta \mid \mathcal{D})$, our updated
+belief about the bias having seen the flips, and Bayes' rule tells us how to get it from the prior and the likelihood:
+
+\[
+p(\theta \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \theta)\, p(\theta)}{p(\mathcal{D})}, \qquad \text{where} \qquad p(\mathcal{D}) = \int_0^1 p(\mathcal{D} \mid \theta)\, p(\theta)\, d\theta.
+\]
+
+Notice that the numerator is just the likelihood times the prior, and we can evaluate both at any $\theta$ easily. The denominator $p(\mathcal{D})$, called the
+\emph{model evidence}, doesn't depend on $\theta$ at all\footnote{$\theta$ has been integrated out}; its only job is to normalise the posterior so that it integrates to one.
+It is this normalising constant, an integral over the whole space of $\theta$, which is in general intractable. It involves exploring the entire sample space to compute this
+integral\footnote{In this particular example the \emph{posterior} can in-fact be computed since it is a fact that the numerator,the product of a binomial and beta distribution is also beta distribution.
+The \emph{posterior} is thus a $\mathrm{Beta}$ distribution whose parameters we can calculate algebraically. This trick, known as \emph{conjugacy}, only applies in very special cases like our coin flip example though}.
+
+This is a central motivation for the field of probabilistic inference: \emph{given an unnormalised probability distribution (usually obtained through an application of Baye's) rule, how do we
+obtain the normalised distribution, possibly through approximate methods?}
+
+Say we are given an unnormalised distribution $\overset{\sim}{\pi}(x)$. Then we would like to obtain some information on the normalised $\pi(x)$, without explicitly computing the normalising constant,
+the integral in the denominator in the above equation.
+We can ask 3 concrete questions \citep{pml, ppl}
 \begin{enumerate}
-\item Taking an expectation over a distribution (SMC: Sequential Monte Carlo)
-\item sampling from it or approximating a closed form solution (MCMC: Markov Chain Monte Carlo)
-\item Determining a closed form equation for an approximation of the target distribution (Variational Inference)
+\item How to determine a closed form approximation $q(x)$ from a parametrised family of distributions $q \in Q_\theta$ such that $q$ is ``closest'' to $pi$, $q \approx \pi$ (Variational Inference)
+\item Drawing samples distributed as $\pi(x)$ (MCMC: Markov Chain Monte Carlo)
+\item Approximating the expectation (or some other integral) over $\pi$ (SMC: Sequential Monte Carlo)
 \end{enumerate}
 
-Here we focus exclusively on MCMC.
+In what follows we focus exclusively on MCMC, which is what is used in the interpreter or compiler of a PPL.
 
-\subsection{Some more measure theory}
+\section{Measure vs density}
+\label{sec:abs-cont}
 Let's make the goal of MCMC precise. We had stated that we wanted to draw samples given an unnormalised distribution $\overset{\sim}{\pi}(x)$ which corresponds to a true distribution $\pi(x)$ which cannot
 be stated in closed form\footnote{``in closed form'' morally means that intractable operations like integrals are not allowed, but includes most other common mathematical operations (trigonometry, arithemtic, ...) are allowed}.
 
 ``Distribution'' could mean a few things. It can either mean a \emph{measure}, $\mu : \Sigma_A \to \mathbb{R}^+$ or a \emph{density}, $\rho : A \to \mathbb{R}^+$. Most common measures \emph{admit a density}, in which case we can
 treat the two interchangeably, hence the terminology ``distribution'' refers to both. MCMC is only defined for those measures which admit a density.
 
-Below we describe the conditions for a measure to admit a density
+Below we describe the conditions for a measure to admit a density.
 
-\Todo{Absolute continuity}
+To even speak of a density we first need to fix a \emph{base measure} $\lambda$ on the same space, against which the density is measured. On $\mathbb{R}^n$ the natural
+choice is the Lebesgue measure, which simply assigns to each set its usual length (or area, or volume). The density $\rho$ is then understood relative to $\lambda$: the
+measure of a set $A$ is recovered by integrating the density over it,
+
+\[
+\mu(A) = \int_A \rho \; d\lambda.
+\]
+
+We say $\mu$ \emph{admits a density} (with respect to $\lambda$) exactly when some such $\rho$ exists. When can we find one? The obstruction is easy to spot. If there
+is a set $A$ that $\lambda$ considers negligible, $\lambda(A) = 0$, then the integral above is forced to give $\mu(A) = 0$ too, no matter which density $\rho$ we pick. So
+if $\mu$ places any mass on a set that $\lambda$ ignores, no density can possibly exist. A measure $\mu$ is \emph{absolutely continuous} with respect to $\lambda$, written
+$\mu \ll \lambda$, when it avoids exactly this situation:
+
+\[
+\lambda(A) = 0 \implies \mu(A) = 0 \qquad \text{for every measurable } A.
+\]
+
+It turns out this necessary condition is also sufficient. This is the content of the \emph{Radon-Nikodym theorem} \citep{axler}: provided $\lambda$ is $\sigma$-finite, $\mu$
+admits a density with respect to $\lambda$ if and only if $\mu \ll \lambda$. Moreover the density is essentially unique, with any two choices agreeing $\lambda$-almost
+everywhere. This density is called the \emph{Radon-Nikodym derivative} and written $\frac{d\mu}{d\lambda}$.
+
+A simple measure which fails to be absolutely continuous is the Dirac measure $\delta_0$ on $\mathbb{R}$, which places all of its mass on the single point $0$. The point
+$\{0\}$ has Lebesgue measure zero, yet $\delta_0(\{0\}) = 1$, so $\delta_0 \not\ll \lambda$ and no density exists. This is precisely why MCMC, which manipulates densities,
+is only defined for those measures which are absolutely continuous.
 
 \section{Markov Chain Monte Carlo in a PPL}
-Having established the problem precisely, let us describe the solution. An MCMC algorithm constructs a sequence of values, $x\_i : S$, where the state space $S$, is defined as the space over which our target distribution is defined. Intuitively it guarantees that after some
+Having established the problem precisely, let us describe the solution.
+An MCMC algorithm constructs a sequence of values, $x\_i : S$, where the state space $S$, is defined as the space over which our target distribution is defined. Intuitively it guarantees that after some
 ``burn in values'' at the beginning, each element of the rest of the sequence are all distributed according to the target distribution. 
-The way in which these values are generated, is a using a probability kernel\footnote{Extremely convenient for us since the semantics of our PPL is also exactly a probability kernel}, known as the transition kernel, $T : S \marrow \mathcal{G} S$.
-Suppose we have some starting value $x_0 : S$, then subsequent values are generated by sampling the kernel like so, using haskell like do notation in the Giry Monad.
+The way in which these values are generated, is using a kernel\footnote{Extremely convenient for us since the semantics of our programs is also a kernel!}, known as the transition kernel, $T : S \marrow \mathcal{G} S$.
+Suppose we have some starting value $x_0 : S$, then subsequent values are generated by sampling the kernel like so, using Haskell like do notation in the Giry Monad:
 
 \[
 x_1 \leftarrow T(x_0); \\
@@ -47,25 +106,112 @@ x_3 \leftarrow T(x_2); \\
 \]
 
 This is exactly an unrolling of the for loop construct from Appl \ref{sec:appl}. We recall the syntax here: $for (N, M_i, i X. M_s)$ where N is the number of times to iterate, $M_i : \mathcal{G} A$ from which the initial value is sampled and
-$\lambda i X. M_s : \mathbb{N} \to S \marrow \mathcal{G} S$. The last argument is a family of \emph{step kernels} indexed by the iteration index, i. In MCMC we only use a single step kernel ignoring the iteration index i. The previous value is fed
-into the step kernel, and the next value is sampled. So restating MCMC as a for loop we have:
+$\lambda i X. M_s : \mathbb{N} \to S \marrow \mathcal{G} S$. The last argument is a family of \emph{step kernels} indexed by the iteration index, $i$. In MCMC we only use a single step kernel ignoring the iteration index $i$. The previous value is fed
+into the step kernel, and the next value is sampled. So restating MCMC as a for loop in PPL we have:
 
 $X_N : \mathcal{G} S := for(N, dirac(0), \_i x. T(x))$
 
-The choice of $M_i$ is arbitrary and does not affect correctness of MCMC. Above, we arbitrarily chose 0 as an example.
+The choice of $M_i$ is arbitrary and does not affect correctness of MCMC. Above, we arbitrarily chose 0 as an example. The concrete values $x_1, x_2, \ldots$ obtained on an individual run,
+associated with random variables $X_1, X_2, \ldots$, representing the distributions of those values across all possible runs. These varaibles $X_1, X_2, \ldots$ form what are called
+Markov chains because when each $x_{i+1}$ is sampled, the transition kernel is only passed the immediately preceding value $x_i$. This property of being dependent on just the previous step,
+is the Markovian property. For loops in Appl, by their definition, generate Markov chains if we ignore the iteration index $i$ as above.
+
+We had claimed that as $N \to \infty$, $X_N \sim \pi$, or equivalently $lim_{N \to \infty}\, T^N(X_0) \sim \pi$ But we haven't even mentioned how $\pi$ or $\overset{\sim}{\pi}$ gets involved in the construction of $T(x)$ for any of this to work out!
+In this presentation we lack the space to develop the basics of \emph{ergodic theory} which go into providing the condition on the transition kernel that ensures that the random variable $X_N$
+is eventually distributed according to $\pi$. So we state the result at a high level. As developed by \citet{meyn-tweedie}, if a transition kernel is \emph{ergodic} then it has an invariant measure,
+i.e. $\exists \pi'. lim_{N \to \infty}\, T^N(X_0) \sim \pi$. We omit the definition of \emph{ergodic} which is quite involved, as it is sufficient to state the following predicate on Kernels and know that it is a provable
+property with much of the required theory already developed in Mathlib\footnote{}:
+
+\begin{leancode}
+def HasInvariantMeasure (π' : Measure S) (T : Kernel S S) : Prop
+\end{leancode}
+
+(Note that we intend for $\pi'$ to mean $\overset{\sim}{pi}$ in Lean code.) The astute reader may notice that in the above definition, in Appl, we must have\\ \lean{(π' : ProbabilityMeasure S)}. BaSL~\citep{basl} is a program logic which
+is able to reason about unnormalised measures as well, which do indeed arise exactly in the manner they did in our bent coin example from Sec \ref{sec:future-motivation},
+through the application of the Baye's rule. The programming language which BaSL reasons about, Bppl, is a generalisation of Appl. So to understand this chapter, it
+suffices to think of BaSL as Lilac but with support for constructing unnormalised distributions as programs.
 
 
-\subsection{Metropolis Hastings}
+We now have the components to establish a new \texttt{wp} proof rule that will aid in reasoning about probabilistic inference in a separation logic.
+
+\[
+\inferrule*[right=\textsc{wp-lim}]
+  {}
+  { \mathrm{HasInvariantMeasure} \overset{\sim}{\pi} \vdash \mathrm{wp}([\![\mathrm{for}(n,e,\_i\,X.\,M)]\!],X\!:\!A.\,X \sim \pi)}
+\]
+
+Is that true? Not quite since $N$ has to approach infinity for this rule to hold. And in any executable program we cannot have N approach infinity. We could prove the correctness of an inference
+algorithm by proving the above given $N \to \infty$. However, that is done entirely in the meta-logic and there is nothing that using a separation logic would contribute here.
+We want to reason about the \texttt{for} loop in the above program when it is part of a larger program, as realistic inference algorithms can indeed involve sub-inference procedures as part of it.
+$N$ not going to $\infty$ in practice is why these inference methods are called ``approximate''. 
+
+\textbf{Research Problem 1} : Can we develop a modification of the above rule which is sound by introducing in the logic, a method for tracking and bounding the approximation error.
+The pure measure theoretic component, quantitative convergence of Markov is well-established~\citep{meyn-tweedie}. The logical component can be based on similar
+previous ``error-bounding'' logics such as Approxis~\citep{approxis}.
+
+\section{Metropolis Hastings}
+MCMC is seldom used directly. It is generally hard to find a transition kernel $T$, which has an invariant measure which we can specify. The Metropolis-Hastings
+algorithm is one of the simplest family of MCMC algorithms. In general there are several parametrised families of MCMC algorithms where the parameters are
+not as difficult to provide then directly providing a transition kernel $T$ with an invariant measure.
+We start first with an example, adapted from the \emph{island problem} of~\citet{eliot}.
+
+\textbf{Teleportation Museum: } To celebrate the advances in instantaneous teleportation, a museum dedicated to the technology has just opened in town. There are no lifts
+or stairs in the building, and instead people can go from one floor to any other using the teleportation portals built into the entire floorspace of all floors. The museum is instantaneously the biggest
+attraction in town, and museum staff are tasked with devising a method of keeping the population on each floor at the maximum capacity. And it is not possible at to count
+the number of people on any floor exactly, there are too many! The museum staff
+implement into the teleportation system a feature where a teleportation request can be accepted or rejected. Here's where the example gets slightly
+artificial. The visitors to the museum are principled people, operating on their own internal transition kernels \texttt{Q : Kernel Floor Floor} (which they graciously shared with the museum staff). After
+every unit of time, they take their current floor $x$, and sample a new floor $x' \sim Q\, x$
+Let us focus on a single visitor Alice (transition kernel $Q_A$), and the museum's protocol for automatically
+handling her teleportation requests. The algorithm itself is simple: the museum wishes that the ratio of people across the floors which can be understood as a distribution of people $\pi$
+be maintained. They devise an acceptance ratio A which depends on $Q_A$, $\pi$ $x$ and $x'$. If the acceptance ratio is high the protocol is
+more likely to accept the proposed move and if not Alice must stay at the current floor $x$. The museum staff, with a lot of clever mathematics, prove that they can pick
+a particular acceptance ratio A, such that after infinitely long, the distribution of Alice's positions is exactly $\pi$. They can repeat their protocol for every visitor
+to reach their requirements. The protocol was scrapped since no one could wait infinitely long for a guarantee.
+
+Let's fill in the details. Under the Metropolis-Hastings algorithm, the acceptance ratio is given as:
+
+$A(Q, \overset{\sim}{\pi}, x, x') = min \left(1, \frac{\mathrm{density}_{\overset{\sim}{\pi}}(x')}{\mathrm{density}_{\overset{\sim}{\pi}}(x)} \frac{\mathrm{density}_{(Q\, x)}(x')}{\mathrm{density}_{(Q\, x')}(x)} \right)$
+
+We have introduced some new notation, particularly by $\mathrm{density}_\mu$ we refer to the density associated with a measure. A density may not always be admitted by a measure though, so
+Metropolis-Hastings is only well-defined when for all $x$, $Q x$ admits a density and $\overset{\sim}{\pi}$ admits a density (see Sec \ref{sec:abs-cont}). It is normal to omit this distinction
+between the density and measure and simply refer to $\mathrm{density}_{\overset{\sim}{\pi}}(x')$ as $\overset{\sim}{\pi}(x')$, but we prefer precise notation here.
+
+Secondly it is interesting to note that
+$\frac{\mathrm{density}_{\pi}(x')}{\mathrm{density}_{\pi}(x)} = \frac{\mathrm{density}_{\overset{\sim}{\pi}}(x')}{\mathrm{density}_{\overset{\sim}{\pi}}(x)}$ since the normalising constants
+cancel. In the correctness proof of Metropolis-Hastings we would use the right-hand side (non-computable) but for computation we can use the left-hand side which is easy to compute. That
+is the core innovation of Metropolis-Hastings. We now provide Metropolis-Hastings as a Bppl program:
 
 \[
 \begin{aligned}
 T &: S \marrow \mathcal{G} S \\
 T x &= x' \leftarrow Q x \\
-&let A = min \left(1, \frac{\text{density}_{\overset{\sim}{\pi}}(x')}{\text{density}_{\overset{\sim}{\pi}}(x)} \frac{\text{density}_{Q x}(x')}{\text{density}_{Q x'}(x)} \right) \\
 &u \leftarrow \texttt{unif01} \\
-&if u \leq A then (ret x') else (ret x) 
+&if u \leq A(Q, \overset{\sim}{\pi}, x, x') then (ret x') else (ret x) 
 \end{aligned}
 \]
 
-\textbf{Future Research Problem 1: }
+Using the acceptance rejection procedure, we have transformed the \emph{proposal transition kernel} $Q$, into a different transition kernel $T$. Metropolis-Hastings is a valid MCMC
+method since it is proven that when $T$ is constructed in such a way, it has the invariant distribution $\pi$~\citep{}.
 
+We now motivate our 2nd research problem. A complex target distribution, $\overset{\sim}{\pi}$, is required to admit a density for
+Metropolis-Hastings (and any MCMC method in general) to be well-defined. And $\overset{\sim}{\pi}$ is the semantics of a program constructed using Bppl. Can we guarantee that the denotation of every program in Bppl (a measure) admits a density?
+Not in general. Say that $\sem{M} \pi$ admits a density w.r.t to a base measure, $\lambda$:
+
+\begin{equation}\label{eq:dens-assumption}
+\forall E \in B_{\mathbb{R}}.\ \lambda(E) = 0 \to \overset{\sim}{\pi}(E) = 0
+\end{equation}
+
+To ask if sequencing in Bppl preserves the property of admitting a density, is to ask whether taking the Giry Monadic bind with an arbitrary kernel $\kappa$ preserves admitting a density.
+Remembering $(\pi \bind \kappa)(E) = \int (\lambda\, \mu \mapsto \mu(E))\ d(\kappa_\#\pi)$ (Sec \ref{sec:appl}), that amounts to proving:
+
+\begin{equation}\label{eq:dens-goal}
+\forall E \in B_{\mathbb{R}}.\ \lambda(E) = 0 \to (\pi \bind \kappa)(E) = 0
+\end{equation}
+
+We would like to prove \eqref{eq:dens-goal} given the assumption \eqref{eq:dens-assumption}, but it does not hold in general. To clarify, proving this would be a single inductive case in proving that all denotations of Bppl programs admit a density.
+\textbf{Research Problem 2}: Can we track automatically in the type system whether a program admits a density? Can we design an $\mathrm{density}$ primitive which can be applied
+when the density is known to exist? Is verification of probabilistic inference in separation logic a strong motivator for developing higher order PSLs, noting that
+$\mathrm{density} : \G A \to \mathbb{R}$ can be phrased as a higher order function? Or is a workaround more elegant/satisfactory?
+
+We conclude this chapter, with these two identified research problems for unlocking verification of probabilistic inference in separation logic, as future work.
