@@ -1,4 +1,37 @@
 \chapter{Discussion}
-\section{Limitations and Future Work}
+\section{Limitations}
+In the previous section \ref{sec:future}, we outlined a vision for were continuous PSLs could go. Here we list some more
+
+\begin{itemize}
+\item We have not yet mechanised conditioning Lilac's most interesting feature. We attempted to structure of the codebase with extensibility\footnote{For example with the \texttt{closed\_subtype\_krm} in \repo{Krm}, which we ran out of space to discuss in the report} especially to
+Lilac's conditioning modality which is the nearest goal. BaSL~\citep{basl} would be a natural next goal.
+\item Due to our use of de Bruijn indices, larger programs written in our mechanisation of Appl, can quickly become unreadable. This is the representation that the user of the Iris interface
+would see. It is not clear how to solve this issue without some involved metaprogramming to translate to a more human-readable variable notation before display in the Iris interface or
+with a different approach to variables in Appl.
+\item The language Appl, makes heavy use of noncomputable constructs in Mathlib, so we do not automatically obtain a foundationally verified executable, unfortunately.
+This is indeed expected due to formal theory working with many idealised mathematical constructs, most obviously, Real numbers and not floating point integers. So it is in fact not straightforward
+to obtain an formally verified artefact when we right an Appl, program in Lean. This would recover some accounting for error, an operational semantics and form of correspondence theorem.
+\item For long-term relevance of such mechanisation projects, it is important to bring the codebase to the highest standards so that it may be upstreamed to relevant more visible repositories, for others to build upon.
+There are two relevant upstream repositories: Mathlib and Iris-lean.
+The first step is to generalise several (ideally all) of the lemmas in \repo{ProofRules/MeasureProduct}, so that they no longer mention \texttt{FiniteFootprint} (see Sec \ref{sec:ff}), which is specific to Lilac/BaSL.
+The reason for doing so is to get these proofs merged into Mathlib. The measure theory proofs don't really belong in this repo and likely would not be reviewed by the Iris-lean maintainers.
+Such a generalisation may be harder than our current proof, but at the very least requires a rewrite of the relevant proofs. The second step is to condense and clarify the remaining Lilac repository, and attempt have it
+merged into Iris-lean\footnote{Guidelines for proof quality are that each line of proof should represent some idea like a line of a pen-paper proof}.
+% \item An extension of the previous point is the following rather large scale refactor of our Lilac mechanisation. We had decided earlier on the project to use the algebraic structure, KRM (Kripke resource monoid),
+% directly rather than what is standard in Iris projects, of wrapping the Krm into another algebraic structure called ORA (Ordered unital Resource Algebra). 
+\item Probabilistic separate logic is a tiny but rapidly growing field. It is generally quite hard to give a convincing pitch of it to someone who has never heard of it. One of the factors is the steep
+learning curve of having to learn a considerable amount of measure theory\footnote{Some of which (Giry monads, Kernels) is not covered by a standard first course in measure theory}. Getting an intuitive understanding of a proof system is easiest when allowed to play with it. This is exactly what our mechanisation
+now allows, albeit to a limited extent. It would be great to have a repository of many more examples. We expect this may involve the invention and soundness proofs of several new proof rules, given our experience with expectation (Sec \ref{sec:expectation}).
+Ultimately it would be nice to develop a tutorial in the style of the \href{https://github.com/logsem/iris-tutorial/}{Iris tutorial}.
+\end{itemize}
 
 \section{Conclusion}
+By mechanising Core Lilac in Lean we have provided the first ever mechanisation of a probabilistic separation logic which supports continuous distribution. Much of the measure theoretic
+prerequisites were already present in Mathlib, which made this project possible. As a result we have demonstrated that Mathlib is suitable not only for pushing the boundaries
+of (formalised) mathematics, but will eventually also be of use in producing software with the highest levels of assurance. If and when PSLs get used for large scale probabilistic program verification,
+we may require many more mathematical results which as suggested in Chapter \ref{sec:future} is likely to already be supported or show strong foundations in Mathlib.
+
+By embedding Lilac into Iris (specifically its frontend MoSeL~\cite{mosel} which was a modularisation of the original Iris proof mode),
+we empirically show the impressive generality of the Iris framework, as we had to make
+no modifications whatsoever to Iris, which originally designed with the verification of concurrent, heap-manipulating programs in mind. Furthermore, this project is one of the first significant instantiations
+of what was at the beginning of this project a nascent port of Iris Lean.

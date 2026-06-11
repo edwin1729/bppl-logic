@@ -163,15 +163,14 @@ P * Q \vdash Q * P \\[0.8em]
 \end{array}
 \]
 
-\Todo{If I add the one\_le, does the KRM become an affine logic generator?}
 % Going back to the KRMs, we can now define the standard recipe for constructing an affine separation logic out of a KRM. 
 
 Next we define the affine propositions: $P$ as any proposition satisfying for all Q $P * Q \vdash Q$. In other words $P$ can always be dropped. An affine 
 separation logic is one where all propositions are affine. Affine propositions can also be equivalently defined as $P * \mathrm{True} \bient P$ or $\mathrm{True} \bient \mathrm{emp}$.
 Another class of propositions is persistent propositions. Those propositions which may be duplicated to establish the goal. So for instance if $P$ is persistent than
-$P \vdash P * P$. \Todo{Why is this not the definition?}.
+$P \vdash P * P$.
 Intuitionistic propositions are a final class of propositions which are both affine and persistent. Working with intuitionistic propositions in the premise
-feels like working with the familiar first order (intuitionistic) logic, since we don't at all need to keep track of how many times these propositions are used.
+feels like working with the familiar first order (``intuitionistic'') logic, since we don't at all need to keep track of how many times these propositions are used.
 Because of this Iris treats intuitionistic propositions specially, keeping them separate from the rest of the ``spatial'' propositions in the premise. So a user
 of the iris proof-mode will see an ``intuitionistic context'', following rules familiar to them from using the host theorem prover (Rocq or Lean), and additionally
 the spatial context, which they will need to treat more carefully. Examples follow in the next section.

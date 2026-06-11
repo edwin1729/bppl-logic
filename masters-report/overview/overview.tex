@@ -1,7 +1,7 @@
 \chapter{Introduction}
 There has been an exciting amount of progress recently in the area of \emph{probabilistic separation logics} (PSL).
 Separation logic first introduced by \citet{og_sl} has since been tremendously successful in formally proving the correctness of
-heap manipulating programs \citep{} and concurrent programs \citep{}. 
+heap manipulating programs \citep{verifast, cse-og, infer-pulse} and concurrent programs \citep{csl}.
 Iris \citep{iris} introduced a
 language-generic framework of separation logics for reasoning about programming languages with concurrency and higher order state,
 which spanned a significant class of mainstream programming languages. Notably the soundness of a significant subset
@@ -12,23 +12,12 @@ in \citep{mosel}.
 The application of separation logics for reasoning about
 \emph{probabilistic programs} was first explored in \citep{og_psl}. At a high level a probabilistic program offers sampling
 from a probability distribution as a primitive of the language. A persuasive notion of separation: ``separation is independence of
-random variables'' was proposed by Lilac \citep{lilac} which has been adopted by most subsequent probabilistic separation logics.
+random variables'' was proposed by Lilac \citep{lilac}. Brielfy, propositions joined with the separating conjunct may not talk about inter-dependent random variables.
+This notion of separation has been adopted by most subsequent probabilistic separation logics.
 
 This project provides a complete mechanisation of Core Lilac, in Lean, along with the proof mode required to carry out interactive
 proofs in it. We know of two similar roughly simultaneous projects, which are along with this project one of the first mechanised
 probabilistic separation logics: Bluebell \citep{bluebell} and Amaryllis \citep{amaryllis}.
-
-\textbf{Contributions}
-\begin{itemize}
-\item We mechanise the soundness of Core Lilac proof system (Lilac without conditioning) available \href{https://github.com/edwin1729/bppl-logic/tree/submission}{on github}.
-This is the first mechanisation of a probabilistic separation logic which supports continuous distributions.
-\item We overcome difficulties in embedding Lilac (as provided in \citep{lilac}) into Iris, by suggesting some modifications to Lilac, and introduce
-some new proof rules (about expectations) as necessary to carry out proofs in Lilac
-\item We instantiate a nascent port of Iris to Lean to provide proof mode for carrying out lilac proofs. For Lilac-specific connectives we provide some
-custom tactics through metaprogramming. This also acts as one of the first non-trivial logics instantiating the Iris-lean port. 
-% \item We outline of validating probabilistic inference algorithms using probabilistic separation logics
-% with support for continuous distributions, as a promising reason for pursuing them. It is well known that 
-\end{itemize}
 
 
 % \section{Contributions}
@@ -75,7 +64,7 @@ custom tactics through metaprogramming. This also acts as one of the first non-t
 
 \section{Motivation}
 \label{sec:motivation}
-\emph{Here we give an informal account of what probabilistic programs are and why we would care to use them}
+Here we give an informal account of what probabilistic programs are and why we would care to use them.
 A Probabilistic programming language is not an established or general paradigm of programming such as Functional or Imperative programming.
 Most generally probabilistic programs are simply programs which have a \texttt{sample} construct for sampling from probability distributions,
 and optionally, an \texttt{observe} for specifying a new distribution given an old distribution and some newly observed data.
@@ -99,18 +88,19 @@ logics for reasoning about PPLs. This will be the main topic of this report.
 
 \subsection{Discrete vs continuous distributions}
 \label{discont}
-First let us define what discrete and general (continuous) PPLs are. A discrete PPL does not allow specifying a probability distribution
-over $\mathbb{R}$. This is achieved most straightforwardly by not including a type corresponding to $\mathbb{R}$ in the syntax of a PPL.
-A general PPL will have a type corresponding to $\mathbb{R}$. This seemingly small detail has significant consequences on the semantics 
+First let us define what discrete and general (continuous) PPLs are. A discrete PPL does not allow specifying a continuous probability distribution.
+This is achieved most straightforwardly by simply not including any ``continuous'' types, types that can support a continuous distribution such as $\mathbb{R}$, in the syntax of a PPL.
+A general PPL will have a type corresponding to $\mathbb{R}$, and not restrict the distributions one can construct over it. This seemingly small detail has significant consequences on the semantics 
 of a PPL which in turn dictates the complexity of program logics for such a language. This dichotomy largely exists due to difficulties
-with semantics of continuous PPLs. Take for example, that the category of measurable spaces, in which the denotational semantics of probabilistic programs
-are interpreted, is not cartesian closed \citep{aumann}. In plain words, the existing approach for semantics of probabilistic languages did not allow for functions to be first class citizens.
+with semantics of continuous PPLs. In plain words, the existing approach for semantics of probabilistic languages did not allow for functions to be first class
+citizens\footnote{In precise terminology the category of measurable spaces, in which the denotational semantics of probabilistic programs
+are interpreted, is not cartesian closed \citep{aumann}}.
 An alternative semantics for such PPLs with higher order functions was given by \citep{prob-semantics} within the decade. In general the difficulties of verification
 of continuous PPLs is in the nuances of using measure theoretic, rather than standard set theoretic, machinery.
 
 However, all PPLs listed above are continuous. Indeed, PPLs are only relevant when working with continuous distributions,
-as they remove the difficulty of working with the probabilistic inference algorithms. Much less sophistication is required in the inference algorithms
-for discrete algorithms, so discrete PPLs are not of much interest. So why are program logics for discrete PPLs such as \citep{bluebell} and \citep{amaryllis} important?
+as they remove the difficulty of working with the probabilistic inference algorithms. The inference problems that are interesting rely heavily on continuous distributions,
+so discrete PPLs would not be of much use. So why are program logics for discrete PPLs such as \citep{bluebell} and \citep{amaryllis} important?
 
 \subsection{Probabilistic programs in the wild}
 \label{sec:wild}
@@ -119,7 +109,7 @@ cryptographic protocols, differential privacy, distributed systems and randomise
 only support discrete probability distribution. Conventional techniques like software testing are much less applicable here; applying it naively
 would result in an outlier (correct) execution and a bug become indistinguishable. The above applications of probabilistic reasoning all require support
 only for discrete distributions, and generally fall firmly within traditional areas of computer science. This justifies the many logics which
-support only discrete distributions, including both bluebell and amaryllis. Examples requiring continuous distributions include
+support only discrete distributions, including both Bluebell and Amaryllis. Examples requiring continuous distributions include
 Scientific computing (climate modelling, physics simulations for engineering applications) \citep{sci-comp}, Bayesian data analysis and probabilistic machine learning \citep{pml}.
 In each of these applications, the probabilistic component is centred around probabilistic inference \citep{nature}.
 
@@ -164,16 +154,15 @@ Iris Proof Mode (MoSeL \citep{mosel}), but partially instantiates the Iris logic
 higher order state\footnote{This would indeed not be feasible in Iris-lean \citep{iris-lean-impl} as it is just about to reach the stage of proving properties in HeapLang, the prototypical full Iris instantiation}.
 Amaryllis pushes the direction of reasoning about probabilistic programs written in mainstream programming languages (as discussed in Sec \ref{sec:wild}).
 
-\Todo{is ``partially instantiate Iris'' a valid thing to say? The paper says they do not support ``step-indexing , higher-order ghost state , and concurrency/invariants ''}
-
 \textbf{Lilac} \citep{lilac} is the only PSL among the 3 which supports continuous distributions. It is implemented in Lean, due to Mathlib (Lean's mathematical library) having the richest and fastest growing support
 for measure and probability theory, since it strives to support formalisation of modern research-level mathematics in Lean. An important consequence of this is that results in Mathlib are generally stated at the broadest
 levels of generality, such as encompassing both discrete and continuous distributions\footnote{An example is given in Chapter \ref{sec:future}}. The mechanisation of Core Lilac makes the first step towards verifying
-the diverse set of systems which work in the continuous domain (as seen in Sec \ref{discont}). Bayesian Separation Logic (BaSL) \citep{basl}, extends Lilac with the bayesian reasoning, which is central to virtually all
-applications in the continuous domain which also introduces the need for probabilistic inference (as explained in \ref{sec:motivation}). We also claim that logics in the vein of Lilac and BaSL, are capable of tackling
-verification of algorithms at the heart of the enterprise: Probabilistic Inference. In Chapter \ref{sec:future}, we present a novel idea for how BaSL can be used to verify the correctness of a certain class of Probabilistic
-Inference Algorithm, MCMC (Markov Chain Monte Carlo). Probabilistic inference is a well-established field of research, and often the innovation of a research paper may be the usage of a novel inference algorithm. It is thus
-interesting to have an expressive level logic for verification of various inference algorithms. The verification of inference algorithms, which may also be referred to as the interpreter/compiler of probabilistic programs,
+the diverse set of systems which work in the continuous domain (as seen in Sec \ref{discont}). Bayesian Separation Logic (BaSL) \citep{basl}, extends Lilac with the bayesian reasoning, which is central (to every continuous application in Sec \ref{discont}),
+ and also introducing the need for probabilistic inference (as explained in \ref{sec:motivation}). We also claim that logics in the vein of Lilac and BaSL, are capable of tackling
+verification of algorithms at the heart of the enterprise: probabilistic inference. In Chapter \ref{sec:future}, we present a novel idea for how BaSL, extended with some components which are yet to be invented, 
+can be used to verify the correctness of a certain class of probabilistic
+inference algorithms, called MCMC (Markov Chain Monte Carlo). Probabilistic inference is a well-established field of research, and often the innovation of a research paper may be the usage of a novel inference algorithm. It is thus
+interesting to have an expressive logic for verification of various inference algorithms. The verification of inference algorithms, which may also be referred to as the interpreter/compiler of probabilistic programs,
 has been carried out previously \citep{tassarotti,scibior_2017}. Both previous approaches used the operational or denotational semantics directly and did not reason in a PSL. We hypothesise that verification
 in a PSL with separation as independence, support for conditioning and bayesian reasoning, may significantly reduce the complexity of proof obligations. If true, we envision a Lean library of verified inference algorithms,
 providing confidence in algorithms belonging to an area where the only assurance of correctness emerges from an implementation being well-established or ``battle-tested''. 
@@ -201,40 +190,62 @@ providing confidence in algorithms belonging to an area where the only assurance
 % Some examples of such languages include Stan citep{stan}, Hakaru citep{hakaru} and Anglican citep{anglican} 
 
 
-\section{Lean and related formalisation projects}
+% \section{Lean and related formalisation projects}
 
-% In the Lean ecosystem, two aspects of these
-% Measure-theoretic foundations and Iris, reached a level of maturity that was promising enough, to make foramlisation of Lilac by an individual a reachable target.
+% % In the Lean ecosystem, two aspects of these
+% % Measure-theoretic foundations and Iris, reached a level of maturity that was promising enough, to make foramlisation of Lilac by an individual a reachable target.
+% We have already mentioned ``Lean'' and ``Rocq'' in the previous section as the platform for mechanisation projects. What exactly are these?
+% Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
+% of mathematics. In this project we are concerned with verification of software, so the theorems in question
+% express properties of the software. Lean and Rocq are the two comtemporary theorem provers, which both have support for so called ``tactical''
+% reasoning, where the user writes proofs by calling high level tactics like ``by induction'' or ``by cases''. For a rigorous explanation of the underlying
+% theory, see Sec \ref{sec:coc} and the mechanism beneath tactics, see Sec \ref{sec:meta}.
+% Here we justify our choice 
 
-Foundational verification, consists of machine checked proofs of theorems, assuming only the axioms
-of mathematics. Here we are concerned with verification of software, so the theorems in question
-express properties of the software. The axioms of mathematics that we use is a dependent type theory.
-In this setting of dependent type theory, checking the correctness of proof is the same thing as
-checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
-Further the tool we use for machine-checked proofs is an interactive theorem prover with support
-for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
-principles a person would use when writing pen-and-paper proofs. There are two proof assistants
-that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
-of required theorems in measure theory and the latter having the original implementation of the Iris framework.
-Lean was chosen since the front-end of the Iris proof mode (MoSeL, see \ref{MoSeL}) had been fully ported
-to Lean very recently.
+% The axioms of mathematics that we use is a dependent type theory.
+% In this setting of dependent type theory, checking the correctness of proof is the same thing as
+% checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
+% Further the tool we use for machine-checked proofs is an interactive theorem prover with support
+% for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
+% principles a person would use when writing pen-and-paper proofs. There are two proof assistants
+% that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs
+% of required theorems in measure theory and the latter having the original implementation of the Iris framework.
+% Lean was chosen since the front-end of the Iris proof mode (MoSeL, see \ref{MoSeL}) had been fully ported
+% to Lean very recently.
 
-There has been an exciting amount of recent activity in formalisations related to this work, which has enabled
-the formalisation of Lilac (see, \ref{lilac}) in Lean to be a realistic goal. Most importantly, the formalisation of the 
-disintegration theorem in \citep{remy} is only available in Lean at the moment. Disintegration theorem also involved the
-formalisation of kernels which are actually available in several other proof assistants.
- Quasi-borel spaces \citep{quasi-borel} (in which higher order
-probabilistic programs are interpreted) have been formalised in Isabelle/HOL in \citep{quasi-borel-impl}, along with kernels.
-s-finite-kernels can also be found in rocq \citep{sfinite_kernel_rocq}.
+% There has been an exciting amount of recent activity in formalisations related to this work, which has enabled
+% the formalisation of Lilac (see, \ref{lilac}) in Lean to be a realistic goal. Most importantly, the formalisation of the 
+% disintegration theorem in \citep{remy} is only available in Lean at the moment. Disintegration theorem also involved the
+% formalisation of kernels which are actually available in several other proof assistants.
+%  Quasi-borel spaces \citep{quasi-borel} (in which higher order
+% probabilistic programs are interpreted) have been formalised in Isabelle/HOL in \citep{quasi-borel-impl}, along with kernels.
+% s-finite-kernels can also be found in rocq \citep{sfinite_kernel_rocq}.
 
-A lot of background in Lean was required to undertake this project.
-For example, we use the full expressivity of inductive types and inductive families.
-Also an understanding of propositional vs definitional
-equality which is related to Proof irrelevance \citep{theorem-proving-in-lean} and how that's implemented
-in Lean's type theory by special treatment of the lowest Universe \citep{mario}, is very helpful.
+% A lot of background in Lean was required to undertake this project.
+% For example, we use the full expressivity of inductive types and inductive families.
+% Also an understanding of propositional vs definitional
+% equality which is related to Proof irrelevance \citep{theorem-proving-in-lean} and how that's implemented
+% in Lean's type theory by special treatment of the lowest Universe \citep{mario}, is very helpful.
 
 
-\section{Overview}
+\section{Contributions}
+
+\begin{itemize}
+\item We mechanise the soundness of Core Lilac proof system (Lilac without conditioning) available \href{https://github.com/edwin1729/bppl-logic/tree/submission}{on github}.
+This is the first mechanisation of a probabilistic separation logic which supports continuous distributions.
+\item Chapter \ref{sec:definitions} overcomes difficulties in embedding Lilac into Iris, by modifying Lilac's definition of variables. We thoroughly
+motivate the problem by showing how a correct specification on the simplest of programs (\texttt{unif1}) cannot be proven.
+\item Chapter \ref{chap:proofs} presents the intuition behind some of the most difficult soundness proofs, of proof rules in Lilac.
+\item Chapter \ref{chap:examples} presents verifies properties of fundamental probabilistic programs in Lilac using the Iris proof interface. We return to
+the verification of \texttt{unif1} from Chapter \ref{sec:definitions}, and show that this is now easily achieved. Next we verify a specification
+on another program (\texttt{halve}) which involved stating and proving some new proof rules (about expectations) and custom tactics for Lilac-specific connectives
+through metaprogramming.
+\item Chapter \ref{sec:future} breaks away from the Lean mechanisation and reflects on what we think is a promising application of continuous PSLs.
+It introduces probabilistic inference (the algorithm at the core of the interpreter/compiler of a PPL), and poses rigorously, 2 research problems that
+stand in the way of verification of probabilistic inference algorithms using separation logic.
+% \item We outline of validating probabilistic inference algorithms using probabilistic separation logics
+% with support for continuous distributions, as a promising reason for pursuing them. It is well known that 
+\end{itemize}
 
 % \section{Related Work}
 % \Todo{List the quasi borel spaces formalisation and stuff}
