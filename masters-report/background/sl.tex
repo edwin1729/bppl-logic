@@ -2,7 +2,7 @@
 Separation logic has been extremely productive in the last two decades in reasoning about imperative programming languages, after first being introduced in \citep{og_sl}.
 The classical separation logic introduced a compositional state, specifically a heap (modelled as a function $\mathbb{N} \to Val$), which was required along with a more
 usual variable environment, to interpret any assertion. This heap or more generally resource, had an algebraic structure to it: the most fundamental one being
-a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine to heaps. Many more complex algebras for resources were studied in
+a partial commutative monoid (PCM), with the binary operator dictating when it is valid to combine two heaps. Many more complex algebras for resources were studied in
 later works \citep{abstract_sl, abstract_sl2}. Separation logic was identified as a natural tool to reason about imperative programs mutating heap based memory
 at a suitable level of abstraction. It then also found success in reasoning about concurrent programs \citep{csl}.
 
@@ -10,7 +10,7 @@ at a suitable level of abstraction. It then also found success in reasoning abou
 The first separation logic was proposed by \citet{og_sl} for reasoning about programs which manipulate a heap. Before we move to probabilistic separation logic which is the main topic
 of the report, we first present separation logic in a simpler setting. Intuitively, separation logic is just first order logic with the
 additional connectives of the separating conjunction and separating implication (notation: $*$ and $\wand$). These separating connectives
-are defined with respect to a \emph{resource}. In the original separation logic we have a simple resource which is a finite partial function from some 
+are defined with respect to a \emph{resource}. In the original separation logic we have a simple resource which is a finite partial function from
 a set denoted Locations to a set Values (fig \ref{fig:sla}). The notation $h_0 \star h_1$ is a partial binary operation denoting
 the union of $h_0$ and $h_1$ if they are disjoint. So we see that in order for a separating conjunct to hold we need to split the resource appropriately such
 that each part satisfies a conjunct. This is the principle behind all separation logics. Each proposition ``owns'' unique resources. One can imagine how each proposition
@@ -79,7 +79,7 @@ programs and assertions we make about the program. We do not go into the specifi
 \end{figure}
 
 \subsection{Zoo of separation logics}
-In this section we see increasingly abstract presentations of separation logic to spot patterns amongst them, and give definitions of characterstics that help classify separation logics.
+In this section we see increasingly abstract presentations of separation logic to spot patterns amongst them, and give definitions of characteristics that help classify separation logics.
 Identifying these characteristics and ``telling'' Iris about it, lets us effectively use the proof automation/engineering developed by the Iris framework for our probabilistic separation
 logic (which will be presented later).
 
@@ -172,7 +172,7 @@ Another class of propositions is persistent propositions. Those propositions whi
 $P \vdash P * P$. \Todo{Why is this not the definition?}.
 Intuitionistic propositions are a final class of propositions which are both affine and persistent. Working with intuitionistic propositions in the premise
 feels like working with the familiar first order (intuitionistic) logic, since we don't at all need to keep track of how many times these propositions are used.
-Because of this Iris treats intuitionistic propositions specially, keep them separate from the rest of the ``spatial'' propositions in the premise. So a user
+Because of this Iris treats intuitionistic propositions specially, keeping them separate from the rest of the ``spatial'' propositions in the premise. So a user
 of the iris proof-mode will see an ``intuitionistic context'', following rules familiar to them from using the host theorem prover (Rocq or Lean), and additionally
 the spatial context, which they will need to treat more carefully. Examples follow in the next section.
 
@@ -197,7 +197,7 @@ We are also able to introduce both variables and premises with the same command,
 \Todo{example 2}
 What is unique about the Iris proof mode when compared to Lean or Rocq, is that it has an additional spatial context.
 \Todo{example with spatial context}
-In short it is engineered to provide an interface which mimics the natural reasoning style of user. The IPM understands separation logic and endeavours to automate common
+In short it is engineered to provide an interface which mimics the natural reasoning style of the user. The IPM understands separation logic and endeavours to automate common
 boring tasks.
 
 Though these seem like rather basic conveniences they are quite difficult to provide in a manner extensible to all separation logics. In order to understand how the

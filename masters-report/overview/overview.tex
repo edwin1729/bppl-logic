@@ -21,7 +21,7 @@ probabilistic separation logics: Bluebell \citep{bluebell} and Amaryllis \citep{
 \textbf{Contributions}
 \begin{itemize}
 \item We mechanise the soundness of Core Lilac proof system (Lilac without conditioning) available \href{https://github.com/edwin1729/bppl-logic/tree/submission}{on github}.
-This is first mechanisation of a probabilistic separation logic which supports continuous distributions.
+This is the first mechanisation of a probabilistic separation logic which supports continuous distributions.
 \item We overcome difficulties in embedding Lilac (as provided in \citep{lilac}) into Iris, by suggesting some modifications to Lilac, and introduce
 some new proof rules (about expectations) as necessary to carry out proofs in Lilac
 \item We instantiate a nascent port of Iris to Lean to provide proof mode for carrying out lilac proofs. For Lilac-specific connectives we provide some
@@ -89,7 +89,7 @@ weather forecasting, medical diagnosis, economics, statistical mechanics etc).
 
 What distinguishes a probabilistic programming language is that it decouples the specification of a statistical model from the algorithm for
 its simulation (henceforth called probabilistic inference). Inference algorithms are often highly optimised and specialised to the specific model
-and the interpreter of a PPLs attempts to make the best choice/combination of inference algorithms for the given code (model), relieving
+and the interpreter of a PPL attempts to make the best choice/combination of inference algorithms for the given code (model), relieving
 the user of this additional work \citep{ppl}.
 
 So in other words PPLs are a layer of abstraction which sits between a statistical model and the inference algorithms which simulate it.
@@ -110,7 +110,7 @@ of continuous PPLs is in the nuances of using measure theoretic, rather than sta
 
 However, all PPLs listed above are continuous. Indeed, PPLs are only relevant when working with continuous distributions,
 as they remove the difficulty of working with the probabilistic inference algorithms. Much less sophistication is required in the inference algorithms
-for discrete algorithms, so discrete PPLs are not of much interest. So why are programs logics for discrete PPLs such as \citep{bluebell} and \citep{amaryllis} important?
+for discrete algorithms, so discrete PPLs are not of much interest. So why are program logics for discrete PPLs such as \citep{bluebell} and \citep{amaryllis} important?
 
 \subsection{Probabilistic programs in the wild}
 \label{sec:wild}
@@ -144,7 +144,7 @@ PSLs is a non-trivial investment, since it also involves mechanisation of some b
 \textbf{Bluebell} \citep{bluebell} is a PSL, novel for combining both unary and relational styles of reasoning under a single logic. Unary logics like the original PSL \citep{og_psl} and Lilac are
 highly expressive for reasoning about probabilistic programs. In some situations we are only interested in proving a property regarding how two probabilistic programs relate.
 The outcomes of probabilistic programs follow some probability distribution. Imagine we have two probabilistic programs, and we are given a partial
-order over probability distributions, known as \emph{stochastc dominance}. A relational logic can help us establish that one program \emph{stochastically dominates} another.
+order over probability distributions, known as \emph{stochastic dominance}. A relational logic can help us establish that one program \emph{stochastically dominates} another.
 In order to achieve such a result using a unary logic, we would need to specify the output distribution of each program in sufficient detail using the unary logic first, 
 and as a next step prove that they are related by the stochastic dominance relation. This may be impossible if the programs are more complex than the logic is expressive, and otherwise
 unrealistic, as we  may have convoluted proof obligations for each of the programs, which is entirely unnecessary under the relational paradigm. One can imagine how
@@ -168,12 +168,12 @@ Amaryllis pushes the direction of reasoning about probabilistic programs written
 
 \textbf{Lilac} \citep{lilac} is the only PSL among the 3 which supports continuous distributions. It is implemented in Lean, due to Mathlib (Lean's mathematical library) having the richest and fastest growing support
 for measure and probability theory, since it strives to support formalisation of modern research-level mathematics in Lean. An important consequence of this is that results in Mathlib are generally stated at the broadest
-levels of generallity, such as encompassing both discrete and continuous distributions\footnote{An example is given in Chapter \ref{sec:future}}. The mechanisation of Core Lilac makes the first step towards verifying
+levels of generality, such as encompassing both discrete and continuous distributions\footnote{An example is given in Chapter \ref{sec:future}}. The mechanisation of Core Lilac makes the first step towards verifying
 the diverse set of systems which work in the continuous domain (as seen in Sec \ref{discont}). Bayesian Separation Logic (BaSL) \citep{basl}, extends Lilac with the bayesian reasoning, which is central to virtually all
 applications in the continuous domain which also introduces the need for probabilistic inference (as explained in \ref{sec:motivation}). We also claim that logics in the vein of Lilac and BaSL, are capable of tackling
 verification of algorithms at the heart of the enterprise: Probabilistic Inference. In Chapter \ref{sec:future}, we present a novel idea for how BaSL can be used to verify the correctness of a certain class of Probabilistic
 Inference Algorithm, MCMC (Markov Chain Monte Carlo). Probabilistic inference is a well-established field of research, and often the innovation of a research paper may be the usage of a novel inference algorithm. It is thus
-interesting to have an expressive level logic for verification of various inference algorithms. The verification of inference algorithms, which may also be referred to as the interpreter/compiler of a probabilistic programs,
+interesting to have an expressive level logic for verification of various inference algorithms. The verification of inference algorithms, which may also be referred to as the interpreter/compiler of probabilistic programs,
 has been carried out previously \citep{tassarotti,scibior_2017}. Both previous approaches used the operational or denotational semantics directly and did not reason in a PSL. We hypothesise that verification
 in a PSL with separation as independence, support for conditioning and bayesian reasoning, may significantly reduce the complexity of proof obligations. If true, we envision a Lean library of verified inference algorithms,
 providing confidence in algorithms belonging to an area where the only assurance of correctness emerges from an implementation being well-established or ``battle-tested''. 
@@ -211,7 +211,7 @@ of mathematics. Here we are concerned with verification of software, so the theo
 express properties of the software. The axioms of mathematics that we use is a dependent type theory.
 In this setting of dependent type theory, checking the correctness of proof is the same thing as
 checking if a proof (program) is well typed, due to the Curry-Howard Isomorphism.
-Further the tool we use to for machine-checked proofs is an interactive theorem prover with support
+Further the tool we use for machine-checked proofs is an interactive theorem prover with support
 for proofs using "tactics". Tactical support is just metaprogramming, trying to encapsulate reasoning
 principles a person would use when writing pen-and-paper proofs. There are two proof assistants
 that were strongly considered for the purposes of this project: Lean and Rocq, former having proofs

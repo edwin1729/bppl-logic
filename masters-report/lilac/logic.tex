@@ -20,7 +20,7 @@ structure PSpace (Ω : Type*) where
 Essentially this is just a Probability Measure, a measure which assigns measure (or probability) 1 to the universal set, and
 all the data required to define it (a \texttt{MeasurableSpace}). So by analogy with classical separation logic, a Probability
 Space dictates the state of a probabilistic program. This is achieved by the values of variables in a probabilistic
-program being modelled by based on this probability measure. Concretely, variables in the logic are measurable functions (
+program being modelled based on this probability measure. Concretely, variables in the logic are measurable functions (
 aka random variables) from the \( \Omega \marrow ty.den \) for some \( ty : Ty \). This means that the distribution (the measure) over \( ty.den\) is a 
 pushforward of \(\mu\) from the resource. Hence, the resource is controlling the distribution of every random variable which makes up expressions which
 makes up probabilistic programs.
@@ -47,7 +47,7 @@ when exists is unique, required to show that independent combination is a functi
 Probability spaces are defined parametrically over some type $\Omega$, but Lilac makes a specific choice for $\Omega$ in order to define
 the notion of a finite footprint. We will return to finite footprint later in Sec \ref{sec:ff}, but here we first define $\Omega = [0, 1]^{\mathbb{N}}$.
 Henceforth, denote the interval, $[0,1]$ as $I$.
-This type is known as the Hilbert Cube. The Hilbert Cube is an countably infinite sequence of intervals $I$,
+This type is known as the Hilbert Cube. The Hilbert Cube is a countably infinite sequence of intervals $I$,
 in other words $\mathbb{N} \to I$. First we must establish a measurable space over $I^{\mathbb{N}}$, to turn this into a probability space.
 Intuitively this would be obtained by taking the standard borel $\sigma$-algebra, $\Sigma_I$ over each dimension and taking the product measurable space iteratively over all dimensions.
 In other words a fold over $\mathbb{N}$. Mathlib offers a more general way to construct this measurable space, as it defines \texttt{Measurable.pi}, which can construct
@@ -124,8 +124,8 @@ where we use this notation $\oplus \in \{\land, \lor, \to, *, \wand\}$
 % \end{array}
 % \]
 
-Lilac like any other separation logic has additional connectives beyond the standard connectives specified by BI that is required of it. The first row of the syntax above standard connectives in BI,
-so their semantics is identical that of classical separation logic, replacing heaps with probability spaces. The second row of quantifiers is explained later when explaining iris proof mode, which
+Lilac like any other separation logic has additional connectives beyond the standard connectives specified by BI that is required of it. The first row of the syntax above are standard connectives in BI,
+so their semantics is identical to that of classical separation logic, replacing heaps with probability spaces. The second row of quantifiers is explained later when explaining iris proof mode, which
 requires a different treatment of quantifiers to keep track of variables when carrying out proofs in the logic. The connectives in the third row
 are called logic (or probability) specific connectives and where we make interesting assertions about the state of a program. To understand the relation between the logic-specific connectives and the standard connectives, think of the syntax of the logic as a tree,
 the logic specific connectives tend to be the leaves, while the standard connectives are like nodes (they are mostly binary). The nodes are there to compose together information expressed by the leaves.

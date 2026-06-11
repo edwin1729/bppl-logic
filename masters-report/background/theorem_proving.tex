@@ -41,8 +41,8 @@ strictly speaking should be considered since the index $i$ is unquantifed in the
 We now move to expressing logic in CoC, but before doing so we introduce the sort $\mathbf{Prop} : \mathbf{Type_1}$, so that the (infinite) set of sorts is
 given by $\mathcal{S} := \{\mathbf{Prop}\} \cup \bigcup_{i\in\mathbb{N}}\{\mathbf{Type}_i\}$. $\mathbf{Prop}$ is special and is \emph{impredicative} as we will see in \ref{sec:predicativity}.
 We map first order logic propositions to types of sort $\mathbf{Prop}$. For example, if $A : \mathbf{Prop}$ and $B : \mathbf{Prop}$, then logical implication $A \Rightarrow B$ corresponds
-to the type $A \to B$. This is justified by the meaning of implication to be being able to prove $B$ given a proof of $A$. Forall quantification (also) corresponds to dependent product types:
-given some $T : \mathbf{Type_i}$ and $P : \mathbf{Prop}$, the logical statement $\forall x : T, P(x)$ corresponds to the type $\Pi (x : T), P(x)$. This also make sense since to prove a
+to the type $A \to B$. This is justified by the meaning of implication being able to prove $B$ given a proof of $A$. Forall quantification (also) corresponds to dependent product types:
+given some $T : \mathbf{Type_i}$ and $P : \mathbf{Prop}$, the logical statement $\forall x : T, P(x)$ corresponds to the type $\Pi (x : T), P(x)$. This also makes sense since to prove a
 universally quantified statement we need a proof of $P(x)$ for every $x$, which is what a term of type $\Pi (x : T), P(x)$ would give. We will use the notation $\forall x : T, P$ for
 $\Pi (x : T), P(x)$, freely, as is standard in Lean.
 
@@ -51,9 +51,9 @@ above example. With that intuition in mind lets show how some other logical conn
 
 As seen in this example, the standard recipe in constructive mathematics is to specify a proposition by what is required prove it. In the next example we
 see representation also arises from what the connective enables us to prove. Take $\mathrm{False} := \forall (P : Prop). P : Prop$.
-First notice that if we have a proof of $\mathrm{False}$, that is a term of type $\forall (P : Prop). P$, we would get the proof of every any proposition $P$,
+First notice that if we have a proof of $\mathrm{False}$, that is a term of type $\forall (P : Prop). P$, we would get the proof of any proposition $P$,
 out of that, encoding false entails anything. Also, it is not possible to construct a term of type $\forall (P : Prop). P$, ie, there is no proof of $\mathrm{False}$.
-A strange thing that one might notice is that we are quantifying over all everything in $Prop$, in order to obtain something of type $Prop$.
+A strange thing that one might notice is that we are quantifying over everything in $Prop$, in order to obtain something of type $Prop$.
 
 \subsubsection{Predicativity}
 \label{sec:predicativity}
@@ -119,13 +119,13 @@ Let's now introduce all the typing rules. Remember $\mathcal{S} := \{\mathbf{Pro
 
 We notice that there are two typing rules for the dependent product: \texttt{PI-PROP} for sort Prop and \texttt{PI-TYPE} for all other sorts. \texttt{PI-TYPE}
 is saying that the dependent product falls into a sort which is the max of the sort of its domain and codomain. While there is also a special case rule 
-\texttt{PI-PROP}, which says that \texttt{PI-PROP} says that regardless of the domain, if the codomain is in Prop, then the $\Pi$-type stays in Prop.
+\texttt{PI-PROP}, which says that regardless of the domain, if the codomain is in Prop, then the $\Pi$-type stays in Prop.
 We say that the sort Prop is impredicative, because elements in it are defined by quantifying over Prop itself! Remembering 
 $\mathrm{False} := \Pi P : Prop, P : Prop$, we see exactly this. And suppose that we instead were to type this with the rule \texttt{PI-TYPE} and 
 $Prop \triangleq Type_0$, then the
 domain, $Prop : Type_1$ and codomain $P : Prop$ would give the $\Pi$-type sort $Type_1$, making Prop \emph{predicative}. However, we would like $False : Prop$,
 so the impredicativity of Prop is desirable. Let's also recall the definition of forall quantification which also depended on predicativity: $\forall x : T, P$,
-we can quanitfy over values in much larger universes or quantify over all Props and still end up with a type in Prop. Impredicativity is powerful but fragile.
+we can quantify over values in much larger universes or quantify over all Props and still end up with a type in Prop. Impredicativity is powerful but fragile.
 It can be shown that if $Type_1$ is also impredicative, then this type theory would become inconsistent \citep{coquand}.
 
 As a final example lets have a look at $A \wedge B \triangleq ∀(P : Prop). (A → B → P) → P : Prop$. Or making things a little more explicit:
@@ -147,7 +147,7 @@ definitionally equal if \texttt{toFun} is equal. In practice this is incredibly 
 objectives. It was always used in an elegant abstraction in establishing that certain constructions form a KRM, which we will detail later.
 
 The choices made in lean's type theory to bring about proof irrelevance does have some major theoretical drawbacks such as leading to undecidability of definitional
-equality \citep[see chatper 3]{mario}, which however don't seem to matter too much in practice.
+equality \citep[see chapter 3]{mario}, which however don't seem to matter too much in practice.
 
 \subsubsection{Calculus of Inductive Constructions}
 Mention here that 1) Inductive families... 2) strict positivity
@@ -155,8 +155,8 @@ Mention here that 1) Inductive families... 2) strict positivity
 
 In this section we hope to have gotten across that theorem proving in a dependent type theory is exactly type checking of terms constructed by the user. This is all that is needed
 to motivate the next section \label{sec:meta} on how this is partially automated and scaled in Rocq and Lean (going into more Lean specific detail). We also introduced the notions of
-predicativity and proof relevance, both of which I encountered over the course of the project without have previously heard of it. Interestingly they also cleanly separate 3 
-of the most significant proof assistants. They will be mentioned breifly where relevant but is not particularly important in understanding most of this report.
+predicativity and proof relevance, both of which I encountered over the course of the project without having previously heard of it. Interestingly they also cleanly separate 3
+of the most significant proof assistants. They will be mentioned briefly where relevant but are not particularly important in understanding most of this report.
 
 \subsection{Metaprogramming}
 \label{sec:meta}
@@ -165,7 +165,7 @@ It is however extremely time-consuming and error-prone to go down to this level 
 higher level, and the use of metaprogramming in Proof assistants, is motivated by the desire to remove the mental overhead of mechanised proofs, move closer
 to the style of pen and paper proofs.
 
-``Tactics'' are metaprograms meant for constructing proof terms. A Tactic block is started in Lean using $by$ syntax: in our code if we wanted to
+``Tactics'' are metaprograms meant for constructing proof terms. A Tactic block is started in Lean using $by$ syntax: in our code if we wanted
 a term (proof) of type $A : Prop$, we can write $(by \ldots) : A$ (though the type A, would usually be inferred by lean). So how does the $by$ tactic
 make it easier to construct the term? It provides a proof context, of premises and goals, which is actually additional state wrapped in a monad called
 \texttt{TacticM}. Inside a tactic block a sequence of \texttt{TacticM} monads are composed, each monad constructed using one Lean's ecosystem of tactics,
@@ -173,8 +173,8 @@ incrementally modifying the proof state until ``all goals are solved''. And at t
 a term of the desired type should be constructed using the information collected in the TacticM monad.
 
 We have been pretty vague about what this ``proof context'' and ``goals'' actually are so far. In lean there are a few more constructors for terms than in the simply
-types lambda calculus, on top of lambda abstraction and application. Terms are called \texttt{Expr} in lean. We introduce the constructor \lean{mvar : MVarID → Expr}.
-For building an expression given a metavariable. This is at the heart of how tactics work. Tactics communicate to eachother of what has been proven and
+typed lambda calculus, on top of lambda abstraction and application. Terms are called \texttt{Expr} in lean. We introduce the constructor \lean{mvar : MVarID → Expr}.
+For building an expression given a metavariable. This is at the heart of how tactics work. Tactics communicate to each other what has been proven and
 what is left to prove using metavariables. We will illustrate this through a simple example reproduced from \citep[chapter 4]{meta}. In the proof of the following
 theorem we show the evolution of the proof context, line by line.
 

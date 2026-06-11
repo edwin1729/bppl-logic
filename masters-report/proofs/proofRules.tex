@@ -2,7 +2,7 @@
 \emph{Having overcome the fundamental change in the definitions, consolidate inconsistencies and instantiating Iris, we present here the 2nd aspect
 of a mechanisation project: A LOT of theorem proving. We present the soundness proofs of Lilac proof rules drawing attention to 2 of them
 in particular: \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them influencing the definition of the \texttt{wp}
-connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use Mathlib's Probability Kernels, with kernel style definitions
+connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use of Mathlib's Probability Kernels, with kernel style definitions
 and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
 measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube.}
 
@@ -13,10 +13,10 @@ measure theoretic results about measurable spaces obtained through finite footpr
 % Api is not present and a library of lemmas needs to first be built in order to carry out a proof as was the case for \texttt{wp\_unif}. It is worth noting
 % that as past contributor of Mathlib, Mathlib has exacting code quality standards, for the generalisability and suitable abstractions used in contributed
 % code, and as seen the success of such autoformalisation is in part due to the availability of such an excellent library. The ambitions of this mechanisation
-% is to forma a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic citep{},
+% is to form a foundation for further developments in probabilistic separation logic, such extended Lilac (with conditioning) and Bayesian Separation Logic citep{},
 % so we try to maintain good abstractions and remark on the extensibility at points in the chapter.}
 
-\Todo{Proof irrelavance for closed\_krm\_subtype also for conditioning}
+\Todo{Proof irrelevance for closed\_krm\_subtype also for conditioning}
 \Todo{Pi-lambda theorem not suitable for BaSL}
 
 \section{Finite Footprints}
@@ -24,7 +24,7 @@ measure theoretic results about measurable spaces obtained through finite footpr
 When it comes to the proof rules of Lilac, the probability-specific reasoning that can occur in the logic is predominantly present in two rules \texttt{wp\_unif} and
 \texttt{wp\_flip}, which reason about two syntactic constructs from Appl, \texttt{unif01} (uniform distribution on unit interval) and \texttt{flip}
 (bernoulli distribution) respectively. There is nothing special about these two distributions, and we can indeed have a general rule \texttt{wp\_meas}, parametric
-over any distribution. For this suppose we define a new Appl term  we also introduce a construct for a defining a general distribution, like so:
+over any distribution. For this suppose we define a new Appl term, we also introduce a construct for defining a general distribution, like so:
 
 \[
 \tag{\textsc{wp-meas}}
@@ -60,7 +60,7 @@ def FiniteFootprint (n : ℕ) (ms : MeasurableSpace (ℕ → I)) : Prop :=
 \end{leancode}
 
 First let's look at the types involved $\mathbb{N} \to I$ is exactly the Hilbert cube, while $\mathrm{Fin}\ n \to I$ ($I^n$) is a finite portion of it.
-There exists an isomorphism $(\mathrm{Fin}\ n \to I) \times (\mathbb{N} \to I) \simeq \mathbb{N} \to I$, which just that we can split something infinite to a
+There exists an isomorphism $(\mathrm{Fin}\ n \to I) \times (\mathbb{N} \to I) \simeq \mathbb{N} \to I$, which just says that we can split something infinite to a
 finite and infinite part.
 
 We define finite footprint based on this isomorphism, defined in Lean as \texttt{splitBi}:
@@ -114,14 +114,14 @@ of the key fact that a random variable (which is a measurable function) from a f
 other words Finite footprint hilbert cube (FFHC) can't own every random variable and are restricted in some way. In particular, we are always able to easily construct
 random variables that a FFHC does not own simply by having some $Y$ consider the values of dimensions greater than n.
 
-The above FFHC property of measurability interpretable as ownership, only used that fact that FFHC can be decomposed into a product. So it is just
+The above FFHC property of measurability interpretable as ownership, only used the fact that FFHC can be decomposed into a product. So it is just
 a property of product measurable spaces. The key property of a lilac resource $\mathcal{P} = (\Sigma_{I^\mathbb{N}}, \mathcal{F}, \mu)$ (FFHC along with a probability measure) is one can create
 a new $\mathcal{P'} = (\Sigma_{I^\mathbb{N}}, \mathcal{F'}, \mu')$ by ``adding a random variable $Y$ to $\mathcal{P}$''.
 Let's make that intuition precise.
 
 \begin{enumerate}
 \item For all random variables $X : (I^\mathbb{N}, \mathcal{F}) \marrow A$ (we explicitly state the measurable space of
-the domain), which we refer to as random variables owned by $\mathcal{P}$, $X$ must also measurable w.r.t. $\mathcal{F'}$.
+the domain), which we refer to as random variables owned by $\mathcal{P}$, $X$ must also be measurable w.r.t. $\mathcal{F'}$.
 \item Say we have a probability
 measure $\nu$ in the space $B : \texttt{Meas}$. We are able to construct $\mathcal{P'}$ such that with a suitable choice of $Y : (I^\mathbb{N}, \mathcal{F'}) \marrow A$,
 $Y_\#\mu' = \nu$!
@@ -156,7 +156,7 @@ which simultaneously supports an arbitrary number of random variables $Y_i$.
 
 We end this section with the definition of a finite footprint for a measurable function:
 
-\textbf{Definition B.6 citep[Appendix B]{lilac}} A random variable $X : (I^\mathbb{N}, \Sigma_{I^\mathbb{N}}) \to (A, \Sigma_A)$ has finite footprint if the pullback $\sigma$-algebra $\{X^{-1}(E) \mid E \in \Sigma_A\}$ has finite footprint.
+\textbf{Definition B.6 \citep[Appendix B]{lilac}} A random variable $X : (I^\mathbb{N}, \Sigma_{I^\mathbb{N}}) \to (A, \Sigma_A)$ has finite footprint if the pullback $\sigma$-algebra $\{X^{-1}(E) \mid E \in \Sigma_A\}$ has finite footprint.
 
 The need for this definition is a technical detail: sometimes we will not always have access to a measurable space with finite footprint to define a measurable map from. Even when a measurable function
 is from the Borel $\sigma$-algebra on the Hilbert cube, this definition allows us to only consider those measurable maps, which still behave as if they were mapping from some $\sigma$-algebra
@@ -316,7 +316,7 @@ In Sec \ref{sec:ff} on Finite Footprints we gave most of the intuition for the p
 \texttt{wp\_meas}, in Sec \ref{sec:wp}. Now we can discuss the proof of soundness of \texttt{wp\_meas}, elaborating on Sec \ref{sec:ff} and showing parts of the Lean mechanisation.
 
 In our presentation of transformations on the Hilbert cube, we are being quite verbose with stating the isomorphisms (measurable equivalence), by ``splitting'' and ``unsplitting'' the Hilbert cube. In the
-informal proof this isomorphism is not mentioned, and it is natural to fluidly move in between the two representations, not even noticing that there are must in 
+informal proof this isomorphism is not mentioned, and it is natural to fluidly move in between the two representations, not even noticing that there must in
 fact be two different representations in a type theory (since the types $I^\mathbb{N}$ and $I^n \times I^\mathbb{N}$ are not equal). At the base there is a measurable equivalence on measurable spaces,
 and on top of that there is also an isomorphism of measures over
 each representation. In Sec \ref{sec:ff} we had brushed over this as is done in the informal proof, appealing to intuition. However, this isomorphism between the measures is not covered by
@@ -427,7 +427,7 @@ Our goal is to prove:
     \includegraphics[width=0.65\linewidth]{proofs/bind-goal.png}
 \end{figure}
 
-We first note that we need to construct both a $\mu Y$ (a more sensible name than the usual $\mu'$) and $Y$ to satisfy the proof obligation. We notice some new notation, an oval outside a triangle?. This represents a measurable function, in our case $D$, is random variable context. $D$ is implicit in the informal presentation but is explicit
+We first note that we need to construct both a $\mu Y$ (a more sensible name than the usual $\mu'$) and $Y$ to satisfy the proof obligation. We notice some new notation, an oval outside a triangle?. This represents a measurable function, in our case $D$, in a random variable context. $D$ is implicit in the informal presentation but is explicit
 in the Lean code. We bring clarity through the types denoting, noting that $\circ_r$ is just straightforward function composition.
 
 \begin{align*}
@@ -442,7 +442,7 @@ Continuing with the proof, we feed $\mu$ into the \textcolor{ForestGreen}{outer 
     \includegraphics[width=0.5\linewidth]{proofs/bind-outer.png}
 \end{figure}
 
-Notice that since \texttt{D\_ext} is universally quantified for \texttt{wp} \texttt{LProp}, we rename to $D_1$ here to avoid names clashes. The above result can be with used with any $D_1$ instantiation.
+Notice that since \texttt{D\_ext} is universally quantified for \texttt{wp} \texttt{LProp}, we rename to $D_1$ here to avoid name clashes. The above result can be used with any $D_1$ instantiation.
 
 From the \textcolor{ForestGreen}{outer \texttt{wp}} we will obtain that the resource associated with $\mu X$, satisfies the \textcolor{RoyalBlue}{inner \texttt{wp}}. So feeding $\mu X$ to the \textcolor{RoyalBlue}{inner \texttt{wp}},
 further provides $\mu Y$ and $Y$ such that this equation holds:

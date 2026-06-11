@@ -11,7 +11,7 @@ We develop some proof rules regarding expectation and some custom tactics for er
 Most notably we use this example to remark on how in our mechanised proofs we completely sidestep the usage of almost surely equals connective ($\circeq$) and substitutions using the congruence rule.
 This is not specific to this particular example and is a general phenomenon. Indeed, the Lilac paper \citep{lilac} has not provided proof rules for introduction of
 $\circeq$\footnote{the original notation from the paper for the almost surely equals connective is $\overset{as}{=}$. We use $\circeq$ in the lean formalisation}, and uses it rather intuitively
-in the proof sketches. In our formalisation, we have required it at all.
+in the proof sketches. In our formalisation, we have not required it at all.
 
 \section{Sampling Uniform Distributions}
 \label{sec:uniform}
@@ -35,7 +35,7 @@ x \leftarrow \mathrm{unif}\ [0,1];\\
 \]
 \end{minipage}
 
-Since we are using de Brujin indices we cannot name variables bound by the \texttt{bind} construct, but instead need to access this variables
+Since we are using de Brujin indices we cannot name variables bound by the \texttt{bind} construct, but instead need to access these variables
 from an implicit context. \texttt{\#0} is shorthand for \texttt{Term.var Member.head}, which refers to the syntactically closest (right most)
 variable bound. In this case it is obvious which variable we refer to since there is only a single variable. Below the informal
 specification is followed by the formalised Lean specification:
@@ -78,7 +78,7 @@ theorem unif1_spec :
 \end{leancode}
 
 We present the proof state after each tactic\footnote{The interested reader is encouraged to clone the repository and view the file \repo{Examples} directly, in a Lean LSP enabled IDE such as vs-code.
-Interactive proofs more informative when interacted with.}. Unlike the failed attempt in Sec \ref{sec:parametrised} where the proof state was artificially simplified for readability, here we faithfully reproduce the proof state
+Interactive proofs are more informative when interacted with.}. Unlike the failed attempt in Sec \ref{sec:parametrised} where the proof state was artificially simplified for readability, here we faithfully reproduce the proof state
 displayed by Lean's info-view, as seen by a user.
 
 \texttt{iapply wp\_bind}
@@ -108,7 +108,7 @@ X : RV ⟪Ty.real⟫.carrier
 ⊢ wp ((var head).ret.den ∘ᵣ X ;; nil) fun X ↦ (X ∼ unif01_sem)
 \end{leancode}
 
-Crucially here we are able to we have no \texttt{substLProp} unlike in Sec \ref{sec:parametrised}, unblocking
+Crucially here we have no \texttt{substLProp} unlike in Sec \ref{sec:parametrised}, unblocking
 further application of rules. This is as far as we had previously gotten. 
 
 \texttt{iapply wp\_ret}
@@ -154,7 +154,7 @@ This concludes the first ever mechanised Lilac proof.
 Here we explore a more nuanced example where we first encountered difficulty with a notational side-stepping
 of an issue in the Lilac paper~\citep{lilac}. Next, we this opportunity to also comment on a pervasive
 simplification in proofs in our mechanisation and informal proofs provided in the paper. Here is a Hoare triple
-style proof annotation of the program \texttt{Halve} which we have will next mechanise.
+style proof annotation of the program \texttt{Halve} which we will next mechanise.
 
 \[
 \begin{array}{l}
@@ -177,7 +177,7 @@ is robust to these kinds of examples, as it was a major difficulty that was over
 The immediate difficulty to notice is that the expectation is a logical connective, $\mathbb{E}[X]=e$, includes $=$
 in the syntax of the connective which can be misleading. It expects arguments typed as $E : \RV \mathbb{R}$ and $e : \mathbb{R}$.
 So in particular, none of the expectations in the above proof, are using valid syntax. For example the post
-condition must by expanded to:
+condition must be expanded to:
 
 
 $\textcolor{blue}{\{\,Z.\ \exists e,\ \mathbb{E}[Z] = e/2 \land \mathbb{E}[X] = e\,\}}$
@@ -193,7 +193,7 @@ $\textcolor{blue}{\{\,Z.\ \exists e,\ \mathbb{E}[Z] = e/2 \land \mathbb{E}[X] = 
 
 Is this merely an inconvenience or a more fundamental problem, which might make this theorem unprovable in the logic.
 The latter was in-fact a concern since it is not actually possible to instantiate the above existential! For clarity,
-we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean), it is defined as an integral
+we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But the $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean), it is defined as an integral
 of the random variable X. We want to instantiate $e$ with this semantic $\mathbb{E}[X]$. Let us first present the partial proof until we hit this roadblock.
 
 \begin{leancode}
@@ -221,7 +221,7 @@ We would of course want to instantiate it with the semantic (Lean )
 \subsection{}
 
 \section{Removing the almost surely equals connective ($\circeq$)}
-As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analagous situations appear all throughout the paper,
+As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analogous situations appear all throughout the paper,
 both in examples using Core Lilac (Lilac without conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
 conditioning modality. Simultaneously, we are demonstrating that the set of definitions for Core Lilac will translate naturally into full Lilac.
 We explain just what is relevant to showing that almost surely equals is not necessary, omitting the conditioning-specific proof rules. This is the first
@@ -322,5 +322,5 @@ and in Bluebell a fundamentally alternative approach was pursued in part to offe
 In particular Bluebell includes variables in its resource algebra. @Shing Hin can you confirm if these claims are correct?
 
 Because of this observation, I just want to state that it is strange I ended up not needed almost surely equals at all.
-And I would want to try out more example and implement full Lilac (with conditioning) before being confirming if
+And I would want to try out more examples and implement full Lilac (with conditioning) before confirming if
 almost surely equals is indeed not necessary....

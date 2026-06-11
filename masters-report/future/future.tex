@@ -2,7 +2,7 @@
 \label{sec:future}
 \emph{This chapter outlines a separate effort from the previous chapters where we had mechanised Core Lilac \citep{lilac}. Here we sketch a novel theoretical contribution, proposing
 to apply probabilistic separation logic to the verification of not only PPLs but also their compiler/interpreter. We argue why a successor of Lilac, Bayesian Separation Logic (BaSL) \citep{basl}, brings us
-one step closer to the verification of probabilistic inference algorithms in a separation logic. Two research well-motivated \texttt{research problems} which lie at the intersection of measure theory
+one step closer to the verification of probabilistic inference algorithms in a separation logic. Two well-motivated \texttt{research problems} which lie at the intersection of measure theory
 and the semantics of PPLs are posed.}
 %  \texttt{research directions} the open questions that remain to be answered}
 
@@ -11,11 +11,10 @@ and the semantics of PPLs are posed.}
 The importance of verification of probabilistic inference, which lies at the heart of the compilers or interpreters of PPLs has already been established by \citet{scibior_2017} and \citet{tassarotti}.
 The former undertakes more foundational work expressing probabilistic inference in higher order probabilistic programs and verifying correctness properties directly using the denotational semantics.
 The latter verifies correctness of key passes in the compiler of the Stan PPL \citep{stan}. Both approaches prove properties of the denotational semantics directly and do not work in a PSL.
-Our hypothesis that is that it is beneficial to work at the higher level of abstraction of a separation logic, which has not been attainable before the recent introduction of BaSL \citep{basl}. This is because
+Our hypothesis is that it is beneficial to work at the higher level of abstraction of a separation logic, which has not been attainable before the recent introduction of BaSL \citep{basl}. This is because
 reasoning about unnormalised probability distributions is crucial for probabilistic inference, as we will explain below, and no logic before BaSL was capable of that. If our hypothesis that PSL
 offers a scalable framework for reasoning about probabilistic inference is correct, then we would unlock being able to produce foundational correctness proofs for the latest probabilistic inference algorithms
 published every year in an active field of research \cite ... 
-% Our hypothesis is motivated by the fact that 
 
 
 
@@ -42,7 +41,7 @@ It is this normalising constant, an integral over the whole space of $\theta$, w
 integral\footnote{In this particular example the \emph{posterior} can in-fact be computed since it is a fact that the numerator,the product of a binomial and beta distribution is also beta distribution.
 The \emph{posterior} is thus a $\mathrm{Beta}$ distribution whose parameters we can calculate algebraically. This trick, known as \emph{conjugacy}, only applies in very special cases like our coin flip example though}.
 
-This is a central motivation for the field of probabilistic inference: \emph{given an unnormalised probability distribution (usually obtained through an application of Baye's) rule, how do we
+This is a central motivation for the field of probabilistic inference: \emph{given an unnormalised probability distribution (usually obtained through an application of Bayes' rule), how do we
 obtain the normalised distribution, possibly through approximate methods?}
 
 Say we are given an unnormalised distribution $\overset{\sim}{\pi}(x)$. Then we would like to obtain some information on the normalised $\pi(x)$, without explicitly computing the normalising constant,
@@ -59,7 +58,7 @@ In what follows we focus exclusively on MCMC, which is what is used in the inter
 \section{Measure vs density}
 \label{sec:abs-cont}
 Let's make the goal of MCMC precise. We had stated that we wanted to draw samples given an unnormalised distribution $\overset{\sim}{\pi}(x)$ which corresponds to a true distribution $\pi(x)$ which cannot
-be stated in closed form\footnote{``in closed form'' morally means that intractable operations like integrals are not allowed, but includes most other common mathematical operations (trigonometry, arithemtic, ...) are allowed}.
+be stated in closed form\footnote{``in closed form'' morally means that intractable operations like integrals are not allowed, but includes most other common mathematical operations (trigonometry, arithmetic, ...) are allowed}.
 
 ``Distribution'' could mean a few things. It can either mean a \emph{measure}, $\mu : \Sigma_A \to \mathbb{R}^+$ or a \emph{density}, $\rho : A \to \mathbb{R}^+$. Most common measures \emph{admit a density}, in which case we can
 treat the two interchangeably, hence the terminology ``distribution'' refers to both. MCMC is only defined for those measures which admit a density.
@@ -94,7 +93,7 @@ is only defined for those measures which are absolutely continuous.
 \section{Markov Chain Monte Carlo in a PPL}
 Having established the problem precisely, let us describe the solution.
 An MCMC algorithm constructs a sequence of values, $x\_i : S$, where the state space $S$, is defined as the space over which our target distribution is defined. Intuitively it guarantees that after some
-``burn in values'' at the beginning, each element of the rest of the sequence are all distributed according to the target distribution. 
+``burn in values'' at the beginning, each element of the rest of the sequence is all distributed according to the target distribution. 
 The way in which these values are generated, is using a kernel\footnote{Extremely convenient for us since the semantics of our programs is also a kernel!}, known as the transition kernel, $T : S \marrow \mathcal{G} S$.
 Suppose we have some starting value $x_0 : S$, then subsequent values are generated by sampling the kernel like so, using Haskell like do notation in the Giry Monad:
 
@@ -112,7 +111,7 @@ into the step kernel, and the next value is sampled. So restating MCMC as a for 
 $X_N : \mathcal{G} S := for(N, dirac(0), \_i x. T(x))$
 
 The choice of $M_i$ is arbitrary and does not affect correctness of MCMC. Above, we arbitrarily chose 0 as an example. The concrete values $x_1, x_2, \ldots$ obtained on an individual run,
-associated with random variables $X_1, X_2, \ldots$, representing the distributions of those values across all possible runs. These varaibles $X_1, X_2, \ldots$ form what are called
+associated with random variables $X_1, X_2, \ldots$, representing the distributions of those values across all possible runs. These variables $X_1, X_2, \ldots$ form what are called
 Markov chains because when each $x_{i+1}$ is sampled, the transition kernel is only passed the immediately preceding value $x_i$. This property of being dependent on just the previous step,
 is the Markovian property. For loops in Appl, by their definition, generate Markov chains if we ignore the iteration index $i$ as above.
 
@@ -152,12 +151,12 @@ previous ``error-bounding'' logics such as Approxis~\citep{approxis}.
 \section{Metropolis Hastings}
 MCMC is seldom used directly. It is generally hard to find a transition kernel $T$, which has an invariant measure which we can specify. The Metropolis-Hastings
 algorithm is one of the simplest family of MCMC algorithms. In general there are several parametrised families of MCMC algorithms where the parameters are
-not as difficult to provide then directly providing a transition kernel $T$ with an invariant measure.
+not as difficult to provide than directly providing a transition kernel $T$ with an invariant measure.
 We start first with an example, adapted from the \emph{island problem} of~\citet{eliot}.
 
 \textbf{Teleportation Museum: } To celebrate the advances in instantaneous teleportation, a museum dedicated to the technology has just opened in town. There are no lifts
 or stairs in the building, and instead people can go from one floor to any other using the teleportation portals built into the entire floorspace of all floors. The museum is instantaneously the biggest
-attraction in town, and museum staff are tasked with devising a method of keeping the population on each floor at the maximum capacity. And it is not possible at to count
+attraction in town, and museum staff are tasked with devising a method of keeping the population on each floor at the maximum capacity. And it is not possible to count
 the number of people on any floor exactly, there are too many! The museum staff
 implement into the teleportation system a feature where a teleportation request can be accepted or rejected. Here's where the example gets slightly
 artificial. The visitors to the museum are principled people, operating on their own internal transition kernels \texttt{Q : Kernel Floor Floor} (which they graciously shared with the museum staff). After

@@ -7,7 +7,7 @@ by both the theorem proving community, also true for professional mathematics an
 to writing definitions (of data and algorithms). So definitions are indeed important and time-consuming in Lean as well. There is no parallel to writing theorems though, in conventional software engineering. 
 
 A milestone was reached when the definitions of the language and logic were written down, with a set of abstractions to convince myself this development was sound.
-These definitions were composed of a separate syntax and semantics for both the language and the logic, using dependent de brujin indices for both. These definitions
+These definitions were composed of a separate syntax and semantics for both the language and the logic, using dependent de Bruijn indices for both. These definitions
 would have sufficed to prove formally the correctness of all the proofs in the paper. However, of the project is not only to validate the soundness of the logic,
 but also to create a usable tool for proving properties of actual probabilistic programs ergonomically (using tactics). The best way to do so is to instantiate the Iris
 framework. And the interface provided by Iris was not compatible with current definitions. Below we explain why it wasn't compatible and how Iris' interface is motivated.
@@ -94,14 +94,14 @@ operators. The most important connectives are  \texttt{sForall} and \texttt{sExi
   iExists : ∀ A : Type u',  (A → PROP) → PROP
 \end{leancode}
 
-We quantify over the type A of variables that we want to quantify over, since Iris can't know what type a variables a specific logic may want to quantify over, and indeed
+We quantify over the type A of variables that we want to quantify over, since Iris can't know what type of variables a specific logic may want to quantify over, and indeed
 as in Lilac there may be multiple types (Lilac has two of each quantifier). We have named the above quantifier \texttt{iForall}, with \texttt{i} short
 for indexed, since when quantifying over types we refer to the types (like \texttt{A}) as \emph{type indices}. \texttt{iForall} and \texttt{iExists} is impredicative
 (see \ref{sec:predicativity}), meaning we
 quantify in universes larger than that of the type being constructed. \texttt{u'} is universe level, a natural number. Indeed, impredicativity is required here to provide complete flexibility in
 what variables an instantiating logic can then quantify over.  
 
-Now lets look at \texttt{sForall} and \texttt{sExists}, with \texttt{s} short for \emph{set}.  
+Now let's look at \texttt{sForall} and \texttt{sExists}, with \texttt{s} short for \emph{set}.  
 Note that in theorem provers, Sets (say \texttt{Set A}) are represented as \lean{A → Prop}. So the signature for the quantifiers says that given a set
 of \texttt{PROP} we construct a \texttt{PROP}. The reason for this less intuitive version of quantification is that iForall (iExists) can be defined in terms of sForall
 (sExists). And the quantified types are not restricted to a predetermined universe \texttt{u'}.
@@ -410,13 +410,13 @@ Applying this we obtain the proof state:
 \end{leancode}
 
 This is an interesting situation where both the left and right hand side of the $\wand$ contain the \texttt{LProp} \lean{(fst_rv ∼ unif01_sem)}. However, remember we are working
-with de brujin indices so \texttt{fst\_rv} does not always refer to the same variable. \texttt{fst\_rv} always refers to the nearest variable introduction, which on the
+with de Bruijn indices so \texttt{fst\_rv} does not always refer to the same variable. \texttt{fst\_rv} always refers to the nearest variable introduction, which on the
 right hand side comes from \texttt{wp} not \texttt{forall\_rv}. So on the rhs we refer to a different variable obtain from running \texttt{ret (var head)}, but with
 more application of proof rules, we should hopefully be able to show that these two variables are in fact equal.
 
 \textbf{Step 3: iintro}
 Now we would like to apply the intro tactic of iris called \texttt{iintro}. In general, an intro tactic can pull the input of a forall quantification or implication in the goal
-into the premise in the proof state (Remember that both forall quantificaion and implication are exactly the same: they are both dependent products \ref{sec:coc}). The \texttt{iintro} tactic
+into the premise in the proof state (Remember that both forall quantification and implication are exactly the same: they are both dependent products \ref{sec:coc}). The \texttt{iintro} tactic
 mimics this acting on iris' $\forall$ (\texttt{iForall} or \texttt{sForall}), $\wand$ and $\to$. But the goal we have uses our custom \texttt{forall\_rv} connective. If we want to use Iris'
 proof mode, we will need to convert this \texttt{forall\_rv} to \texttt{iForall}. Iris does in fact provide extensible tactics, i.e. \texttt{iintro} can be extended to work on other custom connectives
 like \texttt{forall\_rv}. This was the original approach, which adds another level of indirection to this presentation. To make our presentation more understandable let's remove that level of indirection
@@ -436,7 +436,7 @@ abbrev substLProp (P : LProp (A::rs)) (X : RV ⟪A⟫) : LProp rs :=
   fun D Ω ↦ P.1 (X ;; D) Ω
 \end{leancode}
 
-There is nothing unexpected in this defintion
+There is nothing unexpected in this definition
 
 The \texttt{;;} syntax is supposed to look just like the cons operator, but remember that \texttt{X} and \texttt{D} are actually measurable functions to a value and list respectively.
 It is unimportant but here is the definition for completeness:
@@ -479,7 +479,7 @@ x : RV ⟪Ty.real⟫
 Let's focus on \lean{∗H : substLProp (fst_rv ∼ unif01_sem) x}. Now we have exactly a substLProp on a ``leaf'' connective $E \sim \mu$. Conceptually \texttt{x} and \texttt{fst\_rv}
 are the same variable. However \lean{x : HC -m→ ℝ} and \lean{fst_rv : (List.TProd (⟪·⟫) rs) -m→ ℝ} and we can't apply the substitution to remove the substLProp and make $\sim$ the 
 outermost connective. If we can't do that then we can't reason using the proof rules of Lilac. In the proof mode, we have hit a dead end, and the only way to proceed is
-descend back into the meta logic. The separation logic is supposed to provide a higher level of abstraction but clearly out instantiation of Iris was flawed as we can't stay
+descend back into the meta logic. The separation logic is supposed to provide a higher level of abstraction but clearly our instantiation of Iris was flawed as we can't stay
 in the abstraction and manage to prove the simplest objective.
 
 \subsection{ignore}
@@ -487,10 +487,10 @@ in the abstraction and manage to prove the simplest objective.
 The whole point of the variable contexts was supposed to be that, it will
 allow substitution: we want to begin with some $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \sem{\Delta})$ and turn it into $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \llbracket \Delta' \rrbracket)$,
 where in $\Delta'$ one of the variables would have changed. As stated in the paper, we can specify a substitution as a measurable map $\sem{\Delta} \marrow \llbracket \Delta' \rrbracket$.
-The difficulty is the measurability of this map. We can't simply map an index in the list from one value to another, becuase of the way $\sem{\Delta}$ is defined in lean as \lean{List.TProd (⟪·⟫) rs},
-unfolding \texttt{TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denoptations is iteratively taken. Its possible to define a 
+The difficulty is the measurability of this map. We can't simply map an index in the list from one value to another, because of the way $\sem{\Delta}$ is defined in lean as \lean{List.TProd (⟪·⟫) rs},
+unfolding \texttt{TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denotations are iteratively taken. Its possible to define a 
 measurable function which may peel off the head, or cons a new element, or both, but creating a measurable map works deeper inside the list, and then proving properties of the then rather complicated function
-is not attractive. On studying Lilac further it looked as if we only really need to manipulate the head of the list, so this opens up the possibility of not using the dependent de brujin indices method (mapping form a list), which is
+is not attractive. On studying Lilac further it looked as if we only really need to manipulate the head of the list, so this opens up the possibility of not using the dependent de Bruijn indices method (mapping from a list), which is
 what we opt for in the end.
 
 
