@@ -44,7 +44,7 @@ In order to understand the semantics of a probabilistic programming, a formal de
 Measure theory underpins probability theory and an overview is given here. We want to be able to talk about the
 probabilities of some event occurring, which is modelled by a \texttt{random variable}. In order to define a random
 variable we first need to define measures and measurable spaces. A measurable space is a pair $(\Omega, \Sigma_\Omega)$,
-where $\Omega$ is some Set, and $\Sigma_\Omega \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\Sigma_\Omega$
+where $\Omega$ is of type \texttt{Set}, and $\Sigma_\Omega \subseteq \mathcal{P}(\Omega)$ is called the $\sigma$-algebra. We interpret each element of $\Sigma_\Omega$
 to be an event (such as a coin flip landing heads). We would like the $\sigma$-algebra to be closed under complements and
 countable unions\footnote{from unions and complements we obtain intersections through de Morgan's law}. From the presentation so far, it may seem like all singleton sets must be events but
 due to technical reasons (\citep[Chapter 2]{axler}), this cannot be in certain cases where $\Sigma$ is infinite.

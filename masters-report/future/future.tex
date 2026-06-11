@@ -160,7 +160,7 @@ attraction in town, and museum staff are tasked with devising a method of keepin
 the number of people on any floor exactly, there are too many! The museum staff
 implement into the teleportation system a feature where a teleportation request can be accepted or rejected. Here's where the example gets slightly
 artificial. The visitors to the museum are principled people, operating on their own internal transition kernels \texttt{Q : Kernel Floor Floor} (which they graciously shared with the museum staff). After
-every unit of time, they take their current floor $x$, and sample a new floor $x' \sim Q\, x$
+every unit of time, they take their current floor $x$, and sample a new floor $x' \sim Q\, x$.
 Let us focus on a single visitor Alice (transition kernel $Q_A$), and the museum's protocol for automatically
 handling her teleportation requests. The algorithm itself is simple: the museum wishes that the ratio of people across the floors which can be understood as a distribution of people $\pi$
 be maintained. They devise an acceptance ratio A which depends on $Q_A$, $\pi$ $x$ and $x'$. If the acceptance ratio is high the protocol is
@@ -168,6 +168,10 @@ more likely to accept the proposed move and if not Alice must stay at the curren
 a particular acceptance ratio A, such that after infinitely long, the distribution of Alice's positions is exactly $\pi$. They can repeat their protocol for every visitor
 to reach their requirements. The protocol was scrapped since no one could wait infinitely long for a guarantee.
 
+The analogy provides some core intuition on MCMC: obtain the probability distribution, by observing a single person's movements, which at any point in time approximates the true
+distribution, becoming exact at infinity. And it also provides the intuition behind Metropolis-Hastings, which is breaking building a transition kernel into a sub-problems:
+building a \emph{proposal transition kernel} and an \emph{acceptance ratio}, which put together creates the actual transition kernel. It turns out that the \emph{proposal transition kernel}
+can be arbitrary.
 Let's fill in the details. Under the Metropolis-Hastings algorithm, the acceptance ratio is given as:
 
 $A(Q, \overset{\sim}{\pi}, x, x') = min \left(1, \frac{\mathrm{density}_{\overset{\sim}{\pi}}(x')}{\mathrm{density}_{\overset{\sim}{\pi}}(x)} \frac{\mathrm{density}_{(Q\, x)}(x')}{\mathrm{density}_{(Q\, x')}(x)} \right)$

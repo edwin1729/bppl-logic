@@ -6,7 +6,7 @@ in particular: \texttt{wp\_bind} and \texttt{wp\_unif}, due to each of them infl
 connective (in order to validate their soundness). \texttt{wp\_bind} motivated the use of Mathlib's Probability Kernels, with kernel style definitions
 and proofs. \texttt{wp\_unif} the central and most complex proof in the entire project, motivates the creation of an entire sub-library of
 measure theoretic results about measurable spaces obtained through finite footprint on the Hilbert Cube.}
-  
+
 \fleuron{8}
 % Some of the development of these proofs
 % happened simultaneously with surprising progress in LLM-based auto-formalisation in Lean. We report on how these tools were used with success in simpler
@@ -37,8 +37,6 @@ over any distribution. For this suppose we define a new Appl term, we also intro
 where $\mu$ is an arbitrary probability measure. We are specifying a denotation directly instead of taking the denotation of some concrete program.
 Note that $(\lambda\ \_ \mapsto \mu) : A \marrow \mathcal{G} B$ which is correctly typed as a denotation of a program
 (in other words it is a kernel).
-
-\Todo{cite the result that any distribution can be constructed using uniform}
 
 The soundness of \texttt{wp\_meas} is the general theorem that we prove in lean and instantiate to \texttt{wp\_unif} and \texttt{wp\_flip}. The choice of the Hilbert Cube
 with finite footprint as a probability space was made to validate \texttt{wp\_meas}. In order to prove the soundness of this result, we first had to establish a
@@ -110,7 +108,7 @@ and the powerset measurable space over the codomain ($\{\phi, \{false\}, \{true\
 
 Let's say we know $X(0.1, 0.1, 0.1, \ldots) = false$. 
 Then what is the pre-image of the measurable set {false} constrained to be, to remain measurable? The smallest possible answer is $X^{-1} (\{false\}) = (0.1, 0.1, a_0, a_1, a_2, \ldots)$
-for arbitrary $a_i \in I$. Referring to \ref{fig:hc}, this is the same as saying that the region past n, is dense. Hopefully, this convinces the reader
+for arbitrary $a_i \in I$. Referring to Fig \ref{fig:hc}, this is the same as saying that the region past n, is dense. Hopefully, this convinces the reader
 of the key fact that a random variable (which is a measurable function) from a finite footprint Hilbert cube, must ignore all the dimensions beyond n, in
 other words Finite footprint hilbert cube (FFHC) can't own every random variable and are restricted in some way. In particular, we are always able to easily construct
 random variables that a FFHC does not own simply by having some $Y$ consider the values of dimensions greater than n.
@@ -142,8 +140,8 @@ into 3 pieces: before n, at n and after n.
 
 $(I^\mathbb{N}, \mathcal{F}_n) \simeq^m (I^n, \bot) \times_m (I, \Sigma_I) \times_m (I^\mathbb{N}, \bot)$
 
-We also need to define $\mu_n$. On a $\bot$ measurable space there is only one possible probability measure defined as $\mu_\bot := \{\phi \mapsto 0, \mathrm{univ} \mapsto 1\}$.
-$\mu_n := \mu_\bot \otimes \lambda_I \otimes \mu_\bot$. Where $\lambda_I$ is the lebesgue measure on $I$ and $\otimes$ is the product of measures (see Sec \ref{sec:measure_theory}).
+We also need to define $\mu_n$. On the trivial measurable space $\bot = (I^x, {\phi, I^x})$ measurable space there is only one possible probability measure defined as $\mu_\bot := \{\phi \mapsto 0, \mathrm{univ} \mapsto 1\}$.
+$\mu_n := \mu_\bot \otimes \lambda_I \otimes \mu_\bot$. Where $\lambda_I$ is the Lebesgue measure on $I$ and $\otimes$ is the product of measures (see Sec \ref{sec:measure_theory}).
 
 Note that $\lambda_I$ expanded into a measure on $\mathbb{R}$ (mapping all new elements from its domain to 0), is precisely $\nu=\mathrm{Unif}[0,1]$. So if $Y$ is a map from
 $\mathcal{P}_n$, we get $Y_\#\mu_n = \mathrm{Unif[0,1]}$ as required. We wish that if we take the independent combination $\mathcal{P'} := \mathcal{P} \star \mathcal{P}_n$,
@@ -289,7 +287,8 @@ def wp (M : RV (⟪Ty.G A⟫)) (Q : RV ⟪A⟫ → LProp) : LProp :=
 
 We see quite a lot of new notation. Firstly, $\checkmark'$ is notation for \lean{Option.is_some : Option a → Bool}, stating for example that the independent combination \lean{Ω_fr ⋆ Ω} exists.
 $\downarrow$ denotes unwrapping of the value within an \texttt{Option} when we know it is \texttt{some}. We see that the choice of random variable \texttt{D\_ext} can be to any $(\alpha, ms\alpha)$.
-As suggested in the beginning of this equation satisfied by $\mu$ and $\mu'$ can be written in various forms, in particular we had decomposed it into two equations each of which were point free.
+As suggested in Equations \ref{eq:original} and \ref{eq:simplified}, the large ``do-notation'' based equation from the informal definition of the \texttt{wp} connective can
+be converted to point-free form.
 In the lean code too we have a point free formulation of the equation, which essentially merges the two point free forms above. This style is adopted since it uses the
 ``kernel API'', Mathlib's preferred style~\citep{remy} for expressing these kinds of equations. The ``kernel API'' has vast library of lemmas, and one can imagine
 how using a point free style facilitates prerequisites for applying a lemma to be more easily inferred (less parameters less things to infer), by the workhorse of type-class inference~\citep{spitters}.

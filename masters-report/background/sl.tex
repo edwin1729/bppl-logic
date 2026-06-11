@@ -136,36 +136,34 @@ separation logics which will come in handy when instantiating the Iris framework
 
 First let's precisely define the relation between $*$ and $\wand$ (identical to $\wedge$ and $\to$)
 
-The rest of this section reproduces some figures from \citep{mosel}.
-
 \[
-\begin{array}{cccc}
-\begin{array}{c}
+\begin{array}{c@{\qquad}c@{\qquad}c@{\qquad}c}
+\begin{array}[t]{c}
 \mathrm{emp} * P \dashv\vdash P \\[0.8em]
 P * Q \vdash Q * P \\[0.8em]
 (P * Q) * R \vdash P * (Q * R)
 \end{array}
 &
-\begin{array}{c}
-\text{\textsc{*-Mono}} \\[0.4em]
-\frac{P_1 \vdash Q_1 \qquad P_2 \vdash Q_2}{P_1 * P_2 \vdash Q_1 * Q_2}
+\begin{array}[t]{c}
+\text{\textsc{*-Mono}} \\[0.6em]
+\dfrac{P_1 \vdash Q_1 \qquad P_2 \vdash Q_2}{P_1 * P_2 \vdash Q_1 * Q_2}
 \end{array}
 &
-\begin{array}{c}
-\text{\textsc{*-Intro}} \\[0.4em]
-\frac{P * Q \vdash R}{P \vdash Q \mathbin{-\!*} R}
+\begin{array}[t]{c}
+\text{\textsc{*-Intro}} \\[0.6em]
+\dfrac{P * Q \vdash R}{P \vdash Q \mathbin{-\!*} R}
 \end{array}
 &
-\begin{array}{c}
-\text{\textsc{*-Elim}} \\[0.4em]
-\frac{P \vdash Q \mathbin{-\!*} R}{P * Q \vdash R}
+\begin{array}[t]{c}
+\text{\textsc{*-Elim}} \\[0.6em]
+\dfrac{P \vdash Q \mathbin{-\!*} R}{P * Q \vdash R}
 \end{array}
 \end{array}
 \]
 
 % Going back to the KRMs, we can now define the standard recipe for constructing an affine separation logic out of a KRM. 
 
-Next we define the affine propositions: $P$ as any proposition satisfying for all Q $P * Q \vdash Q$. In other words $P$ can always be dropped. An affine 
+Next we define the affine propositions: $P$ as any proposition satisfying $\forall Q.\ P * Q \vdash Q$. In other words $P$ can always be dropped. An affine 
 separation logic is one where all propositions are affine. Affine propositions can also be equivalently defined as $P * \mathrm{True} \bient P$ or $\mathrm{True} \bient \mathrm{emp}$.
 Another class of propositions is persistent propositions. Those propositions which may be duplicated to establish the goal. So for instance if $P$ is persistent than
 $P \vdash P * P$.

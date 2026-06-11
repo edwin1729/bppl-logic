@@ -27,7 +27,7 @@ Agda is based on Martin Lof Type Theory (MLTT) which differs in a matter of pred
 Pure CoC consists of very few rules and constructs and it is very surprising that it is a valid foundation for all mathematics. We start with a typed lambda calculus in which both the
 terms and the types are given by the \emph{same} syntax. This is known as a pure type system (PTS). Instead of function/arrow type we have the dependent product, $\Pi (x : A), B(x)$, where B may be defined using $x$. Additionally,
 (as there is no separate syntax for types) all types have \emph{sort}. In other words, every construction in the calculus must have a type, which itself will have a type and so on, infinitely.
-A has type $\mathbf{Type_1}$ (or \emph{sort} $\mathbf{Type_1}$, to acknowledge that A is itself a type). There is actually an infinite hierarchy of these types:
+$A$ has type $\mathbf{Type_1}$ (or \emph{sort} $\mathbf{Type_1}$, to acknowledge that A is itself a type). There is actually an infinite hierarchy of these types:
 $A : \mathbf{Type_1} : \mathbf{Type_2} : \mathbf{Type_3} \ldots$, where the subscripts are indices known as \emph{universes}.
 
 The type of identity functions A is given by $\Pi (\_ : A), A$. We use the notation $A \to A$ in this case since it is not dependent. For completeness the identity function is typed
@@ -50,10 +50,10 @@ Dependent type theory as a foundation is an example of \emph{constructive mathem
 above example. With that intuition in mind lets show how some other logical connectives are represented:
 
 As seen in this example, the standard recipe in constructive mathematics is to specify a proposition by what is required prove it. In the next example we
-see representation also arises from what the connective enables us to prove. Take $\mathrm{False} := \forall (P : Prop). P : Prop$.
-First notice that if we have a proof of $\mathrm{False}$, that is a term of type $\forall (P : Prop). P$, we would get the proof of any proposition $P$,
-out of that, encoding false entails anything. Also, it is not possible to construct a term of type $\forall (P : Prop). P$, ie, there is no proof of $\mathrm{False}$.
-A strange thing that one might notice is that we are quantifying over everything in $Prop$, in order to obtain something of type $Prop$.
+see representation also arises from what the connective enables us to prove. Take $\mathrm{False} := \forall (P : \mathbf{Prop}).\ P : \mathbf{Prop}$.
+First notice that if we have a proof of $\mathrm{False}$, that is a term of type $\forall (P : \mathbf{Prop}).\ P$, we would get the proof of any proposition $P$,
+out of that, encoding false entails anything. Also, it is not possible to construct a term of type $\forall (P : \mathbf{Prop}).\ P$, ie, there is no proof of $\mathrm{False}$.
+A strange thing that one might notice is that we are quantifying over everything in $\mathbf{Prop}$, in order to obtain something of type $\mathbf{Prop}$.
 
 \subsubsection{Predicativity}
 \label{sec:predicativity}
@@ -72,11 +72,11 @@ Let's now introduce all the typing rules. Remember $\mathcal{S} := \{\mathbf{Pro
 \begin{array}{cc}
 \inferrule* [right=\textsc{Type-Prop}]
   {\Gamma \vdash}
-  {\Gamma \vdash \mathrm{Prop} : \mathrm{Type}_1}
+  {\Gamma \vdash \mathbf{Prop} : \mathbf{Type}_1}
 &
 \inferrule* [right=\textsc{Type-Form}]
   {\Gamma \vdash}
-  {\Gamma \vdash \mathrm{Type}_i : \mathrm{Type}_{i+1}}
+  {\Gamma \vdash \mathbf{Type}_i : \mathbf{Type}_{i+1}}
 \\[1.2em]
 
 \inferrule* [right=\textsc{Var}]
@@ -93,13 +93,13 @@ Let's now introduce all the typing rules. Remember $\mathcal{S} := \{\mathbf{Pro
   {\Gamma \vdash \mathrm{fun}\,x : A \Rightarrow t : \Pi x : A, B}
 &
 \inferrule* [right=\textsc{Pi-Prop}]
-  {\Gamma, x : A \vdash B : \mathrm{Prop}}
-  {\Gamma \vdash \Pi x : A, B : \mathrm{Prop}}
+  {\Gamma, x : A \vdash B : \mathbf{Prop}}
+  {\Gamma \vdash \Pi x : A, B : \mathbf{Prop}}
 \\[1.2em]
 
 \inferrule* [right=\textsc{Pi-Type}]
-  {\Gamma \vdash A : \mathrm{Type}_i \\ \Gamma, x : A \vdash B : \mathrm{Type}_j}
-  {\Gamma \vdash \Pi x : A, B : \mathrm{Type}_{\max(i,j)}}
+  {\Gamma \vdash A : \mathbf{Type}_i \\ \Gamma, x : A \vdash B : \mathbf{Type}_j}
+  {\Gamma \vdash \Pi x : A, B : \mathbf{Type}_{\max(i,j)}}
 &
 \inferrule* [right=\textsc{App}]
   {\Gamma \vdash f : \Pi x : A, B \\ \Gamma \vdash a : A}
@@ -114,25 +114,27 @@ Let's now introduce all the typing rules. Remember $\mathcal{S} := \{\mathbf{Pro
 \end{array}
 \]
 
-\caption{Inference rules for the purely functional part of CIC \citep{coc}}
+\caption{Inference rules for CoC \citep{coc}}
 \end{figure}
 
-We notice that there are two typing rules for the dependent product: \texttt{PI-PROP} for sort Prop and \texttt{PI-TYPE} for all other sorts. \texttt{PI-TYPE}
-is saying that the dependent product falls into a sort which is the max of the sort of its domain and codomain. While there is also a special case rule 
-\texttt{PI-PROP}, which says that regardless of the domain, if the codomain is in Prop, then the $\Pi$-type stays in Prop.
-We say that the sort Prop is impredicative, because elements in it are defined by quantifying over Prop itself! Remembering 
-$\mathrm{False} := \Pi P : Prop, P : Prop$, we see exactly this. And suppose that we instead were to type this with the rule \texttt{PI-TYPE} and 
-$Prop \triangleq Type_0$, then the
-domain, $Prop : Type_1$ and codomain $P : Prop$ would give the $\Pi$-type sort $Type_1$, making Prop \emph{predicative}. However, we would like $False : Prop$,
-so the impredicativity of Prop is desirable. Let's also recall the definition of forall quantification which also depended on predicativity: $\forall x : T, P$,
-we can quantify over values in much larger universes or quantify over all Props and still end up with a type in Prop. Impredicativity is powerful but fragile.
-It can be shown that if $Type_1$ is also impredicative, then this type theory would become inconsistent \citep{coquand}.
+We notice that there are two typing rules for the dependent product: \texttt{PI-PROP} for sort $\mathbf{Prop}$ and \texttt{PI-TYPE} for all other sorts. \texttt{PI-TYPE}
+is saying that the dependent product falls into a sort which is the max of the sort of its domain and codomain. While there is also a special case rule
+\texttt{PI-PROP}, which says that regardless of the domain, if the codomain is in $\mathbf{Prop}$, then the $\Pi$-type stays in $\mathbf{Prop}$.
+We say that the sort $\mathbf{Prop}$ is impredicative, because elements in it are defined by quantifying over $\mathbf{Prop}$ itself! Remembering 
+$\mathrm{False} := \Pi (P : \mathbf{Prop}).\ P : \mathbf{Prop}$, we see exactly this. And suppose that we instead were to type this with the rule \texttt{PI-TYPE} and
+$\mathbf{Prop} \triangleq \mathbf{Type}_0$, then the
+domain, $\mathbf{Prop} : \mathbf{Type}_1$ and codomain $P : \mathbf{Prop}$ would give the $\Pi$-type sort $\mathbf{Type}_1$, making $\mathbf{Prop}$ \emph{predicative}. However, we would like $\mathrm{False} : \mathbf{Prop}$,
+so the impredicativity of $\mathbf{Prop}$ is desirable. Let's also recall the definition of forall quantification which also depended on predicativity: $\forall x : T, P$,
+we can quantify over values in much larger universes or quantify over all $\mathbf{Prop}$s and still end up with a type in $\mathbf{Prop}$. Impredicativity is powerful but fragile.
+It can be shown that if $\mathbf{Type}_1$ is also impredicative, then this type theory would become inconsistent \citep{coquand}.
 
-As a final example lets have a look at $A \wedge B \triangleq ∀(P : Prop). (A → B → P) → P : Prop$. Or making things a little more explicit:
-$\wedge := λ(A B : Prop). ∀(P : Prop). (A → B → P) → P : Prop \to Prop \to Prop$, where we are first using lambda abstractions and then a $\Pi$-type construction.
+As a final example lets have a look at $A \wedge B \triangleq \forall (P : \mathbf{Prop}).\ (A \to B \to P) \to P : \mathbf{Prop}$. Or making things a little more explicit:
+$\wedge := \lambda (A\ B : \mathbf{Prop}) \mapsto \forall (P : \mathbf{Prop}).\ (A \to B \to P) \to P : \mathbf{Prop} \to \mathbf{Prop} \to \mathbf{Prop}$, where we are first using lambda abstractions and then a $\Pi$-type construction.
 
 \subsubsection{Proof Relevance}
-Finally, Proof Relevance separates the type theories of Lean and Rocq. Lean is Proof irrelevant meaning terms of types of Prop, are definitionally equal. So
+Finally, Proof Relevance separates the type theories of Lean and Rocq. Lean is Proof irrelevant meaning terms of types of Prop, are definitionally 
+equal\footnote{Rocq on the other hand is proof relevant by default. However, after noticing that Lean's proof relevance being indispensable for some projects,
+they decided to introduce a sort \texttt{SProp}, which is proof irrelevant}. So
 for instance if we have a structure bundling data and a proof of a property like so in Lean:
 
 \begin{leancode}
