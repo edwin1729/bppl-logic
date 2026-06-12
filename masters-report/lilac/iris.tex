@@ -32,8 +32,8 @@ inductive LProp : List Ty → List Ty → Type
   | exists_rv (r : TyRand) : LProp ds (r :: rs) → LProp ds rs
   ...
 
-def LProp.denote {ds : List TyDet} {rs : List TyRand}
-    (P : LProp ds rs) (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
+def LProp.denote {ds : List TyDet} {rs : List TyRand} (P : LProp ds rs)
+    (γ : HList (⟦·⟧) ds) (D : RV (List.TProd (⟦·⟧) rs)) (φ : PSp HC) : Prop :=
   match P with
   | top  => True
   | and P Q => P.denote γ D φ ∧ Q.denote γ D φ
@@ -394,7 +394,7 @@ Now our state looks like this:
 Now we are in position to apply the \texttt{wp\_unif} rule, given in lean as:
 \begin{leancode}
 lemma wp_unif (Q : \texttt{LProp} ds (Ty.real :: rs)) :
-    forall_rv Ty.real (fst_rv ∼ unif01_sem -∗ Q) ⊢ wp ⦃Term.unif01⟧ Q := ⟨soundness proof⟩ 
+    forall_rv Ty.real (fst_rv ∼ unif01_sem -∗ Q) ⊢ wp ⦃Term.unif01⟧ Q := ... 
 \end{leancode}
 
 This is a pretty direct translation of the informal law. A \texttt{wp} \texttt{LProp} running just the \texttt{unif01} program can be turned into an \texttt{LProp}
@@ -482,24 +482,24 @@ outermost connective. If we can't do that then we can't reason using the proof r
 descend back into the meta logic. The separation logic is supposed to provide a higher level of abstraction but clearly our instantiation of Iris was flawed as we can't stay
 in the abstraction and manage to prove the simplest objective.
 
-\subsection{ignore}
+% \subsection{ignore}
 
-The whole point of the variable contexts was supposed to be that, it will
-allow substitution: we want to begin with some $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \sem{\Delta})$ and turn it into $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \llbracket \Delta' \rrbracket)$,
-where in $\Delta'$ one of the variables would have changed. As stated in the paper, we can specify a substitution as a measurable map $\sem{\Delta} \marrow \llbracket \Delta' \rrbracket$.
-The difficulty is the measurability of this map. We can't simply map an index in the list from one value to another, because of the way $\sem{\Delta}$ is defined in lean as \lean{List.TProd (⟪·⟫) rs},
-unfolding \texttt{TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denotations is iteratively taken. It's possible to define a
-measurable function which may peel off the head, or cons a new element, or both, but creating a measurable map works deeper inside the list, and then proving properties of the then rather complicated function
-is not attractive. On studying Lilac further it looked as if we only really need to manipulate the head of the list, so this opens up the possibility of not using the dependent de Bruijn indices method (mapping from a list), which is
-what we opt for in the end.
+% The whole point of the variable contexts was supposed to be that, it will
+% allow substitution: we want to begin with some $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \sem{\Delta})$ and turn it into $(I^\mathbb{N}, \Sigma_{I^\mathbb{N}} \marrow \llbracket \Delta' \rrbracket)$,
+% where in $\Delta'$ one of the variables would have changed. As stated in the paper, we can specify a substitution as a measurable map $\sem{\Delta} \marrow \llbracket \Delta' \rrbracket$.
+% The difficulty is the measurability of this map. We can't simply map an index in the list from one value to another, because of the way $\sem{\Delta}$ is defined in lean as \lean{List.TProd (⟪·⟫) rs},
+% unfolding \texttt{TProd} gives \lean{rs.foldr (fun r β => ⟪r⟫ × β) PUnit}. A measurable space is also getting constructed as the product type of the denotations is iteratively taken. It's possible to define a
+% measurable function which may peel off the head, or cons a new element, or both, but creating a measurable map works deeper inside the list, and then proving properties of the then rather complicated function
+% is not attractive. On studying Lilac further it looked as if we only really need to manipulate the head of the list, so this opens up the possibility of not using the dependent de Bruijn indices method (mapping from a list), which is
+% what we opt for in the end.
 
 
 
-saying that the random variable obtained by sampling the program \( \llbracket ret M \rrbracket \) is just always the denotation of M, \( \llbracket M \rrbracket \). \( \llbracket M \rrbracket \) substitutes the
-variables X which is free in the \texttt{LProp} $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \sem{\Delta} \)
-level, but this led to a painfully convoluted system before finally hitting a dead end with this approach. We try to outline the old design with the old definitions of \texttt{LProp}. At a high level, the above
-notion of substitution can be made to work 
+% saying that the random variable obtained by sampling the program \( \llbracket ret M \rrbracket \) is just always the denotation of M, \( \llbracket M \rrbracket \). \( \llbracket M \rrbracket \) substitutes the
+% variables X which is free in the \texttt{LProp} $Q$, so substitution is essentially removal of free variables. Initial attempts at defining \( wp\_ret \) tried to adapt the proposed at the \( \sem{\Delta} \)
+% level, but this led to a painfully convoluted system before finally hitting a dead end with this approach. We try to outline the old design with the old definitions of \texttt{LProp}. At a high level, the above
+% notion of substitution can be made to work 
 
-The development got quite far with the \texttt{LProp} being parametrised with the type of the deterministic context. However, that started causing
-serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
-in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.
+% The development got quite far with the \texttt{LProp} being parametrised with the type of the deterministic context. However, that started causing
+% serious issues when stating the proof rules, because of the book-keeping that needs to be done with always keeping track of the number of variables
+% in context. Not to mention this bookkeeping is quite difficult since we always need to keep proving that the the contexts are a measurableSpace.

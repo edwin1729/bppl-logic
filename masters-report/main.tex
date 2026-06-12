@@ -6,6 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{tikz}
 \usetikzlibrary{fadings}
+\usetikzlibrary{arrows.meta, positioning}
 \usepackage{pgfornament} % decorative vector ornaments (fleurons)
 
 %% Sets page size and margins
@@ -48,7 +49,7 @@
   \bigskip}
 
 \newcommand{\rcite}{\textcolor{red}{CITE}}
-\newcommand{\Todo}[1]{\textcolor{red}{Todo: #1}}
+\newcommand{\Todo}[1]{}
 \newcommand{\bind}{\mathbin{>\!\!>\mkern-6.7mu=}} % monadic bind
 \newcommand{\wand}{\mathbin{-\!*}}
 \newcommand{\denote}[2]{\llbracket #1 \rrbracket_{#2}}

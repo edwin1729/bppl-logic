@@ -48,7 +48,7 @@ lemma map_X_Dext_eq_prod [MeasurableSpace α]
   -- have hE' : MeasurableSet (Subtype.val ⁻¹' E : Set I) := measurable_subtype_coe hE
   refine .trans
     ?lhs_eq (
-    (wp_unif_measure_product_core n μ (E := (Prod.fst ∘ splitBi n) ⁻¹' A)
+    (wp_meas_measure_product_core n μ (E := (Prod.fst ∘ splitBi n) ⁻¹' A)
       (F := (· n) ⁻¹' E) hA.1 hE rfl rfl).trans
     ?rhs_eq)
   case lhs_eq =>
@@ -153,14 +153,14 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
       exact trim_measurableSet_eq (N_nil_I_borel_le_Inf_borel n)
         (by rw [N_nil_I_borel_eq_comap_coord]; exact ⟨B_I, hB_I, rfl⟩)
     -- Core: μ'.1 (E ∩ F) = μ.1 E * leb.1 F
-    have h_core := wp_unif_measure_product_core n μ hA_pi hB_I rfl rfl
+    have h_core := wp_meas_measure_product_core n μ hA_pi hB_I rfl rfl
     -- leb.1 F = Ω_n.μ F  (since both equal volume B_I)
     -- Use: Ω_n.μ = μ'.1.trim h, and trim_measurableSet_eq gives Ω_n.μ F = μ'.1 F
     -- And μ'.1 F = leb.1 F by product measure marginal
     -- μ'.1 F = leb.1 F: use wp_unif_measure_product_core with A = univ
     have h_μ'_eq_leb : μ'.1 ((· n) ⁻¹' B_I) =
         lebHC.toMeasure ((· n) ⁻¹' B_I) := by
-      have h_univ := wp_unif_measure_product_core n μ
+      have h_univ := wp_meas_measure_product_core n μ
         (@MeasurableSet.univ _ MeasurableSpace.pi) hB_I
         (show @Set.univ HC = (Prod.fst ∘ splitBi n) ⁻¹' Set.univ from by simp) rfl
       simp only [Set.univ_inter] at h_univ

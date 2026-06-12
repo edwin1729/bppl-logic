@@ -303,95 +303,95 @@ $\gamma, \mathcal{D}, \mathcal{P} \vdash \operatorname{own} X_1 * \cdots * \oper
 So far it had seemed like we had just claimed this fundamental fact but never needed to mechanise or use its proof. But now we do,
 in order to establish \texttt{expectation\_prod}, and any other new proof rule that may depend on the slogan!
 
-\section{Removing the almost surely equals connective ($\circeq$)}
-As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analogous situations appear all throughout the paper,
-both in examples using Core Lilac (Lilac without the conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
-conditioning modality. Simultaneously, we are demonstrating that the set of definitions for Core Lilac will translate naturally into full Lilac.
-We explain just what is relevant to showing that almost surely equals is not necessary, omitting the conditioning-specific proof rules. This is the first
-instance in this report where we present something which does not have corresponding end-to-end proofs in Lean. Below is a condensed version of \citet[Appendix C]{lilac}:
+% \section{Removing the almost surely equals connective ($\circeq$)}
+% As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analogous situations appear all throughout the paper,
+% both in examples using Core Lilac (Lilac without the conditioning modality) and full Lilac. We give one more example from the paper to justify this claim, presenting an example using the
+% conditioning modality. Simultaneously, we are demonstrating that the set of definitions for Core Lilac will translate naturally into full Lilac.
+% We explain just what is relevant to showing that almost surely equals is not necessary, omitting the conditioning-specific proof rules. This is the first
+% instance in this report where we present something which does not have corresponding end-to-end proofs in Lean. Below is a condensed version of \citet[Appendix C]{lilac}:
 
-\[
-\begin{array}{l}
-\textcolor{blue}{\{\, \top \,\}} \\[4pt]
-Z \leftarrow \operatorname{flip}(1/2); \quad
-X \leftarrow \operatorname{flip}(1/2); \quad
-Y \leftarrow \operatorname{flip}(1/2); \\
-\textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \,\}} \\[4pt]
-A \leftarrow \mathrm{ret}\, (X \lor Z); \quad
-B \leftarrow \mathrm{ret}\, (Y \lor Z); \\
-\textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \ast A = (X \lor Z) \ast B = (Y \lor Z) \,\}} \\[4pt]
-\operatorname{ret}\, (Z,X,Y,A,B) \\
-\textcolor{blue}{\{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
-\end{array}
-\]
+% \[
+% \begin{array}{l}
+% \textcolor{blue}{\{\, \top \,\}} \\[4pt]
+% Z \leftarrow \operatorname{flip}(1/2); \quad
+% X \leftarrow \operatorname{flip}(1/2); \quad
+% Y \leftarrow \operatorname{flip}(1/2); \\
+% \textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \,\}} \\[4pt]
+% A \leftarrow \mathrm{ret}\, (X \lor Z); \quad
+% B \leftarrow \mathrm{ret}\, (Y \lor Z); \\
+% \textcolor{blue}{\{\, Z \sim \operatorname{Ber}(1/2) \ast X \sim \operatorname{Ber}(1/2) \ast Y \sim \operatorname{Ber}(1/2) \ast A = (X \lor Z) \ast B = (Y \lor Z) \,\}} \\[4pt]
+% \operatorname{ret}\, (Z,X,Y,A,B) \\
+% \textcolor{blue}{\{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+% \end{array}
+% \]
 
-We translate the Hoare style specific to a \texttt{wp} style specification, and show the stages of reduction as we apply the \texttt{wp} proof rules:
+% We translate the Hoare style specific to a \texttt{wp} style specification, and show the stages of reduction as we apply the \texttt{wp} proof rules:
 
-\[
-\begin{array}{l}
-\textcolor{blue}{\vdash \mathrm{wp}} \\
-\left(
-\begin{array}{l}
-Z \leftarrow \operatorname{flip}(1/2); \quad
-X \leftarrow \operatorname{flip}(1/2); \quad
-Y \leftarrow \operatorname{flip}(1/2); \\
-A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
-B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
-\operatorname{ret}\, (Z,X,Y,A,B)
-\end{array}
-\right) \\[4pt]
-\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
-\end{array}
-\]
+% \[
+% \begin{array}{l}
+% \textcolor{blue}{\vdash \mathrm{wp}} \\
+% \left(
+% \begin{array}{l}
+% Z \leftarrow \operatorname{flip}(1/2); \quad
+% X \leftarrow \operatorname{flip}(1/2); \quad
+% Y \leftarrow \operatorname{flip}(1/2); \\
+% A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
+% B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
+% \operatorname{ret}\, (Z,X,Y,A,B)
+% \end{array}
+% \right) \\[4pt]
+% \textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+% \end{array}
+% \]
 
-\[
-\begin{array}{l}
-\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
-\textcolor{blue}{X \sim Ber (1/2)} \\
-\textcolor{blue}{Y \sim Ber (1/2) }\\ 
-\textcolor{blue}{Z \sim Ber (1/2)} \\
-\textcolor{blue}{\vdash \mathrm{wp}} \\
-\left(
-\begin{array}{l}
-A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
-B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
-\operatorname{ret}\, (Z,X,Y,A,B)
-\end{array}
-\right) \\[4pt]
-\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
-\end{array}
-\]
+% \[
+% \begin{array}{l}
+% \textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+% \textcolor{blue}{X \sim Ber (1/2)} \\
+% \textcolor{blue}{Y \sim Ber (1/2) }\\ 
+% \textcolor{blue}{Z \sim Ber (1/2)} \\
+% \textcolor{blue}{\vdash \mathrm{wp}} \\
+% \left(
+% \begin{array}{l}
+% A \leftarrow \mathrm{ret}\,(X \lor Z); \quad
+% B \leftarrow \mathrm{ret}\,(Y \lor Z); \\
+% \operatorname{ret}\, (Z,X,Y,A,B)
+% \end{array}
+% \right) \\[4pt]
+% \textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+% \end{array}
+% \]
 
-\[
-\begin{array}{l}
-\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
-\textcolor{blue}{X \sim Ber (1/2)} \\
-\textcolor{blue}{Y \sim Ber (1/2) }\\ 
-\textcolor{blue}{Z \sim Ber (1/2)} \\
-\textcolor{blue}{\vdash \mathrm{wp}}
-\ \operatorname{ret}\, (Z,X,Y,(X \lor Z),(Y \lor Z)) \\
-\textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
-\end{array}
-\]
+% \[
+% \begin{array}{l}
+% \textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+% \textcolor{blue}{X \sim Ber (1/2)} \\
+% \textcolor{blue}{Y \sim Ber (1/2) }\\ 
+% \textcolor{blue}{Z \sim Ber (1/2)} \\
+% \textcolor{blue}{\vdash \mathrm{wp}}
+% \ \operatorname{ret}\, (Z,X,Y,(X \lor Z),(Y \lor Z)) \\
+% \textcolor{blue}{\{\, (Z,X,Y,A,B).\ \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(A) \ast \operatorname{own}(B)) \,\}}
+% \end{array}
+% \]
 
-\[
-\begin{array}{l}
-\textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
-\textcolor{blue}{X \sim Ber (1/2)} \\
-\textcolor{blue}{Y \sim Ber (1/2)} \\
-\textcolor{blue}{Z \sim Ber (1/2)} \\
-\textcolor{blue}{\vdash \{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(X \lor Z) \ast \operatorname{own}(Y \lor Z)) \,\}}
-\end{array}
-\]
+% \[
+% \begin{array}{l}
+% \textcolor{blue}{X\, Y\, Z : \RV \mathbb{R}} \\
+% \textcolor{blue}{X \sim Ber (1/2)} \\
+% \textcolor{blue}{Y \sim Ber (1/2)} \\
+% \textcolor{blue}{Z \sim Ber (1/2)} \\
+% \textcolor{blue}{\vdash \{\, \underset{z \leftarrow Z}{\mathbf{C}}(\operatorname{own}(X \lor Z) \ast \operatorname{own}(Y \lor Z)) \,\}}
+% \end{array}
+% \]
 
-\Todo{Condense into a diagram with arrows stating the proof rules applying to achieve the transformations}
+% \Todo{Condense into a diagram with arrows stating the proof rules applying to achieve the transformations}
 
-We have made the program context (of the form \lean{∘ᵣ (... ;; nil)}) implicit, and given explicit
-names rather than de Brujin indices to variables, as a consequence of this omission, for readability. We color code
-the program in black and the LProp logical assertions in \textcolor{blue}{blue} to show the entire reduction of
-of the program using weakest precondition reasoning and our proof rules, never needs to use $\circeq$ the almost
-surely equals connective. The proof is not completed, and we have stopped at the point that we would have needed proof
-rules about the conditioning modality, the mechanisation of whose soundness proofs we leave as future work\footnote{This
-is expected to be similar in difficulty to the formalisation of \texttt{wp\_unif} possibly requiring the mechanisation
-of relevant measure theoretic lemmas first before we can proceed with the soundness proof itself.
-}
+% We have made the program context (of the form \lean{∘ᵣ (... ;; nil)}) implicit, and given explicit
+% names rather than de Brujin indices to variables, as a consequence of this omission, for readability. We color code
+% the program in black and the LProp logical assertions in \textcolor{blue}{blue} to show the entire reduction of
+% of the program using weakest precondition reasoning and our proof rules, never needs to use $\circeq$ the almost
+% surely equals connective. The proof is not completed, and we have stopped at the point that we would have needed proof
+% rules about the conditioning modality, the mechanisation of whose soundness proofs we leave as future work\footnote{This
+% is expected to be similar in difficulty to the formalisation of \texttt{wp\_unif} possibly requiring the mechanisation
+% of relevant measure theoretic lemmas first before we can proceed with the soundness proof itself.
+% }

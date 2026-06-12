@@ -175,27 +175,54 @@ the spatial context, which they will need to treat more carefully. Examples foll
 
 \subsection{Iris and MoSeL}
 \label{MoSeL}
-Iris is a general framework for tactic based proofs in a separation logic. Iris (specifically MoSeL) can be understood according to the layers of abstraction it provides.
+Iris is a general framework for building tactic-based proofs in a separation logic, and MoSeL~\cite{mosel} is the front-end of the Iris Proof Mode through which is
+exposed to the user of the logic.
+Iris is best understood through the layers of abstraction it provides, summarised in Fig.~\ref{fig:iris-layers}.
 
-\begin{verbatim}
-  
-KRM -> BI                               ->                   Iris Proof Mode
-    |_ Probability Specific connectives -> typeclass instances -|
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]},
+      node distance=12mm and 20mm,
+      box/.style={draw, rounded corners, align=center, minimum height=10mm,
+                  inner sep=6pt, font=\small},
+      lab/.style={font=\scriptsize\itshape, fill=white, inner sep=2pt},
+    ]
+    \node[box] (krm) {KRM\\\scriptsize(resource model)};
+    \node[box, right=of krm] (bi) {BI\\\scriptsize(standard SL connectives)};
+    \node[box, right=of bi] (ipm) {Iris Proof Mode};
 
-\end{verbatim}
+    \node[box, below=of krm] (prob) {probability-specific\\connectives};
+    \node[box, below=of bi]  (tc)   {typeclass\\instances};
 
-This is sort of the general structure of how Iris is meant to be used by someone instantiating it. You start with a KRM or similar algebraic structure which is the resource
-model, from which there is a pre-determined construction of a BI (those connectives common to all separation logic). Given this Iris proof mode will be
-aware of the standard properties of a separation logic. For example, it is able to prove the following goal, note it has implicitly applied both commutativity
-of the separating conjunct
-%  $\star$ and distributivity of $\star$ over $\and$.
-\Todo{example 1}
-We are also able to introduce both variables and premises with the same command, to build a context of everything we have to prove our goal.
-\Todo{example 2}
-What is unique about the Iris proof mode when compared to Lean or Rocq, is that it has an additional spatial context.
-\Todo{example with spatial context}
-In short it is engineered to provide an interface which mimics the natural reasoning style of the user. The IPM understands separation logic and endeavours to automate common
-boring tasks.
+    \draw[->] (krm) -- (bi) node[lab, midway, above] {construct};
+    \draw[->] (bi)  -- (ipm);
+    \draw[->] (krm) -- (prob);
+    \draw[->] (prob) -- (tc);
+    \draw[->] (tc.east) -- (ipm.south west);
+  \end{tikzpicture}
+  \caption{The layers of abstraction an instantiator of Iris works through. A resource model
+  (a KRM) yields a BI by a predetermined construction, giving the proof mode the connectives and
+  properties common to all separation logics. The connectives specific to the object logic are then
+  defined and their characteristics registered with Iris as typeclass instances.}
+  \label{fig:iris-layers}
+\end{figure}
 
-Though these seem like rather basic conveniences they are quite difficult to provide in a manner extensible to all separation logics. In order to understand how the
-proof mode works (as we will be instantiating Iris), it is first necessary to understand tactic based proofs in general.
+The intended workflow for someone instantiating Iris proceeds along these layers. One starts with a KRM (or a similar algebraic structure) serving as the resource
+model, from which there is a predetermined construction of a BI, yielding the standard separation logic connectives: those connectives common to all separation logics. Given this, the Iris proof mode is
+aware of the standard ``structural'' properties of a separation logic. For example commutativity and associativity of the separating conjunction, and
+its distributivity over $\wedge$. This proof rules are implicitly applied where necessary to simplify goals and the user need not be concerned with
+these trivialities. Additional to the generic core, the
+instantiator must define the connectives specific to their object logic (in our case the probabilistic connectives such as $\sim$, $\mathrm{own}$ and $\mathbb{E}[\cdot]=e$)
+and register their characteristics: whether they are affine, persistent or intuitionistic in the sense of Sec.~\ref{sec:bi}. This is done by providing the corresponding
+typeclass instances. Once this is done, the proof mode handles the new connectives correctly: persistent and intuitionistic hypotheses are kept in a separate
+intuitionistic context and may be reused freely, while the remaining spatial hypotheses are tracked linearly.
+
+This additional spatial context, sitting along with the usual intuitionistic one, is exactly what distinguishes the Iris proof mode from the base tactic language
+of the host prover (Lean or Rocq). The user is presented with an interface that mimics the natural reasoning style of a pen-and-paper separation-logic proof:
+introducing variables and hypotheses with a single command, splitting the spatial context across a separating conjunction, applying entailments, and so on, while
+Iris automates the bookkeeping these steps would otherwise require. Though such conveniences appear basic, providing them in a manner that is extensible to an arbitrary
+separation logic is a difficult problem, and is the central engineering achievement of Iris.
+
+Concrete demonstrations of the proof mode in action introducing variables and spatial hypotheses, and manipulating the spatial context, will be seen in
+Chapter~\ref{chap:examples}. We use our embedding of Lilac to interactively verify specifications of probabilistic programs. 

@@ -105,7 +105,7 @@ lemma infinitePiNat_coord_marginal (k : ℕ) (B : Set I) (hB : MeasurableSet B) 
 Core computation for `wp_unif_measure_product`, separated to avoid instance conflicts
 with `ms_pre`. Here `A` and `B_I` are measurable in the standard (pi/Borel) instances.
 -/
-lemma wp_unif_measure_product_core
+lemma wp_meas_measure_product_core
     (n : ℕ) (μ : @ProbabilityMeasure HC Inf_borel)
     {E F : Set HC} {A : Set (Fin n → I)} {B_I : Set I}
     (hA_pi : MeasurableSet A) (hB_I : MeasurableSet B_I)

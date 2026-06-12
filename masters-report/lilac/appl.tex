@@ -103,7 +103,7 @@ construction. Below we provide the denotation of selected terms:
   | unif01 => ⟨fun _ ↦ ⟨lebI, inferInstance⟩, measurable_const⟩
 \end{leancode}
 
-Firstly, if \texttt{Ty} was not marked as \lean|@[reducible]|, each denotation would not type check. In \lean{Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den},
+Firstly, if \texttt{Ty} was not marked as \lean|@[reducible]|, each denotation would not type check.\\ In \lean{Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den},
 \texttt{ty.den} needs to be normalised to the actual denotation of a \texttt{Ty}. For example, if \texttt{Ty.real} does not reduce to $\mathbb{R}$
 then in the semantics of \texttt{Term.r}, we have $x : \mathbb{R}$, but we want $x : Ty.real$ which will not type-check. This kind of type-level
 computation has its limits and during the project we had faced significant difficulties with being able to prove that two types are equal, but the 

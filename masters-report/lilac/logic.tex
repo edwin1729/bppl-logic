@@ -207,7 +207,7 @@ with the (random) variable X free in it. If \texttt{M : Ty.G ty} (Appl type judg
 we have access to in the logic is that representing the outcome of the entire program. Though in practice multiple variables can be accessed
 by the logic by destructuring a tuple output by the program as in the example of UNIF2.
 
-\Todo{how this destructuring works even with RV? (Not important will probably get dropped at the end)}
+% \Todo{how this destructuring works even with RV? (Not important will probably get dropped at the end)}
 
 The alternative connective, \texttt{wp}, is constructed with the denotation of a program and only one \texttt{LProp}, the postcondition. Syntactically: $\mathrm{wp} \llbracket M \rrbracket \{X. Q\}$.
 \texttt{wp} is defined to be the weakest precondition on the program M, such that the postcondition Q holds. In a consistently defined semantics the following equivalence
