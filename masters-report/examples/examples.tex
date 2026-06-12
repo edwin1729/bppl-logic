@@ -18,7 +18,8 @@ in the proof sketches. In our formalisation, we have not required it at all.
 \label{sec:uniform}
 
 We recall the proof from Sec \ref{sec:parametrised}, which we had failed to complete under the old definitions. 
-The informal and lean version, taken from \repo{Examples}, are provided side-by-side.
+The informal and lean version, taken from \repo{Examples}, are provided side-by-side. The program \texttt{unif1} samples from a uniform distribution from a unit interval and then
+simply returns that sample. It is apparent that semantically the program \texttt{unif1} is exactly equal to the primitive \texttt{unif01}.
 
 \begin{minipage}[t]{0.48\textwidth}
 \begin{leancode}
@@ -175,6 +176,11 @@ reasoning about expectations, it would also test whether the mechanisation can s
 goal of verifying a specification on an open variable. We are very much interested in whether our approach to variables
 is robust to these kinds of examples, as it was a major difficulty that was overcome in this project.
 
+We start with some arbitrary random variable $X$ that we know that we own, so assertions can be made about it. Then sample a $Y$ from a uniform unit interval, and return the
+product of the two numbers. As $Y$ was sampled with no reference to $X$, the two variables are independent, and the proof rules automatically track the separation between the two random
+variables through the separating conjunct. Since the two variables are independent, an expectation of the product is the product of the expectations. And we know that the expectation over
+a uniform interval is $1/2$ which concludes the proof.
+
 The immediate difficulty to notice is that the expectation is a logical connective, $\mathbb{E}[X]=e$, includes $=$
 in the syntax of the connective which can be misleading. It expects arguments typed as $E : \RV \mathbb{R}$ and $e : \mathbb{R}$.
 So in particular, none of the expectations in the above proof, are using valid syntax. For example the post
@@ -195,18 +201,27 @@ $\textcolor{blue}{\{\,Z.\ \exists e,\ \mathbb{E}[Z] = e/2 \land \mathbb{E}[X] = 
 Is this merely an inconvenience or a more fundamental problem, which might make this theorem unprovable in the logic?
 The latter was in-fact a concern since it is not actually possible to instantiate the above existential! For clarity,
 we emphasize that $\mathbb{E}[X]$ is not well-defined in the logic. But the $\mathbb{E}[X]$ value is well-defined in the meta-logic (Lean); it is defined as an integral
-of the random variable X. We want to instantiate $e$ with this semantic $\mathbb{E}[X]$. Let us first present the partial proof until we hit this roadblock.
+of the random variable X. We want to instantiate $e$ with this semantic $\mathbb{E}[X]$. Let us start at the top, and first present the partial proof until we hit this roadblock.
 
 \begin{leancode}
-lemma hrw (X Y : RV ⟪Ty.real⟫) :
-    (Term.den ((#1 * #0)) ∘ᵣ Y ;; X ;; nil) = X * Y := by rfl
+abbrev halve : Term [Ty.real] Ty.real.G :=
+  unif01.bind (
+    ret (#1 * #0)
+  )
 
-abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
+abbrev post_halve (X : RV ⟪Ty.real⟫) : LProp := wp (halve.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
     iprop(∃ e, 𝔼[Y]=e/2 ∧ 𝔼[X]=e))
+\end{leancode}
 
-theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
+We see above the \texttt{halve} program's Lean translation and it's specification consisting of a \texttt{wp} wrapping the
+program and the final post-condition. We notice the interesting effects that the program being open has. The context of the program
+is not empty (indicated by the non-empty list \texttt{[Ty.real]}) and correspondingly, in the specification as well the context
+being composed is non-empty (\texttt{X ;; nil}).
+
+\begin{leancode}
+theorem halve_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_halve X := by
   iintro hX
-  rw [post_half]
+  rw [post_halve]
   iapply wp_bind
   iapply wp_unif
   iintro %Y hY
@@ -214,12 +229,79 @@ theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
   rw [hrw]
 \end{leancode}
 
+As before, in Sec \ref{sec:uniform}, note that \texttt{rw [hrw]} is the technicality that can be metaprogrammed away as future work.
+After this partial progress, we are in the proof state:
 
-but that is not possible as we demonstrate, with in this partia
-i.e. an expression in Lean. This is well-defined. But we still aren't able to construc
-We would of course want to instantiate it with the semantic (Lean )
+\begin{leancode}
+X Y : RV ⟪Ty.real⟫.carrier
+⊢ 
+∗hX : own X
+∗hY : Y ∼ unif01_sem
+⊢ ∃ e, 𝔼[X * Y]=e / 2 ∧ 𝔼[X]=e
+\end{leancode}
 
-\subsection{}
+Inspecting the goal, we would like to introduce an $e$ such that \lean{𝔼[X]=e}, which means providing the semantic expectation of $X$.
+Taking it directly from the definition of the $\mathbb{E}$ connective that would be, in Lean, \lean{∫ ω, X ω ∂(Ω.μ)} (taken from \repo{Assertion}).
+This is the notation for integrals in lean and is straightforward, perhaps more recognisable if rewritten closer to our notation \lean{∫(λ ω ↦ X ω) d(Ω.μ)}.
+There is a glaring problem here: we do not have access to $\mathcal{P}$ (denoted $\Omega$ in lean code). The abstraction of the logic
+does not permit directly accessing the resource. This did seem like a dead end for quite a while, and we explored trying to define $\mathbb{E}$ in the
+langauge (Appl) rather than the logic, which turned out not to be possible., to remove the problematic existential quantifier
+which seemed to be causing the problems. Eventually it dawned, that this was not a specific to expectation but simply a general pattern: In an object logic,
+the state that is under an abstraction can be accessed directly but only in a principled manner through the proof rules. We simply needed to create appropriate proof rules
+to express that semantics expectation $e$ exists, regardless of the actual value dependent on the resource. Here is the newly invented proof rule:
+
+\begin{leancode}
+lemma expectation_of_own {X : RV ⟪Ty.real⟫} : own X ⊢ iprop(∃ e, 𝔼[X]=e) := by
+  intro Ω ownX
+  use iprop(𝔼[X]=∫ ω, X ω ∂(Ω.μ))
+  simp only [exists_apply_eq_apply, true_and]
+  exact ⟨ownX, rfl⟩
+\end{leancode}
+
+We have provided the proof as well since it was quite short, but it can be safely ignored. Returning to the proof in Lilac: we can now apply the above proof rule,
+
+\begin{leancode}
+  ihave expX := expectation_of_own $$ hX
+  icases expX with ⟨%e, he⟩
+  iexists e
+\end{leancode}
+
+to progress a little further in our proof objectives, to:
+\begin{leancode}
+X Y : RV ⟪Ty.real⟫.carrier
+e : ℝ
+⊢ 
+∗hY : Y ∼ unif01_sem
+∗he : 𝔼[X]=e
+⊢ 𝔼[X * Y]=e / 2 ∧ 𝔼[X]=e
+\end{leancode}
+
+Success! The existential quantification has disappeared and instead we get an $e : \mathbb{R}$ in context. Note that 3 slightly
+unintuitive lines of Iris tactics were applied to remove the exists, but it seems like it seems pretty clear what to do:
+when there is an exists in the goal, along with a conjunction looking like \lean{𝔼[X]=e} and an appropriate hypothesis in
+context either \texttt{own X} or \texttt{X \~ unif01\_sem}, we are able to introduce an $e$ through our custom \texttt{expectation} tactic which replaces the
+above 3 tactics with a single tactic.
+
+The rest of the proof can be found in \repo{Examples}. We finish with another proof rule we needed to introduce which wraps up the story quite nicely.
+
+\begin{leancode}
+lemma expectation_prod {X Y : RV ⟪Ty.real⟫} {xy : ℝ} :
+    iprop(∃ x y, 𝔼[X]=x ∧ 𝔼[Y]=y ∧ ⌜x * y = xy⌝) ⊢ iprop(𝔼[X * Y]=xy) := by
+\end{leancode}
+
+It looks convoluted since we are forced to use existential quantification, but it means exactly \lean{ 𝔼[X]=𝔼[Y] ⊢ 𝔼[X * Y]} in informal notation.
+This result involves using a lemma from Mathlib, to which we need to supply a proof of independence of the random variables $X$ and $Y$. This arises
+from our first slogan ``separation is independence'':
+
+
+\textbf{Lemma B.9 \citep{lilac} (separating conjunction is mutual independence).}
+Fix a configuration $(\gamma, \mathcal{D}, \mathcal{P})$.
+Abbreviating $X_i(\gamma) \circ D$ as $X_i'$, random variables $X_1', \ldots, X_n'$
+are mutually independent with respect to $\mathcal{P}$ iff
+$\gamma, \mathcal{D}, \mathcal{P} \vdash \operatorname{own} X_1 * \cdots * \operatorname{own} X_n$.
+
+So far it had seemed like we had just claimed this fundamental fact but never needed to mechanise or use its proof. But now we do,
+in order to establish \texttt{expectation\_prod}, and any other new proof rule that may depend on the slogan!
 
 \section{Removing the almost surely equals connective ($\circeq$)}
 As we have seen in the previous section we have completely removed the need for usage of the almost surely equals connective and analogous situations appear all throughout the paper,
@@ -313,15 +395,3 @@ rules about the conditioning modality, the mechanisation of whose soundness proo
 is expected to be similar in difficulty to the formalisation of \texttt{wp\_unif} possibly requiring the mechanisation
 of relevant measure theoretic lemmas first before we can proceed with the soundness proof itself.
 }
-
-\subsection{Comparison with Bluebell}
-\Todo{}
-This section is incomplete. What I aim to talk about is that the definition of almost surely equals in Lilac,
-and as a consequence the proof its properties such as being an equivalence relation, got somewhat convoluted,
-and in Bluebell a fundamentally alternative approach was pursued in part to offer a cleaner solution to this problem.
-
-In particular Bluebell includes variables in its resource algebra. @Shing Hin can you confirm if these claims are correct?
-
-Because of this observation, I just want to state that it is strange I ended up not needing almost surely equals at all.
-And I would want to try out more examples and implement full Lilac (with conditioning) before confirming if
-almost surely equals is indeed not necessary....
