@@ -18,7 +18,7 @@ These are the main tools for reasoning about programs in Appl on top of the Iris
 - `wp_cons`: The rule of rule of consequence standard in program logics.
 - `wp_frame`: The frame rule standard in separation logics.
 - `wp_ret`: Eliminating `wp` in an assertion
-- `wp_bind`: The monadic `bind` is like the let construct, and this rule unrolls the program line by line
+- `wp_bind`: The monadic `bind` aka let construct, and this rule unrolls the program line by line
 - `wp_unif`: Converting a syntactic `X ← unif01` program to an LProp `X ~ Unif[0,1]`
 -/
 
@@ -36,7 +36,8 @@ abbrev ret [MeasurableSpace α] (a : α) := dirac a
 theorem wp_cons {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)}
     (P_entails_Q : ∀ X : RV ⟪A⟫, iprop(P X ⊢ Q X)) : iprop(wp M P ⊢ wp M Q) := by
   intro Ω wp_l Ω_fr Ω_pre μ Ω_pre_le_μ  _ msα D_ext
-  have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ := wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
+  have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ :=
+    wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
   use X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, P_entails_Q X Ω' postcond
 
 open Krm in
@@ -60,7 +61,15 @@ theorem wp_frame {F : LProp} {Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeas
     use Ω_F, Ω_M', (right Ω_fr_F_M')
 
 theorem wp_disj {P Q : RV ⟪A⟫ → LProp} {M : RV (ProbabilityMeasure ⟪A⟫)} :
-    iprop((wp M P) ∨ (wp M Q) ⊢ wp M (fun X ↦ iprop(P X ∨ Q X))) := sorry
+    iprop((wp M P) ∨ (wp M Q) ⊢ wp M (fun X ↦ iprop(P X ∨ Q X))) := by
+  intro Ω hor Ω_fr Ω_pre μ Ω_pre_le_μ _ msα D_ext
+  rcases hor with wp_l | wp_l
+  · have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ :=
+      wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
+    exact ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, Or.inl postcond⟩
+  · have ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, postcond⟩ :=
+      wp_l Ω_fr Ω_pre μ Ω_pre_le_μ (msα := msα) D_ext
+    exact ⟨X, Ω', Ω_post, μ', Ω_post_le_μ, calc_block, Or.inr postcond⟩
 
 -- Appendix B.22 from Lilac paper
 -- TODO: It is unclear how to express the substitution of `wp_ret`. Just a function?
@@ -135,7 +144,7 @@ theorem wp_bind (Q : RV ⟪B⟫ → LProp) (D : RV (TProd (⟪·⟫) rs))
 theorem wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
     iprop(∀ (X : RV ⟪Ty.real⟫), iprop(X ∼ unif01_sem -∗ Q X))
     ⊢ wp (Term.unif01.den ∘ᵣ D) Q :=
-  wp_meas Ty.real ⟨λ i ↦ (i : ℝ), by fun_prop⟩ Q D
+  wp_meas Ty.real ⟨λ i ↦ (i : ℝ), by fun_prop⟩ Q
 
 -- lemma ite_den_eq {E : Term rs Ty.bool} {M N : Term rs A}
 --     : (Term.ite E M N).den = M.ret.bind (
@@ -144,9 +153,10 @@ theorem wp_unif (Q : RV ⟪Ty.real⟫ → LProp) (D : RV (List.TProd (⟪·⟫) 
 --                              )
 --     )
 
-/-- Running `Term.ite E M N` is equivalent to running (sampling) all 3 terms (in any order, I just picked one)
-And then doing the if then else on the 3 values thus obtained-/
-theorem wp_if (Q : RV ⟪A⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) (E : Term rs Ty.bool) (M N : Term rs A.G) :
+/-- Running `Term.ite E M N` is equivalent to running (sampling) all 3 terms (in any order, I just
+picked one) And then doing the if then else on the 3 values thus obtained -/
+theorem wp_if (Q : RV ⟪A⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) (E : Term rs Ty.bool)
+  (M N : Term rs A.G) :
     wp (M.den ∘ᵣ D) (fun X ↦ (
     wp (N.den ∘ᵣ D) (fun Y ↦ (
     Q (RV.ite (E.den ∘ᵣ D) X Y) ))))

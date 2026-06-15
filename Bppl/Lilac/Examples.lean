@@ -27,7 +27,8 @@ Maybe we can just have string based mapping somehow. -/
 noncomputable section
 -- Maybe use parametric abstract higher order syntax instead to make
 
-abbrev nil : RV (List.TProd (⟪·⟫) []) := ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, sorry⟩
+abbrev nil : RV (List.TProd (⟪·⟫) []) :=
+  ⟨⟨λ _ ↦ PUnit.unit, measurable_const⟩, RV.ff_const PUnit.unit⟩
 
 notation "#0" => var head
 notation "#1" => var (tail head)
@@ -67,8 +68,10 @@ notation:10 D ".ₘ2" => (measurableFun_snd ∘ᵣ D)
 abbrev post2 : LProp := wp (unif2.den ∘ᵣ nil) (λ (Z : RV ⟪Ty.prod .real .real⟫) ↦
   iprop((Z.ₘ1) ∼ unif01_sem ∗ (Z.ₘ2) ∼ unif01_sem))
 
-lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_fst ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = X := by rfl
-lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) : (measurableFun_snd ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = Y := by rfl
+lemma hrw2₁ {A : Ty} (X Y : RV ⟪A⟫) :
+  (measurableFun_fst ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = X := by rfl
+lemma hrw2₂ {A : Ty} (X Y : RV ⟪A⟫) :
+  (measurableFun_snd ∘ᵣ ((var head.tail).pair (var head)).den ∘ᵣ (Y ;; X ;; nil)) = Y := by rfl
 
 theorem unif2_spec : iprop(⊢ post2) := by
   rw [post2]
@@ -110,8 +113,6 @@ abbrev half : Term [Ty.real] Ty.real.G :=
   )
 
 -- abbrev X : RV ⟪Ty.real⟫ := ⟨⟨λ ω ↦ ω 0, sorry⟩, sorry⟩
-
-abbrev envX : RV (List.TProd (⟪·⟫) [Ty.real]) := ⟨⟨λ ω ↦ (ω 0, PUnit.unit), sorry⟩, sorry⟩
 
 abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
     iprop(∃ e, 𝔼[Y]=e/2 ∧ 𝔼[X]=e))

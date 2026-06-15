@@ -72,6 +72,35 @@ lemma finite_footprint_of_ge {n n' : ℕ} {ms : MeasurableSpace (ℕ → I)} (hn
   convert unSplitBi_eq_comap_fst n ms_n
   exact comap_comp
 
+/-- `FiniteFootprint n ms` is equivalent to `ms` lying below the σ-algebra that only sees the
+first `n` coordinates (where it carries the full σ-algebra `⊤`). This characterisation makes the
+monotonicity and join-closure of `FiniteFootprint` immediate. -/
+lemma finiteFootprint_iff_le {n : ℕ} {ms : MeasurableSpace (ℕ → I)} :
+    FiniteFootprint n ms ↔ ms ≤ unSplitBi ((⊤ : MeasurableSpace (Fin n → I)) ×ₘ Inf_nil) := by
+  rw [unSplitBi_eq_comap_fst]
+  refine ⟨?_, fun h => ?_⟩
+  · rintro ⟨ms', rfl⟩
+    rw [unSplitBi_eq_comap_fst]
+    exact MeasurableSpace.comap_mono le_top
+  · refine ⟨MeasurableSpace.map (Prod.fst ∘ splitBi n) ms, ?_⟩
+    rw [unSplitBi_eq_comap_fst]
+    refine le_antisymm (fun s hs => ?_) comap_map_le
+    obtain ⟨A, -, rfl⟩ := h s hs
+    exact ⟨A, hs, rfl⟩
+
+/-- `FiniteFootprint` is monotone: a smaller σ-algebra below one with footprint `n` also has
+footprint `n`. -/
+lemma ff_mono {n : ℕ} {ms₁ ms₂ : MeasurableSpace (ℕ → I)} (h : ms₂ ≤ ms₁)
+    (ff : FiniteFootprint n ms₁) : FiniteFootprint n ms₂ :=
+  finiteFootprint_iff_le.mpr (h.trans (finiteFootprint_iff_le.mp ff))
+
+/-- `FiniteFootprint` is closed under joins. -/
+lemma ff_sup {n : ℕ} {ms₁ ms₂ : MeasurableSpace (ℕ → I)}
+    (ff₁ : FiniteFootprint n ms₁) (ff₂ : FiniteFootprint n ms₂) :
+    FiniteFootprint n (ms₁ ⊔ ms₂) :=
+  finiteFootprint_iff_le.mpr
+    (sup_le (finiteFootprint_iff_le.mp ff₁) (finiteFootprint_iff_le.mp ff₂))
+
 lemma commute (le_α : msα₁ ≤ msα₂) (le_β : msβ₁ ≤ msβ₂) :
     (MeasurableSpace.prod msα₁ msβ₂) ⊔ (MeasurableSpace.prod msα₂ msβ₁) =
     MeasurableSpace.prod msα₂ msβ₂ := by
@@ -216,7 +245,8 @@ instance : IsProbabilityMeasure unif01_sem :=
 -- this should be refactored into a type class, or use the `fun_prop` style, where
 -- lemmas constructing the `ff` property are annotated with `fun_prop`
 /-- A measurable function from `HC` with finite footprint. -/
-structure RV (β : Type*) [msβ : MeasurableSpace β] extends @MeasurableFun HC β MeasurableSpace.pi _ where
+structure RV (β : Type*) [msβ : MeasurableSpace β] extends @MeasurableFun HC β MeasurableSpace.pi _
+    where
   /-- Finite footprint -/
   ff : ∃ n, HC.FiniteFootprint n (msβ.comap toFun)
 
@@ -234,28 +264,55 @@ instance instCoeRV : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
 
 instance : Mul (RV ℝ) where
-  mul M N := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
+  mul M N := ⟨⟨λ ω ↦ M ω * N ω, M.meas.mul N.meas⟩, by
+    obtain ⟨n₁, h₁⟩ := M.ff
+    obtain ⟨n₂, h₂⟩ := N.ff
+    refine ⟨max n₁ n₂, HC.ff_mono (Measurable.comap_le ?_)
+      (HC.ff_sup (HC.finite_footprint_of_ge (le_max_left n₁ n₂) h₁)
+        (HC.finite_footprint_of_ge (le_max_right n₁ n₂) h₂))⟩
+    exact (Measurable.of_comap_le le_sup_left).mul (Measurable.of_comap_le le_sup_right)⟩
 
 -- abbrev mul (M N : RV ℝ) : RV ℝ := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
 
-abbrev ite (E : RV Bool) (M N : RV α) : RV α := ⟨⟨λ ω ↦ if E ω then M ω else N ω, sorry⟩, sorry⟩
+abbrev ite (E : RV Bool) (M N : RV α) : RV α :=
+  ⟨⟨λ ω ↦ if E ω then M ω else N ω,
+      Measurable.ite (E.meas (measurableSet_singleton true)) M.meas N.meas⟩, by
+    obtain ⟨nE, hE⟩ := E.ff
+    obtain ⟨nM, hM⟩ := M.ff
+    obtain ⟨nN, hN⟩ := N.ff
+    refine ⟨max (max nE nM) nN, HC.ff_mono (Measurable.comap_le ?_)
+      (HC.ff_sup (HC.ff_sup
+        (HC.finite_footprint_of_ge ((le_max_left nE nM).trans (le_max_left _ nN)) hE)
+        (HC.finite_footprint_of_ge ((le_max_right nE nM).trans (le_max_left _ nN)) hM))
+        (HC.finite_footprint_of_ge (le_max_right _ nN) hN))⟩
+    exact Measurable.ite
+      ((Measurable.of_comap_le (le_sup_left.trans le_sup_left)) (measurableSet_singleton true))
+      (Measurable.of_comap_le (le_sup_right.trans le_sup_left))
+      (Measurable.of_comap_le le_sup_right)⟩
 
 abbrev prod [MeasurableSpace α] [MeasurableSpace β]
     (f : RV α) (g : RV β) : RV (α × β) :=
   ⟨⟨fun (r : HC) ↦ ((f r : α), (g r : β)), Measurable.prod f.meas g.meas⟩, by
     obtain ⟨n₁, h₁⟩ := f.ff
     obtain ⟨n₂, h₂⟩ := g.ff
-    use max n₁ n₂
-    simp only
-    sorry
+    refine ⟨max n₁ n₂, HC.ff_mono (Measurable.comap_le ?_)
+      (HC.ff_sup (HC.finite_footprint_of_ge (le_max_left n₁ n₂) h₁)
+        (HC.finite_footprint_of_ge (le_max_right n₁ n₂) h₂))⟩
+    exact (Measurable.of_comap_le le_sup_left).prod (Measurable.of_comap_le le_sup_right)
   ⟩
 notation x " ;; " xs => RV.prod x xs
 
 abbrev comp [MeasurableSpace β] [MeasurableSpace γ] (g : β -m→ γ) (f : RV β) : RV γ :=
-  ⟨⟨g ∘ f, Measurable.comp g.meas f.meas⟩, sorry⟩
+  ⟨⟨g ∘ f, Measurable.comp g.meas f.meas⟩, by
+    obtain ⟨n, hn⟩ := f.ff
+    refine ⟨n, HC.ff_mono ?_ hn⟩
+    rw [← MeasurableSpace.comap_comp]
+    exact MeasurableSpace.comap_mono g.meas.comap_le⟩
 notation g " ∘ᵣ " f => RV.comp g f
 
-def coordProj (n : ℕ) : RV I := ⟨⟨fun ω ↦ ω n, by fun_prop⟩, sorry⟩
+def coordProj (n : ℕ) : RV I := ⟨⟨fun ω ↦ ω n, by fun_prop⟩, by
+  obtain ⟨m, hm⟩ := HC.ff_N_nil_I_borel (N := n)
+  exact ⟨m, HC.ff_mono (measurable_iff_comap_le.mp (HC.coordProj_measurable n)) hm⟩⟩
 
 abbrev fProd {α β γ : Type*} (f : α → β) (g : α → γ) (x : α) : β × γ := (f x, g x)
 notation " ⟨ " f ", " g " ⟩ᶠ " => fProd f g

@@ -116,15 +116,17 @@ notation "⟪" t "⟫" => Ty.den t
         ext ⟨⟨a₁, b₁⟩, ⟨a₂, b₂⟩⟩; simp [Set.diagonal, Prod.ext_iff]
       rw [this]
       exact MeasurableSet.inter
-        (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.fst) (measurable_snd.fst)))
-        (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.snd) (measurable_snd.snd)))⟩
+       (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.fst) (measurable_snd.fst)))
+       (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.snd) (measurable_snd.snd)))
+    ⟩
   | bool => inferInstance
   | real => inferInstance
   | exp n ty =>
     have := ty.MeasurableEq
     ⟨by
       have : Set.diagonal (Fin n → ⟪ty⟫) =
-        ⋂ i : Fin n, (fun p : (Fin n → ⟪ty⟫) × (Fin n → ⟪ty⟫) => (p.1 i, p.2 i)) ⁻¹' Set.diagonal ⟪ty⟫ := by
+        ⋂ i : Fin n, (fun p : (Fin n → ⟪ty⟫) × (Fin n → ⟪ty⟫) =>
+          (p.1 i, p.2 i)) ⁻¹' Set.diagonal ⟪ty⟫ := by
         ext ⟨f, g⟩; simp [Set.diagonal, funext_iff]
       rw [this]
       exact MeasurableSet.iInter (fun i =>
@@ -168,7 +170,8 @@ instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
   default := match ty with
     | .prod ty₁ ty₂ =>
       (@default ty₁.den.carrier (arbitrary ty₁), @default ty₂.den.carrier (arbitrary ty₂))
-    | (Ty.G ty) => ⟨Measure.dirac (@default ty.den.carrier (arbitrary ty)), Measure.dirac.isProbabilityMeasure⟩
+    | (Ty.G ty) => ⟨Measure.dirac (@default ty.den.carrier (arbitrary ty)),
+        Measure.dirac.isProbabilityMeasure⟩
     -- | Ty.index => default
     | Ty.exp _ ty => fun _ ↦ @default ty.den.carrier (arbitrary ty)
     | Ty.real => default
@@ -210,8 +213,8 @@ to give an element of a measurable space -/
   | pair M N => ⟨fun env ↦ (M.den env, N.den env), Measurable.prod M.den.2 N.den.2⟩
   | fst M => ⟨fun env ↦ (M.den env).fst, Measurable.fst M.den.2⟩
   | snd M => ⟨fun env ↦ (M.den env).snd, Measurable.snd M.den.2⟩
-  | T => ⟨fun env ↦ true, measurable_const⟩
-  | F => ⟨fun env ↦ false, measurable_const⟩
+  | T => ⟨fun _env ↦ true, measurable_const⟩
+  | F => ⟨fun _env ↦ false, measurable_const⟩
   | ite P M N => ⟨fun env ↦ if P.den env then M.den env else N.den env,
       -- the function translating from bool to Prop is `Measurable`
       -- by `measurableSet_singleton true`

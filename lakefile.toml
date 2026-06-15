@@ -9,6 +9,7 @@ autoImplicit = true
 relaxedAutoImplicit = true
 linter.style.lambdaSyntax = false
 weak.linter.mathlibStandardSet = true
+linter.style.openClassical = false
 maxSynthPendingDepth = 3
 
 [[require]]

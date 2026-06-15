@@ -58,21 +58,25 @@ asserted as part of the resource in the original definition. -/
 def dist (E : HC → ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
   ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = @Measure.map _ _ Ω.ms _ E Ω.μ,
   -- monotonicity proof
-  by sorry
-    -- intro σ₁ σ₂ hle ⟨hm, hbind⟩
-    -- change σ₁.toPSpace ≤ σ₂.toPSpace at hle
-    -- obtain ⟨hms, hmu⟩ := hle
-    -- refine ⟨hm.mono hms le_rfl, ?_⟩
-    -- rw [hbind, hmu,
-    --     Measure.bind_dirac_eq_map _ (hm.mono hms le_rfl),
-    --     Measure.bind_dirac_eq_map _ hm,
-    --     Measure.cast_eq_self,
-    --     Measure.map_map hm (measurable_id.mono hms le_rfl)]
-    -- rfl
+  by
+    intro σ₁ σ₂ hle ⟨hm, hbind⟩
+    change σ₁.toPSpace ≤ σ₂.toPSpace at hle
+    obtain ⟨hms, hmu⟩ := hle
+    refine ⟨hm.mono hms le_rfl, ?_⟩
+    rw [hbind, hmu, Measure.cast_eq_self,
+        Measure.map_map hm (measurable_id.mono hms le_rfl)]
+    rfl
   ⟩
 
 def expectation (E : RV ⟪Ty.real⟫) (e : ℝ) : LProp :=
-  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ ∫ ω, E ω ∂(Ω.μ) = e, sorry⟩
+  ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ ∫ ω, E ω ∂(Ω.μ) = e,
+  by
+    intro σ₁ σ₂ hle ⟨hm, hint⟩
+    change σ₁.toPSpace ≤ σ₂.toPSpace at hle
+    obtain ⟨hms, hmu⟩ := hle
+    refine ⟨hm.mono hms le_rfl, ?_⟩
+    rw [← hint, hmu, Measure.cast_eq_self, ← trim_eq_map hms]
+    exact integral_trim hms hm.stronglyMeasurable⟩
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require

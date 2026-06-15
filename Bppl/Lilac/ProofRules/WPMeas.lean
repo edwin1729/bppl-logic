@@ -27,7 +27,7 @@ open Iris.BI Krm HC
 /-- The pushforward of μ' under `(X, D_ext)` equals `lebI.prod (μ.map D_ext)`. -/
 def PSpace.mk'' {Ω : Type*} {ms ms' : MeasurableSpace Ω} (μ : @ProbabilityMeasure Ω ms)
     (ms'_le_ms : ms' ≤ ms) : PSpace Ω :=
-  ⟨⟨ms', μ.1.trim ms'_le_ms⟩, sorry⟩
+  ⟨⟨ms', μ.1.trim ms'_le_ms⟩, Measure.trim_preserves_prob ms' ms ms'_le_ms μ.2⟩
 
 lemma map_X_Dext_eq_prod [MeasurableSpace α]
     (μ : @ProbabilityMeasure HC Inf_borel)
@@ -71,7 +71,7 @@ abbrev μX {ty : Ty} (X_glue : I -m→ ⟪ty⟫) : ProbabilityMeasure ⟪ty⟫ :
   ⟨lebI.map X_glue, isProbabilityMeasure_map X_glue.meas.aemeasurable⟩
 
 -- Appendix B.21 from Lilac paper — "Uniform" proof rule.
-lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) (D : RV (List.TProd (⟪·⟫) rs)) :
+lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) :
     iprop(∀ (X : RV ⟪ty⟫), iprop(X ∼ (lebI.map X_glue) -∗ Q X))
     ⊢ wp (RV.const (μX X_glue)) Q := by
   rintro Ω lhs Ω_fr Ω_pre μ hΩ_pre _ _ D_ext
@@ -82,7 +82,6 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
   let n := max n₁ n₂
   have ff_pre := HC.finite_footprint_of_ge (le_max_left n₁ n₂) ff_pre
   have ff_D_ext := HC.finite_footprint_of_ge (le_max_right n₁ n₂) ff_D_ext
-
   have hΩ_le_pre : Ω.ms ≤ (↓Ω_pre).ms := by rw [PSp.sum_ms_of_prod]; exact subset_sum_r Ω_fr.ms Ω.ms
   let X : RV ⟪ty⟫ := X_glue ∘ᵣ (RV.coordProj n)
   -- Construct μ' and Ω_n which are relevant to after the program runs
@@ -94,15 +93,12 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
   let Ω_n : PSp := ⟨PSpace.mk'' μ' (N_nil_I_borel_le_Inf_borel n), ff_N_nil_I_borel⟩
   -- Now extract ms_pre (after μ_k/μ' definitions to avoid instance shadowing)
   obtain ⟨ms_pre, h_ms_pre⟩ := ff_pre
-
-
   -- σ-algebra equality: the sum of the two sub-σ-algebras equals the combined one
   -- Uses: .sum = ⊔ (sum_eq_sup), commutativity of ⊔, and commute_with_add_dim
   have h_sum_eq : (↓Ω_pre).1.ms.sum Ω_n.1.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil):= by
     show (↓Ω_pre).ms.sum Ω_n.ms = unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil)
     rw [h_ms_pre, sum_eq_sup, sup_comm]
     exact commute_with_add_dim ms_pre
-
   have ms_pre_le_Inf_borel : unSplitTri (ms_pre ×ₘ I_borel ×ₘ Inf_nil) ≤ Inf_borel := by
     have h_le : unSplitBi (ms_pre ×ₘ Inf_nil) ≤ Inf_borel := h_ms_pre ▸ hΩ_pre.1
     exact unSplitTri_I_borel_le_Inf_borel ms_pre (ms_pre_le_pi_of_le_Inf_borel n ms_pre h_le)
@@ -196,9 +192,7 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
   have Ω' : ✓'(Ω ⋆ Ω_n) := right Ω_post
   -- have eq_Ω_post : ↓Ω_post = ↓Ω_post_alt :=
   --   Krm_helper.get_assoc_eq' Ω_fr Ω Ω_n Ω_pre Ω_post Ω' Ω_post_alt
-
   use X, ↓Ω', (assoc_right Ω_post), μ'
-
   refine ⟨?Ω_post_le, ?bind_eq, ?postcond⟩
   case Ω_post_le =>
     -- (↓Ω_post).toPSpace = r_pspace by uniqueness of the independent product.
@@ -225,12 +219,9 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
           rfl
       rw [this]
       exact PSpace.trim_le ms_pre_le_Inf_borel
-
     exact (assoc_right_eq Ω_post).symm ▸ h_Ω_post_eq_r.symm ▸ h_r_le
-
   case bind_eq =>
     let coordProj : Kernel HC I := deterministic (fun ω ↦ ω n) (by fun_prop)
-
     suffices h: (const HC lebI ×ₖ det D_ext) ∘ₘ μ = (coordProj ×ₖ det D_ext) ∘ₘ μ' by
       calc
         (toMK (RV.const (μX X_glue)) ×ₖ det D_ext) ∘ₘ μ
@@ -250,14 +241,12 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
             rw [Kernel.parallelComp_comp_prod, Kernel.id_comp]
         _ = (det X ×ₖ det D_ext) ∘ₘ ↑μ' := by
             rw [Kernel.deterministic_comp_deterministic]; rfl
-
     -- LHS is `lebI.prod (μ.map D_ext)`
     rw [const_prod_det_compMeasure]
     -- RHS is `μ'.map (fun ω => (X ω, D_ext ω))`
     rw [det_prod_det_compMeasure]
     -- `μ'.map (fun ω => (X ω, D_ext ω)) = lebI.prod (μ.map D_ext)`
     exact (map_X_Dext_eq_prod μ D_ext (le_max_right n₁ n₂) μ_k rfl μ' rfl).symm
-
   case postcond =>
     -- Q X via wand elimination
     dsimp only [BIBase.forall, BIBase.sForall] at lhs
@@ -275,7 +264,6 @@ lemma wp_meas (ty : Ty) (X_glue : I -m→ ⟪ty⟫) (Q : RV ⟪ty⟫ → LProp) 
       apply congrArg (Measure.map ⇑X_glue)
       rw [unif01_eq_map_coord_prod n μ_k μ' hμ']
       exact (map_trim_eq_map (HC.coordProj_measurable n) ↑μ' (N_nil_I_borel_le_Inf_borel n)).symm
-
     suffices h : ↓((Pcm.comm Ω Ω_n) ▸ Ω') = ↓Ω' by exact h ▸ h_wand
     exact Krm.get_comm Ω_n Ω ((Pcm.comm Ω Ω_n) ▸ Ω') Ω'
 
