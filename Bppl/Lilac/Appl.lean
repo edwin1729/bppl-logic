@@ -104,38 +104,6 @@ noncomputable section
 
 notation "⟪" t "⟫" => Ty.den t
 
-@[reducible] def Ty.MeasurableEq (ty : Ty) : MeasurableEq ⟪ty⟫ :=
-  match ty with
-  | prod ty₁ ty₂ =>
-    have := ty₁.MeasurableEq
-    have := ty₂.MeasurableEq
-    ⟨by
-      have : Set.diagonal (⟪ty₁⟫ × ⟪ty₂⟫) =
-        (fun p : (⟪ty₁⟫ × ⟪ty₂⟫) × (⟪ty₁⟫ × ⟪ty₂⟫) => (p.1.1, p.2.1)) ⁻¹' Set.diagonal ⟪ty₁⟫ ∩
-        (fun p : (⟪ty₁⟫ × ⟪ty₂⟫) × (⟪ty₁⟫ × ⟪ty₂⟫) => (p.1.2, p.2.2)) ⁻¹' Set.diagonal ⟪ty₂⟫ := by
-        ext ⟨⟨a₁, b₁⟩, ⟨a₂, b₂⟩⟩; simp [Set.diagonal, Prod.ext_iff]
-      rw [this]
-      exact MeasurableSet.inter
-       (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.fst) (measurable_snd.fst)))
-       (measurableSet_diagonal.preimage (Measurable.prod (measurable_fst.snd) (measurable_snd.snd)))
-    ⟩
-  | bool => inferInstance
-  | real => inferInstance
-  | exp n ty =>
-    have := ty.MeasurableEq
-    ⟨by
-      have : Set.diagonal (Fin n → ⟪ty⟫) =
-        ⋂ i : Fin n, (fun p : (Fin n → ⟪ty⟫) × (Fin n → ⟪ty⟫) =>
-          (p.1 i, p.2 i)) ⁻¹' Set.diagonal ⟪ty⟫ := by
-        ext ⟨f, g⟩; simp [Set.diagonal, funext_iff]
-      rw [this]
-      exact MeasurableSet.iInter (fun i =>
-        measurableSet_diagonal.preimage (Measurable.prod
-          (measurable_pi_apply i |>.comp measurable_fst)
-          (measurable_pi_apply i |>.comp measurable_snd)))⟩
-  -- | index => inferInstance
-  | G ty => sorry
-
 notation "⟪" t "⟫ᵐ" => MeasCat.str (Ty.den t)
 notation "⟪" t "⟫ᵐᵉ" => Ty.MeasurableEq t
 
@@ -165,17 +133,6 @@ notation "⟪" t "⟫ᵐᵉ" => Ty.MeasurableEq t
     convert h using 1
     ext p; simp [decide_eq_true_eq]⟩
 
-
-instance arbitrary (ty : Ty) : Inhabited (ty.den.carrier) where
-  default := match ty with
-    | .prod ty₁ ty₂ =>
-      (@default ty₁.den.carrier (arbitrary ty₁), @default ty₂.den.carrier (arbitrary ty₂))
-    | (Ty.G ty) => ⟨Measure.dirac (@default ty.den.carrier (arbitrary ty)),
-        Measure.dirac.isProbabilityMeasure⟩
-    -- | Ty.index => default
-    | Ty.exp _ ty => fun _ ↦ @default ty.den.carrier (arbitrary ty)
-    | Ty.real => default
-    | Ty.bool => default
 
 abbrev toMK {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
     (f : α -m→ ProbabilityMeasure β) : Kernel α β :=
