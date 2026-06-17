@@ -264,7 +264,7 @@ instance instCoeRV : Coe (RV β) (HC -m→ β) where
   coe D := D.toMeasurableFun
 
 instance : Mul (RV ℝ) where
-  mul M N := ⟨⟨λ ω ↦ M ω * N ω, M.meas.mul N.meas⟩, by
+  mul M N := ⟨⟨M.toFun * N.toFun, M.meas.mul N.meas⟩, by
     obtain ⟨n₁, h₁⟩ := M.ff
     obtain ⟨n₂, h₂⟩ := N.ff
     refine ⟨max n₁ n₂, HC.ff_mono (Measurable.comap_le ?_)
