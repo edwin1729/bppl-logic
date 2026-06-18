@@ -1,0 +1,5 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{lemma}\PYG{+w}{ }\PYG{n}{indep\PYGZus{}of\PYGZus{}own}\PYG{+w}{ }\PYG{o}{\PYGZob{}}\PYG{n}{X}\PYG{+w}{ }\PYG{n}{Y}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{n}{RV}\PYG{+w}{ }\PYG{n+nb+bp}{⟪}\PYG{n}{Ty}\PYG{n+nb+bp}{.}\PYG{n}{real}\PYG{n+nb+bp}{⟫}\PYG{o}{\PYGZcb{}}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{Ω}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{n}{PSp}\PYG{o}{)}
+\PYG{+w}{    }\PYG{o}{(}\PYG{n}{ownXY}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{iprop}\PYG{o}{(}\PYG{n}{own}\PYG{+w}{ }\PYG{n}{X}\PYG{+w}{ }\PYG{n+nb+bp}{∗}\PYG{+w}{ }\PYG{n}{own}\PYG{+w}{ }\PYG{n}{Y}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{n}{LProp}\PYG{o}{)}\PYG{n+nb+bp}{.}\PYG{l+m}{1}\PYG{+w}{ }\PYG{n}{Ω}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{:}
+\PYG{+w}{    }\PYG{n}{IndepFun}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{μ}\PYG{+w}{ }\PYG{o}{:=}\PYG{+w}{ }\PYG{n}{Ω}\PYG{n+nb+bp}{.}\PYG{n}{μ}\PYG{o}{)}\PYG{+w}{ }\PYG{n}{X}\PYG{+w}{ }\PYG{n}{Y}
+\end{MintedVerbatim}

@@ -1,0 +1,36 @@
+\section{Introduction}
+
+\begin{frame}{Why verify probabilistic programs?}
+  \begin{itemize}
+    \item Randomised code is everywhere: cryptography, differential privacy,
+          randomised algorithms, probabilistic ML, scientific simulation.
+    \item Probabilistic programs \emph{evade conventional testing} --- a rare
+          (correct) outlier execution and a bug look the same.
+    \item We want \alert{foundational verification}: machine-checked proofs of
+          correctness resting on nothing but the axioms of mathematics.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Probabilistic separation logics}
+  \begin{itemize}
+    \item Separation logic has been hugely successful for heap-manipulating and
+          concurrent programs.
+    \item \alert{``Separation is independence of random variables.''}
+          --- the key idea of Lilac.
+    \item Lilac supports \emph{continuous} distributions.
+  \end{itemize}
+  \pause
+  \begin{block}{This project}
+    The first mechanisation of a PSL with continuous distributions, and the
+    first mechanisation of any PSL in Lean.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Contributions}
+  \begin{itemize}
+    \item A complete mechanisation of \textbf{Core Lilac} in Lean 4, with full
+          soundness proofs.
+    \item An \textbf{interactive proof interface} built on the Lean port of Iris.
+    \item Worked examples carried out in the Iris proof mode.
+  \end{itemize}
+\end{frame}

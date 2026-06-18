@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n}{sep}\PYG{+w}{ }\PYG{n}{P}\PYG{+w}{ }\PYG{n}{Q}\PYG{+w}{ }\PYG{o}{:=}\PYG{+w}{ }\PYG{n+nb+bp}{⟨}\PYG{k}{fun}\PYG{+w}{ }\PYG{n}{σ}\PYG{+w}{ }\PYG{n+nb+bp}{↦}\PYG{+w}{ }\PYG{n+nb+bp}{∃}\PYG{+w}{ }\PYG{n}{σ₁}\PYG{+w}{ }\PYG{n}{σ₂}\PYG{o}{,}\PYG{+w}{ }\PYG{n+nb+bp}{∃}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{σ₁₂}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{n+nb+bp}{✓\PYGZsq{}}\PYG{o}{(}\PYG{n}{σ₁}\PYG{+w}{ }\PYG{n+nb+bp}{⋆}\PYG{+w}{ }\PYG{n}{σ₂}\PYG{o}{)),}
+\PYG{+w}{                     }\PYG{n+nb+bp}{↓}\PYG{n}{σ₁₂}\PYG{+w}{ }\PYG{n+nb+bp}{≤}\PYG{+w}{ }\PYG{n}{σ}\PYG{+w}{ }\PYG{n+nb+bp}{∧}\PYG{+w}{ }\PYG{n}{P}\PYG{n+nb+bp}{.}\PYG{l+m}{1}\PYG{+w}{ }\PYG{n}{σ₁}\PYG{+w}{ }\PYG{n+nb+bp}{∧}\PYG{+w}{ }\PYG{n}{Q}\PYG{n+nb+bp}{.}\PYG{l+m}{1}\PYG{+w}{ }\PYG{n}{σ₂}\PYG{o}{,}\PYG{+w}{ }\PYG{n+nb+bp}{…⟩}
+\end{MintedVerbatim}

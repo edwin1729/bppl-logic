@@ -1,0 +1,48 @@
+% =====================================================================
+%  Contribution frame
+%  Central sentence with two hand-drawn-style annotation callouts that
+%  pop out on successive overlay clicks.
+%    Click 1: base sentence.
+%    Click 2: gold arrow out of "mechanisation" -> list (above-left).
+%    Click 3: green arrow out of "foundational verification" -> list
+%             (above-right).
+%  Macros \wmech, \wfound, \wprob and colours wordyellow/green/blue are
+%  defined in the main.tex preamble.
+% =====================================================================
+\begin{frame}{Contribution}
+  \vspace*{\fill}
+  \vspace*{2.2cm}
+  \begin{center}
+    \large
+    The first \tikzmarknode{mech}{\wmech{mechanisation}}
+    of \tikzmarknode{found}{\wfound{foundational verification}}\\[0.5em]
+    for \tikzmarknode{prob}{\wprob{probabilistic programs}}\\[0.5em]
+    supporting continuous distributions.
+  \end{center}
+  \vspace*{\fill}
+  \begin{tikzpicture}[remember picture, overlay]
+
+    % --- Click 2: gold callout, above-left, out of "mechanisation" ---
+    \only<2->{
+      \node[anchor=south east, align=left, text width=4.6cm,
+            text=wordyellow, font=\small\bfseries] (mechpts)
+        at ([xshift=0.0cm, yshift=1.3cm]mech.north) {%
+        1.~Soundness proofs\\
+        2.~Interactivity using Iris};
+      \draw[-{Stealth[length=2.4mm]}, thick, wordyellow]
+        (mech.north) to[out=120, in=-70] ([yshift=-1mm]mechpts.south east);
+    }
+    % --- Click 3: green callout, above-right, out of "foundational
+    %     verification" ---
+    \only<3->{
+      \node[anchor=south west, align=left, text width=5.4cm,
+            text=wordgreen, font=\small] (foundpts)
+        at ([xshift=-0.4cm, yshift=1.3cm]found.north) {%
+        using a theorem prover like Lean or Rocq\\
+        Highest achievable assurance\\
+        Assuming only the foundational axioms of mathematics};
+      \draw[-{Stealth[length=2.4mm]}, thick, wordgreen]
+        (found.north) to[out=60, in=-110] ([yshift=-1mm]foundpts.south west);
+    }
+  \end{tikzpicture}
+\end{frame}

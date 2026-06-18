@@ -1,0 +1,78 @@
+% =====================================================================
+%  Contributions, revisited --- the mechanisation of Lilac
+%  \input-able frames only; no preamble. See main.tex for macros.
+% =====================================================================
+
+\begin{frame}{Contributions, ``revised''}
+  Now that the motivation is in place: \alert{what} did we mechanise, and
+  \alert{why} does it matter?
+  \vfill
+  \begin{itemize}
+    \item \wprob{Lilac} is a probabilistic separation logic whose guiding
+          idea is\\[0.2em]
+          \begin{center}
+            \emph{``separation \(=\) independence of random variables''}
+          \end{center}
+          The separating conjunction \(P * Q\) asserts that the random
+          variables described by \(P\) and \(Q\) are \alert{probabilistically
+          independent} --- and Lilac supports \wprob{continuous} distributions.
+    \item We give the \wmech{first mechanisation of \textbf{Core\footnote{Extended Lilac adds reasoning about conditioning} Lilac} in Lean 4},
+          the first mechanisation of \emph{any} probabilistic separation logic
+          in Lean.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{What was mechanised}
+  \begin{itemize}
+    \item[\textcolor{wordyellow}{\textbf{1.}}]
+          \wfound{Soundness, from the ground up.}
+          Core Lilac is built as a model over probability spaces with finite
+          footprint, and every program-logic proof rule is proved sound
+          against that model:
+          \[
+            \texttt{wp\_ret}\quad
+            \texttt{wp\_bind}\quad
+            \texttt{wp\_unif}\quad
+            \texttt{wp\_cons}\quad
+            \texttt{wp\_frame}
+          \]
+    \pause
+    \item[\textcolor{wordyellow}{\textbf{2.}}]
+          \wfound{An interactive proof interface.}
+          Lilac is instantiated as a \wmech{bunched-implication logic} on the
+          Lean port of \alert{Iris}, so proofs are carried out in the
+          \emph{Iris proof mode}.
+    \pause
+    \item[\textcolor{wordyellow}{\textbf{3.}}]
+          \wfound{Worked examples.}
+          Specifications of sampling programs proved in that proof mode ---
+          including constructing a \alert{separating conjunct of two
+          independent uniform samples}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Separation \emph{is} independence --- formally}
+  The separating conjunction splits a probability space into an
+  \alert{independent product} \(\sigma_1 \star \sigma_2\):
+  \begin{leancode}
+sep P Q := ⟨fun σ ↦ ∃ σ₁ σ₂, ∃ (σ₁₂ : ✓'(σ₁ ⋆ σ₂)),
+                     ↓σ₁₂ ≤ σ ∧ P.1 σ₁ ∧ Q.1 σ₂, …⟩
+  \end{leancode}
+  \pause
+  This is not just a slogan --- it is a theorem. Owning two random
+  variables separately entails that they are genuinely independent:
+  \begin{leancode}
+lemma indep_of_own {X Y : RV ⟪Ty.real⟫} (Ω : PSp)
+    (ownXY : (iprop(own X ∗ own Y) : LProp).1 Ω) :
+    IndepFun (μ := Ω.μ) X Y
+  \end{leancode}
+  \pause
+  \begin{center}
+    \small
+    \(\bigl(\text{own } X * \text{own } Y\bigr)
+      \ \Longrightarrow\
+      X \perp\!\!\!\perp Y\)
+    \qquad with the magic wand \(\wand\) available for hypothetical reasoning.
+  \end{center}
+\end{frame}
