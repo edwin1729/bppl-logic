@@ -7,7 +7,7 @@ Authors: Edwin Fernando
 import Bppl.Lilac.Appl
 import Bppl.Lilac.Assertion
 import Bppl.Lilac.ProofRules.WP
-import Bppl.Lilac.IndepTactic
+import Bppl.Lilac.ProofRules.Expectation
 
 import Iris.ProofMode
 
