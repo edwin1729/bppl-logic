@@ -51,11 +51,7 @@ def own (E : RV ⟪A⟫) : LProp :=
     intro σ₁ σ₂ hle hm
     exact hm.mono hle.1 le_rfl ⟩
 
-/-- We depart from the convention of using `RV` for for the variable `E` here.
-The measurability of `E : RV ⟪A⟫` would be given as `HC.Inf_borel` on the domain
-and this is unnessecary info. So we instead take a simple function E. Measurability is
-asserted as part of the resource in the original definition. -/
-def dist (E : HC → ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
+def dist (μ : Measure ⟪A⟫) (E : RV ⟪A⟫) : LProp :=
   ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ μ = @Measure.map _ _ Ω.ms _ E Ω.μ,
   -- monotonicity proof
   by
@@ -68,7 +64,7 @@ def dist (E : HC → ⟪A⟫) (μ : Measure ⟪A⟫) : LProp :=
     rfl
   ⟩
 
-def expectation (E : RV ⟪Ty.real⟫) (e : ℝ) : LProp :=
+def expectation (e : ℝ) (E : RV ⟪Ty.real⟫) : LProp :=
   ⟨fun Ω ↦ Measurable[Ω.ms] E ∧ ∫ ω, E ω ∂(Ω.μ) = e,
   by
     intro σ₁ σ₂ hle ⟨hm, hint⟩
@@ -77,6 +73,18 @@ def expectation (E : RV ⟪Ty.real⟫) (e : ℝ) : LProp :=
     refine ⟨hm.mono hms le_rfl, ?_⟩
     rw [← hint, hmu, Measure.cast_eq_self, ← trim_eq_map hms]
     exact integral_trim hms hm.stronglyMeasurable⟩
+
+class OwnLike (A : Ty) (sert : RV ⟪A⟫ → LProp) where
+  meas (E : RV ⟪A⟫) (Ω : PSp) : (sert E).1 Ω → Measurable[Ω.ms] E
+
+instance : OwnLike A own where
+  meas _E _Ω h := h
+
+instance {μ : Measure ⟪A⟫} : OwnLike A (dist μ) where
+  meas _E _Ω h := h.1
+
+instance {e : ℝ} : OwnLike Ty.real (expectation e) where
+  meas _E _Ω h := h.1
 
 -- We do not use `ae` filter and general mathlib infrastructure, because these don't give the
 -- very particular measurability of spaces that we require
@@ -130,10 +138,10 @@ open Iris.BI
 syntax:52 term:53 " ∼ " term:53 : term
 
 macro_rules
-  | `(iprop($rv ∼ $dist)) => `(dist $rv $dist)
+  | `(iprop($rv ∼ $dist)) => `(dist $dist $rv)
 
 delab_rule dist
-  | `($_ $rv $dist) => do ``(iprop($(← unpackIprop rv) ∼ iprop($(← unpackIprop dist))))
+  | `($_ $dist $rv) => do ``(iprop($(← unpackIprop rv) ∼ $(← unpackIprop dist)))
 
 syntax:54 term:53 " ≗ " term:53 : term
 
@@ -146,10 +154,10 @@ delab_rule eq
 syntax:53 " 𝔼[" term:52 "]=" term:54 : term
 
 macro_rules
-  | `(iprop(𝔼[$E]=$e)) => `(expectation $E $e)
+  | `(iprop(𝔼[$E]=$e)) => `(expectation $e $E)
 
 delab_rule expectation
-  | `($_ $E₁ $E₂) => do ``(iprop(𝔼[$(← unpackIprop E₁)]=$(← unpackIprop E₂)))
+  | `($_ $e $E) => do ``(iprop(𝔼[$(← unpackIprop E)]=$(← unpackIprop e)))
 
 -- Why am I needing to use nested iprop when using this notation??
 -- My delab rules are naive, they need to use unpack?

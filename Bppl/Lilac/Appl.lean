@@ -153,6 +153,15 @@ abbrev probDirac [MeasurableSpace α] (a : α) : ProbabilityMeasure α := ⟨.di
 @[fun_prop]
 lemma measurable_probDirac [MeasurableSpace α] : Measurable probDirac (α := α) := by fun_prop
 
+/-- The semantic (native lean) uniform distribution in the interval [0,1].
+This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
+via the subtype coercion `↑ : I → ℝ`. -/
+noncomputable def unif01_sem : Measure ⟪Ty.real⟫ :=
+  Measure.map Subtype.val (MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
+
+instance : IsProbabilityMeasure unif01_sem :=
+  isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
+
 /-- Takes the term and variable environment (which is a measurable function)
 to give an element of a measurable space -/
 @[simp] def Term.den : Term ctx ty → List.TProd (⟪·⟫) ctx -m→ ty.den

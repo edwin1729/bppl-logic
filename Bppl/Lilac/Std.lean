@@ -232,16 +232,6 @@ noncomputable abbrev lebHC : @ProbabilityMeasure HC HC.Inf_borel :=
 
 noncomputable abbrev lebI : Measure I := volume
 
-/-- The semantic (native lean) uniform distribution in the interval [0,1].
-This is the pushforward of Lebesgue measure on `I = Set.Icc 0 1`
-via the subtype coercion `↑ : I → ℝ`. -/
-noncomputable def unif01_sem : Measure ℝ :=
-  Measure.map Subtype.val (MeasureSpace.volume (α := Set.Icc (0 : ℝ) 1))
-
-instance : IsProbabilityMeasure unif01_sem :=
-  isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
-
-
 -- this should be refactored into a type class, or use the `fun_prop` style, where
 -- lemmas constructing the `ff` property are annotated with `fun_prop`
 /-- A measurable function from `HC` with finite footprint. -/
