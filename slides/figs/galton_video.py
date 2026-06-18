@@ -10,20 +10,29 @@ Adapted from figs/galton_frames.py.  Differences:
     count.
   * Single-ball trail + swarm bell-curve behaviour kept from the original.
 
-Two PNG sequences are produced, then encoded to mp4 by the caller:
+Two PNG sequences are produced and then encoded to mp4 with ffmpeg:
 
-  figs/single/frame_<n>.png   a single ball tracing one random path
-  figs/swarm/frame_<n>.png    many balls falling and forming the bell curve
+  figs/single/frame_<n>.png  ->  figs/single.mp4   one ball tracing a path
+  figs/swarm/frame_<n>.png   ->  figs/swarm.mp4    many balls -> bell curve
 
 Usage (run from the slides/ directory so the figs/ paths line up)::
 
-    python3 figs/galton_video.py
+    python3 figs/galton_video.py                 # build both mp4s
+    python3 figs/galton_video.py single          # just single.mp4
+    python3 figs/galton_video.py single --seed 3 # try a different path
+    python3 figs/galton_video.py swarm  --seed 9
+    python3 figs/galton_video.py --no-encode     # render PNGs only
 
-Requires numpy + matplotlib.  Prints the final frame indices on exit.
+Requires numpy + matplotlib for rendering and ffmpeg (on PATH) for encoding.
 Frame files use plain (non zero-padded) integer suffixes, e.g. frame_0.png.
 """
 
+import argparse
 import os
+import shutil
+import subprocess
+import sys
+
 import numpy as np
 import matplotlib
 
@@ -166,9 +175,9 @@ def build_single_positions(rng):
     return positions, total
 
 
-def render_single():
+def render_single(seed=SEED_SINGLE):
     os.makedirs(DIR_SINGLE, exist_ok=True)
-    rng = np.random.default_rng(SEED_SINGLE)
+    rng = np.random.default_rng(seed)
     positions, total = build_single_positions(rng)
 
     # Long fading trail so the chosen path is obvious.
@@ -203,9 +212,9 @@ def ease(t):
     return t * t
 
 
-def render_swarm():
+def render_swarm(seed=SEED_SWARM):
     os.makedirs(DIR_SWARM, exist_ok=True)
-    rng = np.random.default_rng(SEED_SWARM)
+    rng = np.random.default_rng(seed)
 
     finals = rng.integers(0, 2, size=(N_BALLS, ROWS)).sum(axis=1)  # bin per ball
     start = np.arange(N_BALLS) * RELEASE_EVERY
@@ -264,13 +273,66 @@ def render_swarm():
 
 
 # ----------------------------------------------------------------------
-def main():
-    n1 = render_single()
-    n2 = render_swarm()
-    print(f"\nsingle: {n1} frames in {DIR_SINGLE}/  (frame_0.png .. frame_{n1 - 1}.png)")
-    print(f"swarm : {n2} frames in {DIR_SWARM}/  (frame_0.png .. frame_{n2 - 1}.png)")
-    print(f"SINGLE_LAST={n1 - 1}")
-    print(f"SWARM_LAST={n2 - 1}")
+#  Encoding
+# ----------------------------------------------------------------------
+FPS = 25   # must match \animategraphics{25} in sections/galton.tex
+
+
+def encode(frame_dir, out_path, fps=FPS):
+    """Encode frame_0.png, frame_1.png, ... in frame_dir into out_path mp4."""
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        sys.exit("error: ffmpeg not found on PATH; cannot encode the mp4.")
+    cmd = [
+        ffmpeg, "-y",
+        "-framerate", str(fps),
+        "-start_number", "0",
+        "-i", os.path.join(frame_dir, "frame_%d.png"),
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        # guarantee even dimensions, which libx264/yuv420p require
+        "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        out_path,
+    ]
+    print("+ " + " ".join(cmd))
+    subprocess.run(cmd, check=True)
+    print(f"wrote {out_path}")
+
+
+# ----------------------------------------------------------------------
+def main(argv=None):
+    p = argparse.ArgumentParser(
+        description="Render and encode the Galton-board animations.")
+    p.add_argument("which", nargs="?", default="both",
+                   choices=("single", "swarm", "both"),
+                   help="which animation to build (default: both)")
+    p.add_argument("--seed", type=int, default=None,
+                   help="random seed for the chosen animation; "
+                        f"defaults are single={SEED_SINGLE}, swarm={SEED_SWARM}")
+    p.add_argument("--no-encode", action="store_true",
+                   help="render PNG frames only, skip the ffmpeg mp4 step")
+    args = p.parse_args(argv)
+
+    if args.seed is not None and args.which == "both":
+        p.error("--seed needs a single target: pass 'single' or 'swarm'.")
+
+    if args.which in ("single", "both"):
+        seed = args.seed if args.seed is not None else SEED_SINGLE
+        n1 = render_single(seed)
+        print(f"single: {n1} frames in {DIR_SINGLE}/  "
+              f"(frame_0.png .. frame_{n1 - 1}.png), seed={seed}")
+        print(f"SINGLE_LAST={n1 - 1}")
+        if not args.no_encode:
+            encode(DIR_SINGLE, os.path.join("figs", "single.mp4"))
+
+    if args.which in ("swarm", "both"):
+        seed = args.seed if args.seed is not None else SEED_SWARM
+        n2 = render_swarm(seed)
+        print(f"swarm : {n2} frames in {DIR_SWARM}/  "
+              f"(frame_0.png .. frame_{n2 - 1}.png), seed={seed}")
+        print(f"SWARM_LAST={n2 - 1}")
+        if not args.no_encode:
+            encode(DIR_SWARM, os.path.join("figs", "swarm.mp4"))
 
 
 if __name__ == "__main__":

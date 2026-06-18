@@ -28,7 +28,7 @@
             text=wordyellow, font=\small\bfseries] (mechpts)
         at ([xshift=0.0cm, yshift=1.3cm]mech.north) {%
         1.~Soundness proofs\\
-        2.~Interactivity using Iris};
+        2.~Interactive \emph{Proof Mode} using Iris};
       \draw[-{Stealth[length=2.4mm]}, thick, wordyellow]
         (mech.north) to[out=120, in=-70] ([yshift=-1mm]mechpts.south east);
     }
@@ -38,11 +38,15 @@
       \node[anchor=south west, align=left, text width=5.4cm,
             text=wordgreen, font=\small] (foundpts)
         at ([xshift=-0.4cm, yshift=1.3cm]found.north) {%
-        using a theorem prover like Lean or Rocq\\
-        Highest achievable assurance\\
-        Assuming only the foundational axioms of mathematics};
+        Using a theorem prover (Lean/Rocq/Agda)\\
+        Assuming only axioms of math\footnotemark};
       \draw[-{Stealth[length=2.4mm]}, thick, wordgreen]
         (found.north) to[out=60, in=-110] ([yshift=-1mm]foundpts.south west);
     }
   \end{tikzpicture}
+  \only<3->{\footnotetext{Background Sec 2.4.1 ``Dependent Type Theory''
+  % provides an understanding of these axioms. Most interestingly it also explains
+  %   \emph{impredicativity}, a surprising property of Lean AND our logic built
+  %   on top of Lean.
+    }}
 \end{frame}

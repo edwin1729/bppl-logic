@@ -52,27 +52,3 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Separation \emph{is} independence --- formally}
-  The separating conjunction splits a probability space into an
-  \alert{independent product} \(\sigma_1 \star \sigma_2\):
-  \begin{leancode}
-sep P Q := ⟨fun σ ↦ ∃ σ₁ σ₂, ∃ (σ₁₂ : ✓'(σ₁ ⋆ σ₂)),
-                     ↓σ₁₂ ≤ σ ∧ P.1 σ₁ ∧ Q.1 σ₂, …⟩
-  \end{leancode}
-  \pause
-  This is not just a slogan --- it is a theorem. Owning two random
-  variables separately entails that they are genuinely independent:
-  \begin{leancode}
-lemma indep_of_own {X Y : RV ⟪Ty.real⟫} (Ω : PSp)
-    (ownXY : (iprop(own X ∗ own Y) : LProp).1 Ω) :
-    IndepFun (μ := Ω.μ) X Y
-  \end{leancode}
-  \pause
-  \begin{center}
-    \small
-    \(\bigl(\text{own } X * \text{own } Y\bigr)
-      \ \Longrightarrow\
-      X \perp\!\!\!\perp Y\)
-    \qquad with the magic wand \(\wand\) available for hypothetical reasoning.
-  \end{center}
-\end{frame}

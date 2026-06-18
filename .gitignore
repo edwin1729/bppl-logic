@@ -3,3 +3,5 @@
 
 masters-report/build/*
 masters-report/*.synctex.gz
+slides/build/*
+slides/*.synctex.gz
