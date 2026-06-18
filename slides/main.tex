@@ -84,10 +84,15 @@
 % NOTE: the old inline "Contribution" frame and sections/intro.tex are
 % superseded by the slides below and are no longer \input. The fixed,
 % two-arrow version lives in sections/contribution.tex.
-\input{sections/everywhere.tex}          % slide 1 + 1.1
-\input{sections/contribution.tex}         % slide 2 (fixed arrows)
-\input{sections/galton.tex}               % slide 3 (galton mp4s)
-\input{sections/contributions_lilac.tex}  % slide 4 (Lilac)
+\input{sections/everywhere.tex}          % motivation: PP is everywhere
+\input{sections/contribution.tex}         % contribution teaser (arrows)
+% --- Background (~5 min): program = distribution -> semantics -> logic ---
+\input{sections/galton.tex}               % a program is a distribution over runs
+\input{sections/semantics.tex}            % M : ⟦Γ⟧ → Measure ty, then HC domain
+\input{sections/psl_motivation.tex}       % how to verify: separation logic (unif1)
+\input{sections/iris_bi.tex}              % Iris & the BI definition
+% --- Contribution, precisely + formalisation dependency graph -----------
+\input{sections/contributions_lilac.tex}
 
 % --- Closing ----------------------------------------------------------
 % \begin{frame}[standout]

@@ -1,0 +1,73 @@
+% =====================================================================
+%  Background: Iris and the logic of bunched implications (BI)
+%  \input-able frame(s) only; no preamble. See main.tex for macros.
+% =====================================================================
+
+\begin{frame}{Iris, and the logic of bunched implications (BI)}
+  The separation logic is built on the Lean port of \alert{Iris}; its
+  assertions \(\mathrm{Prop}\) form a \wmech{BI (bunched-implication) logic}.
+  \vfill
+  % --- The assertion-language signature -------------------------------
+  \begin{center}
+  \renewcommand{\arraystretch}{1.35}
+  \(
+    \begin{array}{r@{\;\;}c@{\;\;}l@{\qquad}l}
+      \ulcorner\,\cdot\,\urcorner
+        & : & \mathrm{Prop} \to \mathrm{Prop}
+        & \text{\footnotesize pure embedding} \\
+      \mathsf{True},\ \mathsf{False},\ \mathsf{emp}
+        & : & \mathrm{Prop}
+        & \text{\footnotesize units} \\
+      \wedge,\ \vee,\ \Rightarrow,\ \wprob{\ensuremath{\ast}},\ \wprob{\ensuremath{\wand}}
+        & : & \mathrm{Prop} \times \mathrm{Prop} \to \mathrm{Prop}
+        & \text{\footnotesize binary connectives} \\
+      \forall,\ \exists
+        & : & \forall A.\ (A \to \mathrm{Prop}) \to \mathrm{Prop}
+        & \text{\footnotesize quantifiers}
+    \end{array}
+  \)
+  \end{center}
+  \vfill
+  \begin{flushright}\footnotesize
+    \wprob{\(\ast\)} separating conjunction \quad
+    \wprob{\(\wand\)} magic wand \quad
+    --- the separation-logic-specific connectives.
+  \end{flushright}
+\end{frame}
+
+
+\begin{frame}{Iris, and the logic of bunched implications (BI)}
+  Assertions \(\mathrm{Prop}\) form a \wmech{BI (bunched-implication) logic} on
+  the Lean port of \alert{Iris}.
+  \smallskip
+  % --- The assertion-language signature -------------------------------
+  \begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \(
+    \begin{array}{r@{\;\;}c@{\;\;}l@{\qquad}l}
+      \ulcorner\,\cdot\,\urcorner
+        & : & \mathrm{Prop} \to \mathrm{Prop}
+        & \text{\footnotesize pure embedding} \\
+      \mathsf{True},\ \mathsf{False},\ \mathsf{emp}
+        & : & \mathrm{Prop}
+        & \text{\footnotesize units} \\
+      \wedge,\ \vee,\ \Rightarrow,\ \wprob{\ensuremath{\ast}},\ \wprob{\ensuremath{\wand}}
+        & : & \mathrm{Prop} \times \mathrm{Prop} \to \mathrm{Prop}
+        & \text{\footnotesize binary connectives} \\
+      \forall,\ \exists
+        & : & \forall A.\ (A \to \mathrm{Prop}) \to \mathrm{Prop}
+        & \text{\footnotesize quantifiers}
+    \end{array}
+  \)
+  \end{center}
+  \smallskip
+  \begin{itemize}
+    \item<2->
+      \alert{A logic inside a logic.} \(\mathrm{Prop}\) is an object logic
+      inside Lean's meta-logic.\footnote<3->{Revisited later in the talk.}
+    \item<3->
+      \alert{Impredicativity.} \(\forall/\exists\) range over an
+      \emph{arbitrary} type \(A\) --- including \(\mathrm{Prop}\) itself: we
+      may quantify over propositions.
+  \end{itemize}
+\end{frame}

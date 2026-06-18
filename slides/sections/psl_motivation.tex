@@ -1,0 +1,61 @@
+% =====================================================================
+%  Background frame: how to verify -- probabilistic separation logic
+%  Single-variable `unif1` example throughout (X ← unif[0,1]; ret X).
+%
+%  Animates in three beats:
+%    Beat 1: program  ≡  awful integral denotation.
+%    Beat 2: big red ✗ strikes through the integral (we do NOT compute it).
+%    Beat 3: the separation-logic alternative -- reason directly about
+%            the variable, X ∼ unif[0,1], with a blue hand-drawn note and
+%            a curved arrow from the crossed-out integral to the assertion.
+%
+%  Macros \wprob and colours wordblue defined in main.tex preamble.
+% =====================================================================
+\begin{frame}{How to verify: probabilistic separation logic}
+  \begin{center}
+    % --- Beat 1: program  ≡  denotation ---------------------------------
+    \large
+    $\underbrace{X \leftarrow \mathrm{unif}[0,1];\ \ \mathrm{ret}\ X}_{\text{\normalsize program}}$
+
+    \smallskip
+    $\equiv$
+    \smallskip
+
+    \tikzmarknode{intl}{}%
+    $\underbrace{%
+      \lambda E \mapsto \int (\lambda \mu \mapsto \mu\,E)\;
+        d\bigl(\mathrm{map}\,(\lambda X \mapsto \mathrm{dirac}\,X)\;\mathrm{unif}[0,1]\bigr)
+    }_{\text{\normalsize denotation}}$%
+    \tikzmarknode{intr}{}
+  \end{center}
+
+  \vspace*{0.3cm}
+
+  % --- Beat 3: the separation-logic alternative ----------------------
+  \onslide<3->{%
+    \begin{center}
+      \large
+      \wprob{reason directly about the variables}\\[0.5em]
+      \tikzmarknode{simassert}{}%
+      {\Large $X \sim \mathrm{unif}[0,1]$}
+    \end{center}
+  }
+
+  \begin{tikzpicture}[remember picture, overlay]
+    % --- Beat 2: red strike-through across the integral expression ----
+    \onslide<2->{
+      \draw[red, line width=2pt]
+        ([yshift=3.5mm]intl.north east) -- ([yshift=-3.5mm]intr.south west);
+      \draw[red, line width=2pt]
+        ([yshift=-3.5mm]intl.south east) -- ([yshift=3.5mm]intr.north west);
+    }
+
+    % --- Beat 3: curved blue arrow from crossed integral to assertion -
+    \onslide<3->{
+      \draw[-{Stealth[length=2.8mm]}, line width=1pt, wordblue]
+        ([yshift=-5mm]$ (intl)!0.5!(intr) $)
+          to[out=-90, in=150]
+        ([xshift=-4mm, yshift=1mm]simassert.west);
+    }
+  \end{tikzpicture}
+\end{frame}

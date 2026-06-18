@@ -1,54 +1,71 @@
 % =====================================================================
-%  Contributions, revisited --- the mechanisation of Lilac
+%  Contribution, precisely --- the mechanisation of Lilac
 %  \input-able frames only; no preamble. See main.tex for macros.
 % =====================================================================
 
-\begin{frame}{Contributions, ``revised''}
-  Now that the motivation is in place: \alert{what} did we mechanise, and
-  \alert{why} does it matter?
+\begin{frame}{Contribution, precisely}
+  \vfill
+  \begin{center}
+    {\Large\wmech{Mechanisation of Core\footnote{Extended Lilac adds
+      reasoning about conditioning.} Lilac in Lean}}
+
+    \vspace{0.6em}
+
+    {\normalsize a \wprob{continuous} probabilistic separation logic with
+      \alert{separation as independence}.}
+  \end{center}
   \vfill
   \begin{itemize}
-    \item \wprob{Lilac} is a probabilistic separation logic whose guiding
-          idea is\\[0.2em]
-          \begin{center}
-            \emph{``separation \(=\) independence of random variables''}
-          \end{center}
-          The separating conjunction \(P * Q\) asserts that the random
-          variables described by \(P\) and \(Q\) are \alert{probabilistically
-          independent} --- and Lilac supports \wprob{continuous} distributions.
-    \item We give the \wmech{first mechanisation of \textbf{Core\footnote{Extended Lilac adds reasoning about conditioning} Lilac} in Lean 4},
-          the first mechanisation of \emph{any} probabilistic separation logic
-          in Lean.
+    \item[] {\small Along the way, plausibly the first (or second) instantiation
+          of \wmech{Iris-lean} for a program logic of this kind.}
   \end{itemize}
+  \vfill
 \end{frame}
 
 
-\begin{frame}{What was mechanised}
-  \begin{itemize}
-    \item[\textcolor{wordyellow}{\textbf{1.}}]
-          \wfound{Soundness, from the ground up.}
-          Core Lilac is built as a model over probability spaces with finite
-          footprint, and every program-logic proof rule is proved sound
-          against that model:
-          \[
-            \texttt{wp\_ret}\quad
-            \texttt{wp\_bind}\quad
-            \texttt{wp\_unif}\quad
-            \texttt{wp\_cons}\quad
-            \texttt{wp\_frame}
-          \]
-    \pause
-    \item[\textcolor{wordyellow}{\textbf{2.}}]
-          \wfound{An interactive proof interface.}
-          Lilac is instantiated as a \wmech{bunched-implication logic} on the
-          Lean port of \alert{Iris}, so proofs are carried out in the
-          \emph{Iris proof mode}.
-    \pause
-    \item[\textcolor{wordyellow}{\textbf{3.}}]
-          \wfound{Worked examples.}
-          Specifications of sampling programs proved in that proof mode ---
-          including constructing a \alert{separating conjunct of two
-          independent uniform samples}.
-  \end{itemize}
-\end{frame}
+\begin{frame}{The formalisation, in one picture}
+  \centering
+  \begin{tikzpicture}[
+      >=Stealth,
+      node distance=9mm and 12mm,
+      every node/.style={font=\footnotesize},
+      box/.style={
+        draw, rounded corners=2pt, align=center,
+        inner sep=3pt, thick,
+      },
+      lang/.style ={box, draw=wordblue,   fill=wordblue!8,  text=wordblue!60!black},
+      logic/.style={box, draw=wordblue,   fill=wordblue!8,  text=wordblue!60!black},
+      res/.style  ={box, draw=wordgreen,  fill=wordgreen!8, text=wordgreen!50!black},
+      iris/.style ={box, draw=wordyellow, fill=wordyellow!12,text=wordyellow!55!black},
+      cs/.style   ={box, draw=gray!70,    fill=gray!8,      text=black!75},
+      dep/.style={->, thick, gray!60},
+    ]
 
+    % --- bottom layer: resource model
+    \node[res] (mos)  {Resource model\\\texttt{\scriptsize MeasureOnSpace.lean}};
+    \node[res] (krm)  [right=of mos] {\phantom{Resource model}\\\texttt{\scriptsize KRM.lean}};
+
+    % --- middle: language (left) and logic (right)
+    \node[lang]  (appl)  [above=10mm of mos] {The language\\\texttt{\scriptsize Appl.lean}};
+    \node[logic] (asrt)  [above=10mm of krm] {The logic\\\texttt{\scriptsize Assertion.lean}};
+
+    % wp connective links language and logic
+    \draw[dep] (appl) -- node[midway, above, font=\footnotesize\itshape, text=black]
+                 {\lean{wp}} (asrt);
+
+    % --- upper: Iris instantiation + tactics / metaprogramming
+    \node[iris] (iris) [above=10mm of asrt]
+      {Iris instantiation \(+\) tactics\\%
+       \texttt{\scriptsize BI.lean}\;\;\texttt{\scriptsize IndepTactic.lean}\;\;\texttt{\scriptsize meta.lean}};
+
+    % --- top: case studies
+    \node[cs] (ex) [above=8mm of iris] {Case studies\\\texttt{\scriptsize Examples.lean}};
+
+    % --- dependency edges (lower supports upper)
+    \draw[dep] (mos.north) -- (appl.south);
+    \draw[dep] (krm.north) -- (asrt.south);
+    \draw[dep] (asrt.north) -- (iris.south);
+    \draw[dep] (appl.north) to[out=90,in=180] (iris.west);
+    \draw[dep] (iris.north) -- (ex.south);
+  \end{tikzpicture}
+\end{frame}

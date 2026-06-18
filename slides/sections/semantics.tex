@@ -1,0 +1,122 @@
+% =====================================================================
+%  Semantics frames (background deck)
+%
+%  B2 "Probabilistic semantics": the flip program  ≡  its semantics type
+%       M : ⟦Γ⟧ → Measure ty
+%  B3 "Refining the domain": the SAME type, same on-screen position, but
+%     the domain grows by prepending  HC →  giving
+%       HC (Hilbert cube) → ⟦Γ⟧ → Measure ty
+%
+%  DESIGN CHOICE -------------------------------------------------------
+%  The "grows into place" effect is realised as a SINGLE frame with beamer
+%  overlays (B3 is a continuation of B2 in the same frame). This guarantees
+%  the type sits in EXACTLY the same position across overlays: the fixed
+%  part  ⟦Γ⟧ → Measure ty  is typeset once and never moves; the  HC →
+%  prefix is revealed on the second overlay and fades in via a tikz
+%  fading. We anchor the whole expression to the RIGHT of a fixed point so
+%  that prepending the prefix grows the formula leftwards into reserved
+%  whitespace, leaving the tail (the part the audience tracks) stationary.
+%
+%  Rather than two separate frames, the single-frame-with-overlays form
+%  keeps the layout provably identical (no risk of a 1pt drift between two
+%  hand-laid frames) — cleanest continuous animation.
+%
+%  Macros from main.tex preamble: \sem{·} (⟦·⟧), \alert{}, colour words.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+%  Frame B2 / B3 — combined, overlay-driven
+% ---------------------------------------------------------------------
+\begin{frame}{%
+    \only<1>{Probabilistic semantics}%
+    \only<2->{Refining the domain: the Hilbert cube}%
+  }
+
+  \begin{center}
+    \begin{minipage}[c]{0.40\textwidth}
+      % --- LEFT: the small program, set in plain math (NOT minted) ------
+      \centering
+      \(
+        \begin{aligned}
+          X_0 &\leftarrow \mathsf{flip}\ 0\\
+          X_1 &\leftarrow \mathsf{flip}\ X_0\\
+          X_2 &\leftarrow \mathsf{flip}\ X_1\\
+              &\mathsf{ret}\ X_2
+        \end{aligned}
+      \)
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[c]{0.06\textwidth}
+      \centering\Large\(\equiv\)
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[c]{0.52\textwidth}
+      % --- RIGHT: the semantics TYPE, large and prominent ---------------
+      % The expression is right-anchored: the fixed tail never moves; the
+      % HC → prefix grows leftwards into reserved whitespace.
+      %
+      % KEY trick: the prefix "HC →" RESERVES its full width on EVERY
+      % overlay via a \phantom, so the fixed tail (⟦Γ⟧ → Measure ty) never
+      % moves. The visible glyphs are overprinted in the same zero-extra-
+      % width box (\rlap) and revealed only on overlay 2+, so the prefix
+      % "grows into place" while the tail stays pinned in position.
+      \raggedleft
+      \Large
+      \(
+        M : {}
+        \rlap{\(\only<2->{\alert{\mathrm{HC}}\;\alert{\to}}\)}%
+        \phantom{\mathrm{HC}\;\to}\;
+        % --- the FIXED tail: typeset once, identical on every overlay ----
+        \sem{\Gamma} \to \mathrm{Measure}\ \mathit{ty}
+      \)
+      % --- small annotation under the HC prefix (overlay 2+) ------------
+      \\[0.2em]
+      \only<2->{\makebox[\linewidth][l]{\hspace*{0.2cm}%
+        \alert{\footnotesize \(\mathrm{HC}\) = Hilbert cube \(=[0,1]^{\mathbb{N}}\)}}}
+    \end{minipage}
+  \end{center}
+
+  \vfill
+
+  % -------------------------------------------------------------------
+  %  Stylised Hilbert-cube illustration (overlay 2+).
+  %  A row of ~6 coordinate cells: scattered sample dots, a couple
+  %  crossed out, thin curved arrows into a {X₁, X₂, X₃} label.
+  % -------------------------------------------------------------------
+  % stylised placeholder — swap for a nicer asset later
+  \only<2->{%
+  \begin{center}
+  \begin{tikzpicture}[
+      cell/.style={draw, gray, thin, minimum size=0.75cm, inner sep=0pt},
+      dot/.style={circle, fill=wordblue, inner sep=0pt, minimum size=2.4pt},
+      arr/.style={-{Stealth[length=1.6mm]}, thin, gray},
+    ]
+    % --- the coordinate cells -----------------------------------------
+    \foreach \i in {0,...,5} {
+      \node[cell] (c\i) at (\i*0.95,0) {};
+    }
+    % --- scattered sample dots inside a few cells ---------------------
+    \node[dot] at ([shift={(-0.18, 0.20)}]c0.center) {};
+    \node[dot] at ([shift={( 0.15,-0.10)}]c0.center) {};
+    \node[dot] at ([shift={( 0.05, 0.25)}]c1.center) {};
+    \node[dot] at ([shift={(-0.20,-0.18)}]c1.center) {};
+    \node[dot] at ([shift={( 0.18, 0.12)}]c1.center) {};
+    \node[dot] at ([shift={( 0.00, 0.00)}]c3.center) {};
+    \node[dot] at ([shift={(-0.15, 0.18)}]c3.center) {};
+    \node[dot] at ([shift={( 0.20,-0.20)}]c4.center) {};
+    % --- a couple of cells crossed out (✗) ----------------------------
+    \draw[red, thin] (c2.south west) -- (c2.north east);
+    \draw[red, thin] (c2.north west) -- (c2.south east);
+    \draw[red, thin] (c5.south west) -- (c5.north east);
+    \draw[red, thin] (c5.north west) -- (c5.south east);
+    % --- label to the right -------------------------------------------
+    \node[anchor=west, font=\small] (lbl) at (6.4,0)
+      {\(\{X_1, X_2, X_3\}\)};
+    % --- thin arrows curving from active cells into the label ---------
+    \draw[arr] (c0.north) to[out=60, in=160] (lbl.north west);
+    \draw[arr] (c1.north) to[out=70, in=170] ([yshift=1mm]lbl.west);
+    \draw[arr] (c4.south) to[out=-30, in=200] (lbl.south west);
+  \end{tikzpicture}
+  \end{center}%
+  }
+\end{frame}
