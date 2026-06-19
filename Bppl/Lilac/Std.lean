@@ -262,8 +262,6 @@ instance : Mul (RV ℝ) where
         (HC.finite_footprint_of_ge (le_max_right n₁ n₂) h₂))⟩
     exact (Measurable.of_comap_le le_sup_left).mul (Measurable.of_comap_le le_sup_right)⟩
 
--- abbrev mul (M N : RV ℝ) : RV ℝ := ⟨⟨λ ω ↦ M ω * N ω, sorry⟩, sorry⟩
-
 abbrev ite (E : RV Bool) (M N : RV α) : RV α :=
   ⟨⟨λ ω ↦ if E ω then M ω else N ω,
       Measurable.ite (E.meas (measurableSet_singleton true)) M.meas N.meas⟩, by

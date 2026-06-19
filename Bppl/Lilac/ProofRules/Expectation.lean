@@ -47,10 +47,8 @@ theorem proj_of_frame {e eX eY oX oY : LProp}
     e ⊢ iprop(oX ∗ oY) :=
   pfX.1.trans <| (sep_mono_l (pfY.1.trans sep_elim_r)).trans sep_comm.1
 
-/-- Model-level core: independence turns the factored expectation goal into the product goal.
-(The measure-theoretic content `𝔼[XY] = 𝔼[X]·𝔼[Y]` under independence is orthogonal to the tactic
-and left as `sorry`, matching the existing development.) -/
-theorem expectation_prod_core {X Y : RV ⟪Ty.real⟫} {xy : ℝ} (Ω : PSp)
+/-- Model-level core: independence turns the factored expectation goal into the product goal -/
+theorem expectation_prod {X Y : RV ⟪Ty.real⟫} {xy : ℝ} (Ω : PSp)
     (hindep : ProbabilityTheory.IndepFun (_mΩ := Ω.ms) (μ := Ω.μ) X Y)
     (hg : (iprop(∃ x y, 𝔼[X]=x ∧ 𝔼[Y]=y ∧ ⌜x * y = xy⌝) : LProp).1 Ω) :
     (iprop(𝔼[X * Y]=xy) : LProp).1 Ω := by
@@ -110,7 +108,7 @@ theorem expectation_prod_keep {X Y : RV ⟪Ty.real⟫} {xy : ℝ}
     e ⊢ iprop(𝔼[X * Y]=xy) := by
   have proj := proj_of_frame pfX pfY
   intro Ω he
-  exact expectation_prod_core Ω (indep_of_own' Ω sertX sertY (proj Ω he)) (hgoal Ω he)
+  exact expectation_prod Ω (indep_of_own' Ω sertX sertY (proj Ω he)) (hgoal Ω he)
 
 end Lilac
 

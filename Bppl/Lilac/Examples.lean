@@ -98,23 +98,21 @@ abbrev half : Term [Ty.real] Ty.real.G :=
     ret (#1 * #0)
   )
 
-abbrev post_half (X : RV ⟪Ty.real⟫) : LProp := wp (half.den ∘ᵣ (X ;; nil)) (λ Y : RV ℝ ↦
-    iprop(∃ e, 𝔼[Y]=e/2 ∧ 𝔼[X]=e))
-
 lemma hrw (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul #1 #0).den ∘ᵣ Y ;; X ;; nil) = X * Y := by rfl
 lemma hr2 (X Y : RV ⟪Ty.real⟫) : ((arith Arith.mul #1 #0).den ∘ᵣ Y ;; X ;; nil)
   = ((Term.den ((#1 * #0): Term [Ty.real, Ty.real] Ty.real)) ∘ᵣ Y ;; X ;; nil) := by rfl
 
-theorem half_spec (X : RV ⟪Ty.real⟫) : own X ⊢ post_half X := by
+theorem half_spec (X : RV ⟪Ty.real⟫) :
+    own X ⊢ wp (half.den ∘ᵣ (X ;; nil))
+               (λ XY : RV ℝ ↦ iprop(∃ e, 𝔼[XY]=e/2 ∧ 𝔼[X]=e)) := by
   iintro hX
-  rw [post_half]
   iapply wp_bind
   iapply wp_unif
   iintro %Y hY
   iapply wp_ret
   rw [← hr2, hrw]
-  ihave expX := expectation_of_own $$ hX
-  icases expX with ⟨%e, he⟩
+  ihave hX := expectation_of_own $$ hX
+  icases hX with ⟨%e, he⟩
   iexists e
   isplit
   · iexpect_prod he hY

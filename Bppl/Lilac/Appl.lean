@@ -192,18 +192,6 @@ to give an element of a measurable space -/
   | cmp op M N => ⟨fun env ↦ op.den (M.den env, N.den env),
     (op.den.2).comp (M.den.2.prod N.den.2)⟩
   | unif01 => ⟨fun _ ↦ ⟨unif01_sem, inferInstance⟩, measurable_const⟩
-  -- not trivial sorry. Need to show the smalest σ-algebra generated out of the product,
-  -- has inverse images measurable
-  -- | vect f => ⟨fun env ↦ (fun n ↦ (f n).den env), sorry⟩
-  -- | @index _ len _ N M => ⟨fun env ↦
-  --   let n : ℕ := (N.den env)
-  --   if h: n < len then (M.den env) ⟨n, h⟩ else default, sorry⟩
-  -- No need to specify name for `i`: index and `X`: A, since we're using De brujin indices
-  -- | @«for» _ ty n Mᵢ Mₛ =>
-  --   let rec loop (k : ℕ) (v : ⟪ty⟫) (f : ℕ → ⟪ty⟫ → Measure ⟪ty⟫) := if n ≤ k then
-  --     .dirac v else
-  --     Measure.bind (f k v) (fun v' ↦ loop (k+1) v' f)
-  --   ⟨fun env ↦ loop 1 (Mᵢ.den env) fun k v ↦ Mₛ.den (k, (v, env)), sorry⟩
 
 notation "〚" M "⟧" => Term.den M
 
