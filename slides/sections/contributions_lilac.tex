@@ -38,16 +38,16 @@
       res/.style  ={box, draw=wordgreen,  fill=wordgreen!8, text=wordgreen!50!black},
       iris/.style ={box, draw=wordyellow, fill=wordyellow!12,text=wordyellow!55!black},
       cs/.style   ={box, draw=gray!70,    fill=gray!8,      text=black!75},
+      pr/.style   ={box, draw=wordgreen, fill=wordgreen!8, text=wordgreen!50!black},
       dep/.style={->, thick, gray!60},
     ]
 
     % --- bottom layer: resource model
-    \node[res] (mos)  {Resource model\\\texttt{\scriptsize MeasureOnSpace.lean}};
-    \node[res] (krm)  [right=of mos] {\phantom{Resource model}\\\texttt{\scriptsize KRM.lean}};
+    \node[lang]  (appl)  {The language\\\texttt{\scriptsize Appl.lean}};
+    \node[res] (mos)  [right=of appl] {Resource model\\\texttt{\scriptsize MeasureOnSpace.lean}\;\;\texttt{\scriptsize Krm.lean}};
 
     % --- middle: language (left) and logic (right)
-    \node[lang]  (appl)  [above=10mm of mos] {The language\\\texttt{\scriptsize Appl.lean}};
-    \node[logic] (asrt)  [above=10mm of krm] {The logic\\\texttt{\scriptsize Assertion.lean}};
+    \node[logic] (asrt)  [above=10mm of mos] {The logic\\\texttt{\scriptsize Assertion.lean}};
 
     % wp connective links language and logic
     \draw[dep] (appl) -- node[midway, above, font=\footnotesize\itshape, text=black]
@@ -55,17 +55,21 @@
 
     % --- upper: Iris instantiation + tactics / metaprogramming
     \node[iris] (iris) [above=10mm of asrt]
-      {Iris instantiation \(+\) tactics\\%
-       \texttt{\scriptsize BI.lean}\;\;\texttt{\scriptsize IndepTactic.lean}\;\;\texttt{\scriptsize meta.lean}};
+      {Iris instantiation \\%
+       \texttt{\scriptsize BI.lean}};
+
+    \node[pr] (pr) [left=10mm of iris]
+      {Probability-specific Proof Rules\\%
+       \texttt{\scriptsize ProofRules/*}};
 
     % --- top: case studies
     \node[cs] (ex) [above=8mm of iris] {Case studies\\\texttt{\scriptsize Examples.lean}};
 
     % --- dependency edges (lower supports upper)
-    \draw[dep] (mos.north) -- (appl.south);
-    \draw[dep] (krm.north) -- (asrt.south);
+    \draw[dep] (mos.north) -- (asrt.south);
     \draw[dep] (asrt.north) -- (iris.south);
-    \draw[dep] (appl.north) to[out=90,in=180] (iris.west);
+    \draw[dep] (asrt.north) -- (pr.south);
+    \draw[dep] (pr.north) -- (ex.south);
     \draw[dep] (iris.north) -- (ex.south);
   \end{tikzpicture}
 \end{frame}

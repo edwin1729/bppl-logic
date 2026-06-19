@@ -53,6 +53,7 @@
 % slide for figs/single.mp4 + figs/swarm.mp4. Requires GStreamer with an
 % H.264 decoder (gstreamer1.0-libav + gstreamer1.0-plugins-bad).
 \usepackage{multimedia}
+\usepackage[skins,minted]{tcolorbox}
 
 % ---- Shared macros (kept in sync with masters-report/main.tex) -------
 \newcommand{\bind}{\mathbin{>\!\!>\mkern-6.7mu=}}      % monadic bind
@@ -93,6 +94,8 @@
 \input{sections/iris_bi.tex}              % Iris & the BI definition
 % --- Contribution, precisely + formalisation dependency graph -----------
 \input{sections/contributions_lilac.tex}
+% --- wp_meas proof expansion: informal ↔ formal colour-coded -----------
+\input{sections/wp_meas_proof.tex}
 
 % --- Closing ----------------------------------------------------------
 % \begin{frame}[standout]
